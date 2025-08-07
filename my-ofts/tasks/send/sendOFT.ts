@@ -1,6 +1,5 @@
 import * as dotenv from 'dotenv'
 import { task } from 'hardhat/config'
-// eslint-disable-next-line import/no-named-as-default-member
 dotenv.config()
 
 // Network configuration mapping

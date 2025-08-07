@@ -1,4 +1,6 @@
-node_modules
+my-ofts/node_modules
+my-ofts/artifacts
+my-ofts/cache
 .env
 coverage
 coverage.json
@@ -22,3 +24,4 @@ pnpm-error.log
 # Editor and OS files
 .DS_Store
 .idea
+Note.MD
