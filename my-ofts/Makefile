@@ -161,6 +161,8 @@ bsc-to-fuji:
 	@make send FROM=bsc-testnet TO=fuji AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
 bsc-to-root:
 	@make send FROM=bsc-testnet TO=rootstock AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+bsc-to-arb:
+	@make send FROM=bsc-testnet TO=sepolia-arb AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
 eth-to-bsc:
 	@make send FROM=sepolia TO=bsc-testnet AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
 eth-to-amoy:
@@ -169,12 +171,16 @@ eth-to-fuji:
 	@make send FROM=sepolia TO=fuji AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
 eth-to-root:
 	@make send FROM=sepolia TO=rootstock AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+eth-to-arb:
+	@make send FROM=sepolia TO=sepolia-arb AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
 amoy-to-bsc:
 	@make send FROM=amoy TO=bsc-testnet AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
 amoy-to-eth:
 	@make send FROM=amoy TO=sepolia AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
 amoy-to-fuji:
 	@make send FROM=amoy TO=fuji AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+amoy-to-arb:
+	@make send FROM=amoy TO=sepolia-arb AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
 amoy-to-root:
 	@make send FROM=amoy TO=rootstock AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
 fuji-to-amoy:
@@ -185,6 +191,8 @@ fuji-to-bsc:
 	@make send FROM=fuji TO=bsc-testnet AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
 fuji-to-root:
 	@make send FROM=fuji TO=rootstock AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+fuji-to-arb:
+	@make send FROM=fuji TO=sepolia-arb AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
 root-to-bsc:
 	@make send FROM=rootstock TO=bsc-testnet AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
 root-to-eth:
@@ -193,6 +201,18 @@ root-to-amoy:
 	@make send FROM=rootstock TO=amoy AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
 root-to-fuji:
 	@make send FROM=rootstock TO=fuji AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+root-to-arb:
+	@make send FROM=rootstock TO=sepolia-arb AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+arb-to-bsc:
+	@make send FROM=sepolia-arb TO=bsc-testnet AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+arb-to-eth:
+	@make send FROM=sepolia-arb TO=sepolia AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+arb-to-amoy:
+	@make send FROM=sepolia-arb TO=amoy AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+arb-to-fuji:
+	@make send FROM=sepolia-arb TO=fuji AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+arb-to-root:
+	@make send FROM=sepolia-arb TO=rootstock AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
 
 
 # Predefined BSC to Sepolia peer setup
@@ -238,6 +258,12 @@ verify-root:
 	npx hardhat verify:root --address $(ROOT_CONTRACT) --network rootstock
 	@echo "Verification complete!"
 
+.PHONY: verify-arb
+verify-arb:
+	@echo "Verifying contract on Arb Testnet..."
+	npx hardhat verify:arb --address $(ARB_CONTRACT) --network sepolia-arb
+	@echo "Verification complete!"
+
 # Mint Token
 mint-bsc:
 	npx hardhat lz:oft:mint --contract $(BSC_CONTRACT) --network bsc-testnet --amount 10 --private-key $(PRIVATE_KEY)
@@ -248,7 +274,6 @@ mint-eth:
 mint-amoy:
 	npx hardhat lz:oft:mint --contract $(POLY_CONTRACT) --network amoy-testnet --amount 8 --private-key $(PRIVATE_KEY)
 
-.PHONY: send-oft
 
 # Dynamic OFT_ADDRESS selection based on network
 ifeq ($(NETWORK),bsc-testnet)

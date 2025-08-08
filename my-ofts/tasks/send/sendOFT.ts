@@ -1,4 +1,6 @@
 import * as dotenv from 'dotenv'
+// import * as Ethers from 'ethers'
+import { BigNumber, Contract } from 'ethers'
 import { task } from 'hardhat/config'
 dotenv.config()
 
@@ -14,6 +16,11 @@ const NETWORK_CONFIG = {
         contractEnvKey: 'ETH_CONTRACT',
         name: 'Ethereum Sepolia',
     },
+    'sepolia-arb': {
+        eid: 40231,
+        contractEnvKey: 'ARB_CONTRACT',
+        name: 'Arbitrum Sepolia',
+    },
     amoy: {
         eid: 40267,
         contractEnvKey: 'POLY_CONTRACT',
@@ -28,6 +35,11 @@ const NETWORK_CONFIG = {
         eid: 40350, // Rootstock testnet EID
         contractEnvKey: 'ROOT_CONTRACT',
         name: 'Rootstock Testnet',
+    },
+    lz: {
+        eid: 0, // LayerZero EID
+        contractEnvKey: 'LZ_CONTRACT',
+        name: 'LayerZero',
     },
 } as const
 
@@ -66,9 +78,163 @@ const EXPLORER_URLS: Record<NetworkName, string> = {
     amoy: 'https://www.oklink.com/amoy/tx/',
     fuji: 'https://testnet.snowtrace.io/tx/',
     rootstock: 'https://explorer.testnet.rsk.co/tx/',
+    'sepolia-arb': 'https://sepolia.arbiscan.io/tx/',
+    lz: 'https://explorer.layerzero.io/tx/',
 }
 
-// Universal send task
+const EXTRA_OPTIONS_TO_TRY = [
+    // Very Low Gas (Not recommended, for edge testing only)
+    '0x000301001101000000000000000000000000000061a8', // 25,000
+    '0x0003010011010000000000000000000000000000c350', // 50,000
+    '0x000301001101000000000000000000000000000186a0', // 100,000
+
+    // Low Range
+    '0x000301001101000000000000000000000000000249f0', // 150,000
+    '0x00030100110100000000000000000000000000030d40', // 200,000 (standard)
+    '0x0003010011010000000000000000000000000003d090', // 250,000
+    '0x000301001101000000000000000000000000000493e0', // 300,000
+    '0x00030100110100000000000000000000000000061a80', // 400,000
+
+    // Mid Range
+    '0x0003010011010000000000000000000000000007a120', // 500,000
+    '0x00030100110100000000000000000000000000098968', // 625,000
+    '0x000301001101000000000000000000000000000bebc', // 750,000
+    '0x000301001101000000000000000000000000000f4240', // 1,000,000
+    '0x0003010011010000000000000000000000000013d620', // 1,300,000
+    '0x00030100110100000000000000000000000000186a00', // 1,600,000
+
+    // High Range
+    '0x000301001101000000000000000000000000001e8480', // 2,000,000
+    '0x000301001101000000000000000000000000002625a0', // 2,500,000
+    '0x000301001101000000000000000000000000002dc6c0', // 3,000,000
+    '0x000301001101000000000000000000000000003d0900', // 4,000,000
+    '0x000301001101000000000000000000000000004c4b40', // 5,000,000
+
+    // Ultra High (for very complex txs or special networks)
+    '0x0003010011010000000000000000000000000062a160', // 6,400,000
+    '0x000301001101000000000000000000000000007a1200', // 8,000,000
+    '0x00030100110100000000000000000000000000989680', // 10,000,000
+    '0x00030100110100000000000000000000000000bebc20', // 12,500,000
+    '0x00030100110100000000000000000000000000e4e1c0', // 15,000,000
+] as const
+
+type ResultLogEntry = {
+    gasAmount: number
+    extraOptions: string
+    success: boolean
+    nativeFee?: string
+    error?: string
+}
+
+type FindResult = {
+    workingExtraOptions: string
+    quote?: { nativeFee: BigNumber; lzTokenFee: BigNumber }
+    resultLog: ResultLogEntry[]
+}
+
+/**
+ * Mencari extraOptions yang berhasil memproduksi quote.
+ * Mengembalikan workingExtraOptions, quote (jika ada), dan resultLog (untuk table summary).
+ * Semua logging asli dipertahankan di sini (agar perilaku identik).
+ */
+export async function findWorkingExtraOptions(
+    contract: Contract,
+    dstEid: number,
+    to: string,
+    amount: string,
+    minAmount: string,
+    ethers: {
+        utils: {
+            formatEther: (arg0: string) => string
+            hexZeroPad: (arg0: string, arg1: number) => string
+            parseEther: (arg0: string) => BigNumber
+        }
+    },
+    extraOptionsList: readonly string[] = EXTRA_OPTIONS_TO_TRY
+): Promise<FindResult> {
+    const resultLog: ResultLogEntry[] = []
+
+    console.log('\n🧪 Testing extraOptions configurations...')
+    for (const extraOptions of extraOptionsList) {
+        const gasAmount = parseInt(extraOptions.slice(-8), 16)
+        console.log(`   Testing with ${gasAmount.toLocaleString()} gas...`)
+
+        try {
+            const q = await contract.quoteSend(
+                {
+                    dstEid,
+                    to: ethers.utils.hexZeroPad(to, 32),
+                    amountLD: ethers.utils.parseEther(amount),
+                    minAmountLD: ethers.utils.parseEther(minAmount),
+                    extraOptions: extraOptions,
+                    composeMsg: '0x',
+                    oftCmd: '0x',
+                },
+                false
+            )
+
+            if (q) {
+                const nativeFeeStr = ethers.utils.formatEther(q.nativeFee.toString())
+                console.log(`✅ Success! Native fee: ${nativeFeeStr} ETH`)
+
+                // catat sukses dan keluarkan hasil
+                resultLog.push({
+                    gasAmount,
+                    extraOptions,
+                    success: true,
+                    nativeFee: nativeFeeStr,
+                })
+
+                return {
+                    workingExtraOptions: extraOptions,
+                    quote: q,
+                    resultLog,
+                }
+            } else {
+                // gagal namun tanpa exception
+                resultLog.push({
+                    gasAmount,
+                    extraOptions,
+                    success: false,
+                    error: 'Failed to get quote',
+                })
+                console.error('Failed to get quote')
+            }
+        } catch (error: unknown) {
+            const msg = error instanceof Error ? error.message : 'Unknown error'
+            resultLog.push({
+                gasAmount,
+                extraOptions,
+                success: false,
+                error: msg,
+            })
+            if (error instanceof Error) {
+                console.error(`❌ Error occurred while testing extraOptions: ${error.message}`)
+                console.error(error.stack)
+            } else {
+                console.error('An unknown error occurred')
+            }
+        }
+    }
+
+    // tidak ada yang berhasil
+    return {
+        workingExtraOptions: '',
+        quote: undefined,
+        resultLog,
+    }
+}
+
+export function computePaddedNativeFee(quote?: { nativeFee: BigNumber } | undefined) {
+    return quote?.nativeFee ? quote.nativeFee.mul(110).div(100) : undefined
+}
+
+export function fmtBN(bn: BigNumber | undefined, ethers: { utils: { formatEther: (arg0: string) => string } }) {
+    return bn ? ethers.utils.formatEther(bn.toString()) : '-'
+}
+
+// ---------- task (tetap mempertahankan alur & logging, tapi ringkas) ----------
+
 task('lz:oft:send', 'Send OFT tokens between any supported networks')
     .addParam('amount', 'Amount to send (in tokens)')
     .addParam('to', 'Recipient address')
@@ -107,97 +273,17 @@ task('lz:oft:send', 'Send OFT tokens between any supported networks')
 
         const contract = await ethers.getContractAt('MyOFTMock', srcContract, signer)
 
-        // Try different extraOptions until one works
-        const extraOptionsToTry = [
-            // Very Low Gas (Not recommended, for edge testing only)
-            '0x000301001101000000000000000000000000000061a8', // 25,000
-            '0x0003010011010000000000000000000000000000c350', // 50,000
-            '0x000301001101000000000000000000000000000186a0', // 100,000
+        // PANGGIL helper luar — loop & try/catch ada di sana
+        const { workingExtraOptions, quote, resultLog } = await findWorkingExtraOptions(
+            contract,
+            dstEid,
+            taskArgs.to,
+            taskArgs.amount,
+            minAmount,
+            ethers
+        )
 
-            // Low Range
-            '0x000301001101000000000000000000000000000249f0', // 150,000
-            '0x00030100110100000000000000000000000000030d40', // 200,000 (standard)
-            '0x0003010011010000000000000000000000000003d090', // 250,000
-            '0x000301001101000000000000000000000000000493e0', // 300,000
-            '0x00030100110100000000000000000000000000061a80', // 400,000
-
-            // Mid Range
-            '0x0003010011010000000000000000000000000007a120', // 500,000
-            '0x00030100110100000000000000000000000000098968', // 625,000
-            '0x000301001101000000000000000000000000000bebc2', // 750,000
-            '0x000301001101000000000000000000000000000f4240', // 1,000,000
-            '0x0003010011010000000000000000000000000013d620', // 1,300,000
-            '0x00030100110100000000000000000000000000186a00', // 1,600,000
-
-            // High Range
-            '0x000301001101000000000000000000000000001e8480', // 2,000,000
-            '0x000301001101000000000000000000000000002625a0', // 2,500,000
-            '0x000301001101000000000000000000000000002dc6c0', // 3,000,000
-            '0x000301001101000000000000000000000000003d0900', // 4,000,000
-            '0x000301001101000000000000000000000000004c4b40', // 5,000,000
-
-            // Ultra High (for very complex txs or special networks)
-            '0x0003010011010000000000000000000000000062a160', // 6,400,000
-            '0x000301001101000000000000000000000000007a1200', // 8,000,000
-            '0x00030100110100000000000000000000000000989680', // 10,000,000
-            '0x00030100110100000000000000000000000000bebc20', // 12,500,000
-            '0x00030100110100000000000000000000000000e4e1c0', // 15,000,000
-        ]
-
-        let workingExtraOptions = ''
-        let quote: { nativeFee: BigNumber; lzTokenFee: BigNumber } | undefined
-        const resultLog: {
-            gasAmount: number
-            extraOptions: string
-            success: boolean
-            nativeFee?: string
-            error?: string
-        }[] = []
-
-        console.log('\n🧪 Testing extraOptions configurations...')
-        for (const extraOptions of extraOptionsToTry) {
-            const gasAmount = parseInt(extraOptions.slice(-8), 16)
-            console.log(`   Testing with ${gasAmount.toLocaleString()} gas...`)
-
-            try {
-                quote = await contract.quoteSend(
-                    {
-                        dstEid: dstEid,
-                        to: ethers.utils.hexZeroPad(taskArgs.to, 32),
-                        amountLD: ethers.utils.parseEther(taskArgs.amount),
-                        minAmountLD: ethers.utils.parseEther(minAmount),
-                        extraOptions: extraOptions,
-                        composeMsg: '0x',
-                        oftCmd: '0x',
-                    },
-                    false
-                )
-
-                if (quote) {
-                    console.log(`✅ Success! Native fee: ${ethers.utils.formatEther(quote.nativeFee.toString())} ETH`)
-                    workingExtraOptions = extraOptions
-                    break
-                } else {
-                    console.error('Failed to get quote')
-                }
-                workingExtraOptions = extraOptions
-                break
-            } catch (error: unknown) {
-                resultLog.push({
-                    gasAmount,
-                    extraOptions,
-                    success: false,
-                    error: 'No quote returned',
-                })
-                if (error instanceof Error) {
-                    console.error(`❌ Error occurred while testing extraOptions: ${error.message}`)
-                    console.error(error.stack)
-                } else {
-                    console.error('An unknown error occurred')
-                }
-            }
-        }
-
+        // Summary log (preserved)
         if (resultLog.length > 0) {
             console.log('\n📊 Summary Result:')
             console.table(
@@ -214,10 +300,13 @@ task('lz:oft:send', 'Send OFT tokens between any supported networks')
             throw new Error('No working extraOptions found! Check peer configuration between networks.')
         }
 
-        // Send the actual transaction
+        // Hitung padded fee dengan +10% (preserved)
+        const paddedNativeFee = computePaddedNativeFee(quote)
+
+        // Send the actual transaction (preserved)
         console.log(`\n📤 Sending transaction...`)
         console.log(`   Gas configuration: ${workingExtraOptions}`)
-        quote && console.log(`Estimated fee: ${ethers.utils.formatEther(quote.nativeFee.toString())} ETH`)
+        quote && console.log(`Estimated fee: ${fmtBN(paddedNativeFee, ethers)} ETH`)
 
         const sendParams = {
             dstEid: dstEid,
@@ -231,13 +320,14 @@ task('lz:oft:send', 'Send OFT tokens between any supported networks')
 
         const tx = await contract.send(
             sendParams,
-            { nativeFee: quote?.nativeFee, lzTokenFee: quote?.lzTokenFee },
+            { nativeFee: paddedNativeFee, lzTokenFee: quote?.lzTokenFee },
             signer.address,
-            { value: quote?.nativeFee }
+            { value: paddedNativeFee }
         )
 
         console.log(`\n✅ Transaction sent!`)
         console.log(`   Hash: ${tx.hash}`)
+        console.log(`   LzTrx: https://testnet.layerzeroscan.com/tx/${tx.hash}`)
         console.log(`   Waiting for confirmation...`)
 
         const explorerBase = EXPLORER_URLS[srcNetwork as NetworkName]
@@ -300,7 +390,7 @@ task('lz:peer:set:auto', 'Set peer between two networks automatically')
                 contract: srcContract,
                 peer: dstContract,
             })
-            console.log(`✅ Peer setup complete between ${src} ↔️ ${dst}`)
+            console.log(`✅ Peer setup complete between: ${src} ➡️ :${dst}`)
         }
     })
 

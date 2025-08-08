@@ -88,10 +88,14 @@ const config: CustomHardhatConfig = {
             chainId: 80002,
             eid: EndpointId.AMOY_V2_TESTNET,
         },
-        // Polygon Amoy Testnet configuration
         sepolia: {
             eid: EndpointId.SEPOLIA_V2_TESTNET,
             url: process.env.RPC_URL_SEPOLIA || 'https://ethereum-sepolia-rpc.publicnode.com',
+            accounts,
+        },
+        'sepolia-arb': {
+            eid: EndpointId.ARBITRUM_V2_TESTNET,
+            url: process.env.RPC_URL_SEPOLIA_ARB || 'https://arbitrum-sepolia.therpc.io',
             accounts,
         },
         fuji: {

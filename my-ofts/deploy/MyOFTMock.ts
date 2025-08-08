@@ -24,10 +24,8 @@ const deploy: DeployFunction = async (hre) => {
     console.log(`Deployer: ${deployer}`)
 
     // This is an external deployment pulled in from @layerzerolabs/lz-evm-sdk-v2
-    //
     // @layerzerolabs/toolbox-hardhat takes care of plugging in the external deployments
     // from @layerzerolabs packages based on the configuration in your hardhat config
-    //
     // For this to work correctly, your network config must define an eid property
     // set to `EndpointId` as defined in @layerzerolabs/lz-definitions
     //
@@ -42,14 +40,14 @@ const deploy: DeployFunction = async (hre) => {
 
     // Konversi initialSupply ke bentuk wei
     const initialSupplyWei = ethers.utils.parseUnits(tokenConfig.initialSupply.toString(), tokenConfig.decimals)
-    const endpointV2Deployment = await hre.deployments.get('EndpointV2')
+    const endpointV2Deployment = (await hre.deployments.get('EndpointV2')).address
 
     const { address } = await deploy(contractName, {
         from: deployer,
         args: [
             tokenConfig.name,
             tokenConfig.symbol,
-            endpointV2Deployment.address,
+            endpointV2Deployment,
             deployer,
             97, // main chain
             initialSupplyWei, // Menggunakan nilai yang sudah dikonversi

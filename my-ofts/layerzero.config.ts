@@ -30,6 +30,11 @@ const rootstockContract: OmniPointHardhat = {
     contractName: CONTRACT_NAME,
 }
 
+const arbContract: OmniPointHardhat = {
+    eid: EndpointId.ARBSEP_V2_TESTNET,
+    contractName: CONTRACT_NAME,
+}
+
 const EVM_ENFORCED_OPTIONS: OAppEnforcedOption[] = [
     {
         msgType: 1,
@@ -126,6 +131,41 @@ export default async function () {
             [1, 1], // [A to B confirmations, B to A confirmations]
             [EVM_ENFORCED_OPTIONS, EVM_ENFORCED_OPTIONS], // Chain B enforcedOptions, Chain A enforcedOptions
         ],
+        [
+            arbContract, // Chain A contract
+            bscContract, // Chain B contract
+            [['LayerZero Labs'], []], // [ requiredDVN[], [ optionalDVN[], threshold ] ]
+            [1, 1], // [A to B confirmations, B to A confirmations]
+            [EVM_ENFORCED_OPTIONS, EVM_ENFORCED_OPTIONS], // Chain B enforcedOptions, Chain A enforcedOptions
+        ],
+        [
+            arbContract, // Chain A contract
+            sepoliaContract, // Chain B contract
+            [['LayerZero Labs'], []], // [ requiredDVN[], [ optionalDVN[], threshold ] ]
+            [1, 1], // [A to B confirmations, B to A confirmations]
+            [EVM_ENFORCED_OPTIONS, EVM_ENFORCED_OPTIONS], // Chain B enforcedOptions, Chain A enforcedOptions
+        ],
+        [
+            arbContract, // Chain A contract
+            amoyContract, // Chain B contract
+            [['LayerZero Labs'], []], // [ requiredDVN[], [ optionalDVN[], threshold ] ]
+            [1, 1], // [A to B confirmations, B to A confirmations]
+            [EVM_ENFORCED_OPTIONS, EVM_ENFORCED_OPTIONS], // Chain B enforcedOptions, Chain A enforcedOptions
+        ],
+        [
+            arbContract, // Chain A contract
+            fujiContract, // Chain B contract
+            [['LayerZero Labs'], []], // [ requiredDVN[], [ optionalDVN[], threshold ] ]
+            [1, 1], // [A to B confirmations, B to A confirmations]
+            [EVM_ENFORCED_OPTIONS, EVM_ENFORCED_OPTIONS], // Chain B enforcedOptions, Chain A enforcedOptions
+        ],
+        [
+            arbContract, // Chain A contract
+            rootstockContract, // Chain B contract
+            [['LayerZero Labs'], []], // [ requiredDVN[], [ optionalDVN[], threshold ] ]
+            [1, 1], // [A to B confirmations, B to A confirmations]
+            [EVM_ENFORCED_OPTIONS, EVM_ENFORCED_OPTIONS], // Chain B enforcedOptions, Chain A enforcedOptions
+        ],
     ])
 
     return {
@@ -135,6 +175,7 @@ export default async function () {
             { contract: sepoliaContract },
             { contract: fujiContract },
             { contract: rootstockContract },
+            { contract: arbContract },
         ],
         connections,
     }
