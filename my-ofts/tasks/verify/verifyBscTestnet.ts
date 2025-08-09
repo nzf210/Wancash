@@ -1,5 +1,7 @@
 import { task } from 'hardhat/config'
 
+import { CI_BSC } from '..'
+
 task('verify:bsc', 'Verifies contract on Bsc Testnet')
     .addParam('address', 'Contract address')
     .setAction(async (taskArgs, hre) => {
@@ -11,11 +13,11 @@ task('verify:bsc', 'Verifies contract on Bsc Testnet')
             network: 'bsc-testnet',
             address: taskArgs.address,
             constructorArguments: [
-                'MyOFT', // name
-                'MOFT', // symbol
+                'Wancash', // name
+                'WCH', // symbol
                 endpointV2Deployment.address, // LayerZero's EndpointV2 address
                 deployer, // owner
-                97, // main chain
+                CI_BSC, // main chain
                 1034000000, // initial supply
             ],
         })

@@ -11,7 +11,7 @@ task('test:manual-quote', 'Manual quote test with detailed logging')
         console.log(`Contract: ${taskArgs.contract}`)
         console.log(`Destination EID: ${taskArgs.dst}`)
 
-        const contract = await ethers.getContractAt('MyOFTMock', taskArgs.contract, signer)
+        const contract = await ethers.getContractAt('WancashMock', taskArgs.contract, signer)
 
         // Step 1: Check peer
         console.log('\n1️⃣ Checking peer...')

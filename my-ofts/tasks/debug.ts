@@ -11,7 +11,7 @@ task('debug:lz:config', 'Debug LayerZero configuration')
         console.log(`Signer: ${signer.address}`)
 
         try {
-            const contract = await ethers.getContractAt('MyOFTMock', taskArgs.contract, signer)
+            const contract = await ethers.getContractAt('WancashMock', taskArgs.contract, signer)
 
             // Check basic contract info
             console.log('\n=== Contract Info ===')

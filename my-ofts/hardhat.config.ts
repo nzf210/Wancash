@@ -23,21 +23,27 @@ import '@layerzerolabs/verify-contract'
 import '@nomicfoundation/hardhat-verify'
 
 // Set your preferred authentication method
-//
-const BSC_TESTNET_RPC_URL = process.env.BSC_TESTNET_RPC_URL || ''
-const BSC_TESTNET_PRIVATE_KEY = process.env.PRIVATE_KEY || ''
-const POLYGON_AMOY_RPC_URL = process.env.POLYGON_AMOY_RPC_URL || ''
-const POLYGON_AMOY_PRIVATE_KEY = process.env.PRIVATE_KEY || ''
-// const SEPOLIA_RPC_URL = process.env.SEPOLIA_TESTNET_RPC_URL || ''
-// const SEPOLIA_PRIVATE_KEY = process.env.PRIVATE_KEY || ''
-// If you prefer using a mnemonic, set a MNEMONIC environment variable
-// to a valid mnemonic
 const MNEMONIC = process.env.MNEMONIC
 const PRIVATE_KEY = process.env.PRIVATE_KEY
+
 // If you prefer to be authenticated using a private key, set a PRIVATE_KEY environment variable
 const privateKeyAccounts = PRIVATE_KEY ? [PRIVATE_KEY] : undefined
-
 const accounts: HttpNetworkAccountsUserConfig | undefined = MNEMONIC ? { mnemonic: MNEMONIC } : privateKeyAccounts
+
+const MODE = process.env.MODE === 'main'
+const BSC_RPC_URL = process.env.BSC_RPC_URL || 'https://data-seed-prebsc-1-s1.binance.org:8545'
+const ETH_RPC_URL = process.env.ETH_RPC_URL || 'https://ethereum-sepolia-rpc.publicnode.com'
+const POLYGON_RPC_URL = process.env.POLYGON_RPC_URL || 'https://rpc-amoy.polygon.technology'
+const AVA_RPC_URL = process.env.AVA_RPC_URL || 'https://api.avax-test.network/ext/bc/C/rpc'
+const ROOTSTOCK_RPC_URL = process.env.ROOTSTOCK_RPC_URL || 'https://rpc.testnet.rootstock.io'
+const ARB_RPC_URL = process.env.ARB_RPC_URL || 'https://arbitrum-sepolia.therpc.io'
+
+const CI_BSC = process.env.CI_BSC || 97
+const CI_ETH = process.env.CI_ETH || 11155111
+const CI_POLYGON = process.env.CI_POLYGON || 80002
+const CI_AVA = process.env.CI_AVA || 43113
+const CI_ROOTSTOCK = process.env.CI_ROOTSTOCK || 31
+const CI_ARB = process.env.CI_ARB || 421614
 
 // Warn if no accounts are set
 if (accounts == null) {
@@ -48,7 +54,8 @@ if (accounts == null) {
 
 interface CustomLayerZeroHardhatUserConfig extends LayerZeroHardhatUserConfig {
     endpointV2: {
-        fuji: string
+        avalance: string
+        arbitrum: string
     }
 }
 
@@ -74,39 +81,42 @@ const config: CustomHardhatConfig = {
         ],
     },
     networks: {
-        // BSC Testnet configuration
-        'bsc-testnet': {
-            url: BSC_TESTNET_RPC_URL,
-            accounts: [BSC_TESTNET_PRIVATE_KEY],
-            chainId: 97,
-            eid: EndpointId.BSC_V2_TESTNET,
+        bsc: {
+            url: BSC_RPC_URL,
+            accounts,
+            chainId: Number(CI_BSC),
+            eid: MODE ? EndpointId.BSC_V2_MAINNET : EndpointId.BSC_V2_TESTNET,
         },
         // Polygon Amoy Testnet configuration
-        amoy: {
-            url: POLYGON_AMOY_RPC_URL,
-            accounts: [POLYGON_AMOY_PRIVATE_KEY],
-            chainId: 80002,
-            eid: EndpointId.AMOY_V2_TESTNET,
-        },
-        sepolia: {
-            eid: EndpointId.SEPOLIA_V2_TESTNET,
-            url: process.env.RPC_URL_SEPOLIA || 'https://ethereum-sepolia-rpc.publicnode.com',
+        polygon: {
+            url: POLYGON_RPC_URL,
             accounts,
+            chainId: Number(CI_POLYGON),
+            eid: MODE ? EndpointId.POLYGON_V2_MAINNET : EndpointId.AMOY_V2_TESTNET,
         },
-        'sepolia-arb': {
-            eid: EndpointId.ARBITRUM_V2_TESTNET,
-            url: process.env.RPC_URL_SEPOLIA_ARB || 'https://arbitrum-sepolia.therpc.io',
+        ethereum: {
+            url: ETH_RPC_URL,
             accounts,
+            chainId: Number(CI_ETH),
+            eid: MODE ? EndpointId.ETHEREUM_V2_TESTNET : EndpointId.SEPOLIA_V2_TESTNET,
         },
-        fuji: {
-            eid: EndpointId.AVALANCHE_V2_TESTNET,
-            url: 'https://api.avax-test.network/ext/bc/C/rpc',
+        arbitrum: {
+            url: ARB_RPC_URL,
             accounts,
+            chainId: Number(CI_ARB),
+            eid: MODE ? EndpointId.ARBITRUM_V2_MAINNET : EndpointId.ARBSEP_V2_TESTNET,
+        },
+        avalance: {
+            url: AVA_RPC_URL,
+            accounts,
+            chainId: Number(CI_AVA),
+            eid: MODE ? EndpointId.AVALANCHE_V2_MAINNET : EndpointId.AVALANCHE_V2_TESTNET,
         },
         rootstock: {
-            eid: EndpointId.ROOTSTOCK_V2_TESTNET,
-            url: process.env.RPC_URL_ROOTSTOCK_TESTNET || 'https://rpc.testnet.rootstock.io',
+            url: ROOTSTOCK_RPC_URL,
             accounts,
+            chainId: Number(CI_ROOTSTOCK),
+            eid: MODE ? EndpointId.ROOTSTOCK_V2_MAINNET : EndpointId.ROOTSTOCK_V2_TESTNET,
         },
         // Localhost configuration for testing
         hardhat: {
@@ -119,12 +129,6 @@ const config: CustomHardhatConfig = {
         },
     },
     etherscan: {
-        // apiKey: {
-        //     // Add your API keys here if you want to verify contracts
-        //     sepolia: process.env.ETHERSCAN_API_KEY || '',
-        //     'bsc-testnet': process.env.BSCSCAN_API_KEY || '',
-        //     amoy: process.env.POLYGONSCAN_API_KEY || '',
-        // },
         apiKey: process.env.ETHERSCAN_API_KEY || '',
         customChains: [
             {
@@ -146,16 +150,17 @@ const config: CustomHardhatConfig = {
         ],
     },
     endpointV2: {
-        fuji: '0x6EDCE65403992e310A62460808c4b910D972f10f',
+        avalance: '0x6EDCE65403992e310A62460808c4b910D972f10f',
+        arbitrum: '0x6EDCE65403992e310A62460808c4b910D972f10f',
     },
     // layerZero: {
     //     endpointV2: {
     //         'fuji-ava': '0x6EDCE65403992e310A62460808c4b910D972f10f',
     //     },
     // },
-    // sourcify: {
-    //     enabled: true,
-    // },
+    sourcify: {
+        enabled: true,
+    },
 }
 
 export default config

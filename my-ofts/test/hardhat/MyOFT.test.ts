@@ -25,7 +25,7 @@ describe('MyOFT Test', function () {
         // Contract factory for our tested contract
         //
         // We are using a derived contract that exposes a mint() function for testing purposes
-        MyOFT = await ethers.getContractFactory('MyOFTMock')
+        MyOFT = await ethers.getContractFactory('WancashMock')
 
         // Fetching the first three signers (accounts) from Hardhat's local Ethereum network
         const signers = await ethers.getSigners()

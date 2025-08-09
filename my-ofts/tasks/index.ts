@@ -10,3 +10,7 @@ import './getPeer'
 import './debug'
 import './debug2'
 import './send/sendOFT'
+import './setupEnv'
+
+export const MODE = process.env.MODE === 'main'
+export const CI_BSC = MODE ? process.env.CI_BSC : 97

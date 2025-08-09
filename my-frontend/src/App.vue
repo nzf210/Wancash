@@ -1,6 +1,7 @@
-<!-- src/App.vue -->
 <template>
-  <DefaultLayout />
+  <DefaultLayout>
+    <router-view />
+  </DefaultLayout>
 </template>
 
 <script setup lang="ts">

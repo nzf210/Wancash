@@ -42,7 +42,7 @@ const isAuthenticated = ref(true) // Ganti dengan state auth sesuai kebutuhan
                 <ul class="grid gap-3 p-4 md:w-[400px]">
                   <li>
                     <NavigationMenuLink as-child>
-                      <RouterLink to="/purchase"
+                      <RouterLink to="/buyWancash"
                         class="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
                         <div class="text-sm font-medium leading-none">Beli Token</div>
                         <p class="line-clamp-2 text-sm leading-snug text-muted-foreground">

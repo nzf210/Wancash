@@ -20,66 +20,68 @@ help:
 	@echo "  send FROM=src TO=dst AMOUNT=1.0 RECIPIENT=0xAddress"
 	@echo ""
 	@echo "Examples:"
-	@echo "  make send FROM=bsc-testnet TO=sepolia AMOUNT=1.0 RECIPIENT=0x123..."
-	@echo "  make send FROM=amoy TO=fuji AMOUNT=0.5 RECIPIENT=0x456..."
+	@echo "  make send FROM=bsc TO=ethereum AMOUNT=1.0 RECIPIENT=0x123..."
+	@echo "  make send FROM=polygon TO=avalance AMOUNT=0.5 RECIPIENT=0x456..."
 	@echo ""
 	@echo "Peer Management:"
-	@echo "  peer-setup FROM=bsc-testnet TO=sepolia"
+	@echo "  peer-setup FROM=bsc TO=sepolia"
 	@echo "  peer-check NETWORK=bsc-testnet EID=40161"
 
 op:
 	npx hardhat lz:oapp:wire
 
 dev:
-	npx hardhat lz:deploy --tags MyOFTMock
+	npx hardhat lz:deploy --tags WancashMock
+dev-main:
+	npx hardhat lz:deploy --tags Wancash
 # Verifikasi Contracts
 
 c-conf:
 	npx hardhat lz:oapp:config:get --oapp-config layerzero.config.ts
 
 c-peer:
-	npx hardhat lz:oapp:peers:get --oapp-config layerzero.config.ts --network bsc-testnet
+	npx hardhat lz:oapp:peers:get --oapp-config layerzero.config.ts --network bsc
 
 set-peers:
 	@echo "Setting up bidirectional peers..."
 	
 	# Set peer from chain1 to chain2
-	npx hardhat --network sepolia set:peer \
+	npx hardhat --network arbitrum set:peer \
 		--contract $(ETH_CONTRACT) \
 		--eid $(EID_BSC) \
 		--peer $(BSC_CONTRACT) 
 	@sleep 5
 
 	# Set peer from chain2 to chain1
-	npx hardhat --network bsc-testnet set:peer \
+	npx hardhat --network bsc set:peer \
 		--contract $(BSC_CONTRACT) \
 		--eid $(EID_SEPOLIA) \
 		--peer $(ETH_CONTRACT)
 	@sleep 5
 
 	# Set peer from chain1 to chain3
-	npx hardhat --network bsc-testnet set:peer \
+	npx hardhat --network bsc set:peer \
 		--contract $(BSC_CONTRACT) \
 		--eid $(EID_AMOY) \
 		--peer $(POLY_CONTRACT)
 	@sleep 5
 
 	# Set peer from chain3 to chain1
-	npx hardhat --network amoy set:peer \
+	npx hardhat --network polygon set:peer \
 		--contract $(POLY_CONTRACT) \
 		--eid $(EID_BSC) \
 		--peer $(BSC_CONTRACT)
 	@sleep 5
 
 	# Set peer from chain2 to chain3
-	npx hardhat --network sepolia set:peer \
+	npx hardhat --network arbitrum set:peer \
 		--contract $(ETH_CONTRACT) \
 		--eid $(EID_AMOY) \
 		--peer $(POLY_CONTRACT)
 	@sleep 5
 
 	# Set peer from chain3 to chain2
-	npx hardhat --network amoy set:peer \
+	npx hardhat --network polygon set:peer \
 		--contract $(POLY_CONTRACT) \
 		--eid $(EID_SEPOLIA) \
 		--peer $(ETH_CONTRACT) 	
@@ -88,7 +90,7 @@ set-peers:
 	@sleep 5
 	@echo "Setting up bidirectional peer from fuji to Sepolia..."
 	# Set peer from chain3 to chain2
-	npx hardhat --network fuji set:peer \
+	npx hardhat --network avalance set:peer \
 		--contract $(FUJI_CONTRACT) \
 		--eid $(EID_SEPOLIA) \
 		--peer $(ETH_CONTRACT) 	
@@ -97,7 +99,7 @@ set-peers:
 	@sleep 5
 	@echo "Setting up bidirectional peer from fuji to bsc..."
 	# Set peer from chain3 to chain2
-	npx hardhat --network fuji set:peer \
+	npx hardhat --network avalance set:peer \
 		--contract $(FUJI_CONTRACT) \
 		--eid $(EID_BSC) \
 		--peer $(BSC_CONTRACT) 	
@@ -106,7 +108,7 @@ set-peers:
 	@sleep 5
 	@echo "Setting up bidirectional peer from fuji to Amoy..."
 	# Set peer from chain3 to chain2
-	npx hardhat --network fuji set:peer \
+	npx hardhat --network avalance set:peer \
 		--contract $(FUJI_CONTRACT) \
 		--eid $(EID_AMOY) \
 		--peer $(POLY_CONTRACT) 	
@@ -115,7 +117,7 @@ set-peers:
 	@sleep 5
 	@echo "Setting up bidirectional peer from Amoy to fuji..."
 	# Set peer from chain3 to chain2
-	npx hardhat --network amoy set:peer \
+	npx hardhat --network polygon set:peer \
 		--contract $(POLY_CONTRACT) \
 		--eid $(EID_FUJI) \
 		--peer $(FUJI_CONTRACT) 	
@@ -124,7 +126,7 @@ set-peers:
 	@sleep 5
 	@echo "Setting up bidirectional peer from BSC to fuji..."
 	# Set peer from chain3 to chain2
-	npx hardhat --network bsc-testnet set:peer \
+	npx hardhat --network bsc set:peer \
 		--contract $(BSC_CONTRACT) \
 		--eid $(EID_FUJI) \
 		--peer $(FUJI_CONTRACT) 	
@@ -133,7 +135,7 @@ set-peers:
 	@sleep 5
 	@echo "Setting up bidirectional peer from Sepolia to fuji..."
 	# Set peer from chain3 to chain2
-	npx hardhat --network sepolia set:peer \
+	npx hardhat --network arbitrum set:peer \
 		--contract $(ETH_CONTRACT) \
 		--eid $(EID_FUJI) \
 		--peer $(FUJI_CONTRACT) 	
@@ -144,7 +146,7 @@ send:
 	@if [ -z "$(FROM)" ] || [ -z "$(TO)" ] || [ -z "$(AMOUNT)" ] || [ -z "$(RECIPIENT)" ]; then \
 		echo "❌ Missing parameters!"; \
 		echo "Usage: make send FROM=source_network TO=destination_network AMOUNT=amount RECIPIENT=address"; \
-		echo "Example: make send FROM=bsc-testnet TO=sepolia AMOUNT=1.0 RECIPIENT=0x123..."; \
+		echo "Example: make send FROM=bsc TO=ethereum AMOUNT=1.0 RECIPIENT=0x123..."; \
 		exit 1; \
 	fi
 	@echo "🚀 Sending $(AMOUNT) tokens from $(FROM) to $(TO)"
@@ -154,65 +156,65 @@ send:
 		--to $(RECIPIENT)
 
 bsc-to-eth:
-	@make send FROM=bsc-testnet TO=sepolia AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-bsc-to-amoy:
-	@make send FROM=bsc-testnet TO=amoy AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-bsc-to-fuji:
-	@make send FROM=bsc-testnet TO=fuji AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+	@make send FROM=bsc TO=ethereum AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+bsc-to-poly:
+	@make send FROM=bsc TO=polygon AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+bsc-to-ava:
+	@make send FROM=bsc TO=avalance AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
 bsc-to-root:
-	@make send FROM=bsc-testnet TO=rootstock AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+	@make send FROM=bsc TO=rootstock AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
 bsc-to-arb:
-	@make send FROM=bsc-testnet TO=sepolia-arb AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+	@make send FROM=bsc TO=arbitrum AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
 eth-to-bsc:
-	@make send FROM=sepolia TO=bsc-testnet AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-eth-to-amoy:
-	@make send FROM=sepolia TO=amoy AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-eth-to-fuji:
-	@make send FROM=sepolia TO=fuji AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+	@make send FROM=ethereum TO=bsc AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+eth-to-poly:
+	@make send FROM=ethereum TO=polygon AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+eth-to-ava:
+	@make send FROM=ethereum TO=avalance AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
 eth-to-root:
-	@make send FROM=sepolia TO=rootstock AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+	@make send FROM=ethereum TO=rootstock AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
 eth-to-arb:
-	@make send FROM=sepolia TO=sepolia-arb AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-amoy-to-bsc:
-	@make send FROM=amoy TO=bsc-testnet AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-amoy-to-eth:
-	@make send FROM=amoy TO=sepolia AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-amoy-to-fuji:
-	@make send FROM=amoy TO=fuji AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-amoy-to-arb:
-	@make send FROM=amoy TO=sepolia-arb AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-amoy-to-root:
-	@make send FROM=amoy TO=rootstock AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-fuji-to-amoy:
-	@make send FROM=fuji TO=amoy AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-fuji-to-eth:
-	@make send FROM=fuji TO=sepolia AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-fuji-to-bsc:
-	@make send FROM=fuji TO=bsc-testnet AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-fuji-to-root:
-	@make send FROM=fuji TO=rootstock AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-fuji-to-arb:
-	@make send FROM=fuji TO=sepolia-arb AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+	@make send FROM=ethereum TO=arbitrum AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+poly-to-bsc:
+	@make send FROM=polygon TO=bsc AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+poly-to-eth:
+	@make send FROM=polygon TO=ethereum AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+poly-to-ava:
+	@make send FROM=polygon TO=avalance AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+poly-to-arb:
+	@make send FROM=polygon TO=arbitrum AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+poly-to-root:
+	@make send FROM=polygon TO=rootstock AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+ava-to-poly:
+	@make send FROM=avalance TO=polygon AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+ava-to-eth:
+	@make send FROM=avalance TO=ethereum AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+ava-to-bsc:
+	@make send FROM=avalance TO=bsc AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+ava-to-root:
+	@make send FROM=avalance TO=rootstock AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+ava-to-arb:
+	@make send FROM=avalance TO=arbitrum AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
 root-to-bsc:
-	@make send FROM=rootstock TO=bsc-testnet AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+	@make send FROM=rootstock TO=bsc AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
 root-to-eth:
-	@make send FROM=rootstock TO=sepolia AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-root-to-amoy:
-	@make send FROM=rootstock TO=amoy AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-root-to-fuji:
-	@make send FROM=rootstock TO=fuji AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+	@make send FROM=rootstock TO=ethereum AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+root-to-poly:
+	@make send FROM=rootstock TO=polygon AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+root-to-ava:
+	@make send FROM=rootstock TO=avalance AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
 root-to-arb:
-	@make send FROM=rootstock TO=sepolia-arb AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+	@make send FROM=rootstock TO=arbitrum AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
 arb-to-bsc:
-	@make send FROM=sepolia-arb TO=bsc-testnet AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+	@make send FROM=arbitrum TO=bsc AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
 arb-to-eth:
-	@make send FROM=sepolia-arb TO=sepolia AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-arb-to-amoy:
-	@make send FROM=sepolia-arb TO=amoy AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-arb-to-fuji:
-	@make send FROM=sepolia-arb TO=fuji AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+	@make send FROM=arbitrum TO=ethereum AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+arb-to-poly:
+	@make send FROM=arbitrum TO=polygon AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+arb-to-ava:
+	@make send FROM=arbitrum TO=avalance AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
 arb-to-root:
-	@make send FROM=sepolia-arb TO=rootstock AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
+	@make send FROM=arbitrum TO=rootstock AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
 
 
 # Predefined BSC to Sepolia peer setup
@@ -227,28 +229,28 @@ p-bsc-to-sepolia:
 		oapp2=$(BSC_CONTRACT)
 
 # Verification Contract
-.PHONY: verify-amoy
-verify-amoy:
+.PHONY: verify-poly
+verify-poly:
 	@echo "Verifying contract on Polygon Amoy..."
-	npx hardhat verify:amoy --address $(POLY_CONTRACT) --network amoy
+	npx hardhat verify:amoy --address $(POLY_CONTRACT) --network polygon
 	@echo "Verification complete!"
 
 .PHONY: verify-bsc
 verify-bsc:
 	@echo "Verifying contract on BSC Testnet..."
-	npx hardhat verify:bsc --address $(BSC_CONTRACT) --network bsc-testnet
+	npx hardhat verify:bsc --address $(BSC_CONTRACT) --network bsc
 	@echo "Verification complete!"
 
 .PHONY: verify-eth
 verify-eth:
 	@echo "Verifying contract on Sepolia Testnet..."
-	npx hardhat verify:eth --address $(ETH_CONTRACT) --network sepolia
+	npx hardhat verify:eth --address $(ETH_CONTRACT) --network ethereum
 	@echo "Verification complete!"
 
-.PHONY: verify-fuji
-verify-fuji:
+.PHONY: verify-ava
+verify-ava:
 	@echo "Verifying contract on Fuji Avalance Testnet..."
-	npx hardhat verify:fuji --address $(FUJI_CONTRACT) --network fuji 
+	npx hardhat verify:fuji --address $(AVA_CONTRACT) --network avalance 
 # 	--chain fuji-ava
 	@echo "Verification complete!"
 
@@ -261,18 +263,18 @@ verify-root:
 .PHONY: verify-arb
 verify-arb:
 	@echo "Verifying contract on Arb Testnet..."
-	npx hardhat verify:arb --address $(ARB_CONTRACT) --network sepolia-arb
+	npx hardhat verify:arb --address $(ARB_CONTRACT) --network arbitrum
 	@echo "Verification complete!"
 
 # Mint Token
 mint-bsc:
-	npx hardhat lz:oft:mint --contract $(BSC_CONTRACT) --network bsc-testnet --amount 10 --private-key $(PRIVATE_KEY)
+	npx hardhat lz:oft:mint --contract $(BSC_CONTRACT) --network bsc --amount 10 --private-key $(PRIVATE_KEY)
 
 mint-eth:
-	npx hardhat lz:oft:mint --contract $(ETH_CONTRACT) --network sepolia-testnet --amount 7 --private-key $(PRIVATE_KEY)
+	npx hardhat lz:oft:mint --contract $(ETH_CONTRACT) --network arbitrum-testnet --amount 7 --private-key $(PRIVATE_KEY)
 
 mint-amoy:
-	npx hardhat lz:oft:mint --contract $(POLY_CONTRACT) --network amoy-testnet --amount 8 --private-key $(PRIVATE_KEY)
+	npx hardhat lz:oft:mint --contract $(POLY_CONTRACT) --network polygon-testnet --amount 8 --private-key $(PRIVATE_KEY)
 
 
 # Dynamic OFT_ADDRESS selection based on network
@@ -312,46 +314,46 @@ c-deploy:
 
 g-peer-bsc:
 	@echo "Getting BSC peer to Amoy..."
-	npx hardhat lz:oapp:peer:get --network bsc-testnet --eid 40267 --contract $(BSC_CONTRACT)
+	npx hardhat lz:oapp:peer:get --network bsc --eid 40267 --contract $(BSC_CONTRACT)
 	@sleep 3
 	@echo "Getting BSC peer to sepolia..."
-	npx hardhat lz:oapp:peer:get --network bsc-testnet --eid 40161 --contract $(BSC_CONTRACT)
+	npx hardhat lz:oapp:peer:get --network bsc --eid 40161 --contract $(BSC_CONTRACT)
 
 g-peer-amoy:
 	@echo "Getting AMOY peer to BSC..."
-	npx hardhat lz:oapp:peer:get --network amoy --eid 40102 --contract $(POLY_CONTRACT)
+	npx hardhat lz:oapp:peer:get --network polygon --eid 40102 --contract $(POLY_CONTRACT)
 	@sleep 3
 	@echo "Getting AMOY peer to sepolia..."
-	npx hardhat lz:oapp:peer:get --network amoy --eid 40161 --contract $(POLY_CONTRACT)
+	npx hardhat lz:oapp:peer:get --network polygon --eid 40161 --contract $(POLY_CONTRACT)
 
 g-peer-sepolia:
 	@echo "Getting Sepolia peer to Amoy..."
-	npx hardhat lz:oapp:peer:get --network sepolia --eid 40267 --contract $(ETH_CONTRACT)
+	npx hardhat lz:oapp:peer:get --network arbitrum --eid 40267 --contract $(ETH_CONTRACT)
 	@sleep 3
 	@echo "Getting Sepolia peer to BSC..."
-	npx hardhat lz:oapp:peer:get --network sepolia --eid 40102 --contract $(ETH_CONTRACT)
+	npx hardhat lz:oapp:peer:get --network arbitrum --eid 40102 --contract $(ETH_CONTRACT)
 
 db-bsc:
 	@echo "Debugging BSC..."
-	npx hardhat debug:lz:config --network bsc-testnet --contract $(BSC_CONTRACT)
+	npx hardhat debug:lz:config --network bsc --contract $(BSC_CONTRACT)
 
 db-amoy:
 	@echo "Debugging Amoy..."
-	npx hardhat debug:lz:config --network amoy --contract $(POLY_CONTRACT)
+	npx hardhat debug:lz:config --network polygon --contract $(POLY_CONTRACT)
 
 db-sepolia:
 	@echo "Debugging BSC..."
-	npx hardhat debug:lz:config --network sepolia --contract $(ETH_CONTRACT)
+	npx hardhat debug:lz:config --network arbitrum --contract $(ETH_CONTRACT)
 
 mn-quote:
 	@echo "Quote for minting..."
 	npx hardhat test:manual-quote \
-    --network bsc-testnet \
+    --network bsc \
     --contract $(BSC_CONTRACT) \
     --dst $(EID_AMOY)
 
 # DEV With Verification
-# bunx hardhat --network sepolia deploy --tags MyOFTMock --reset
+# bunx hardhat --network arbitrum deploy --tags MyOFTMock --reset
 
 list-net:
 	npx hardhat verify --list-networks
@@ -398,9 +400,12 @@ test-quote:
 
 
 # Set peer otomatis
-# Example: make set-peer FROM=fuji TO=arbitrum-sepolia
+# Example: make set-peer FROM=avalance TO=arbitrum-sepolia
 set-peer:
 	@FROM=$$(if [ -n "$(FROM)" ]; then echo $(FROM); else echo bsc-testnet; fi); \
 	TO=$$(if [ -n "$(TO)" ]; then echo $(TO); else echo sepolia; fi); \
 	echo "Setting peer from $$FROM to $$TO"; \
 	$(MAKE) peer-setup FROM=$$FROM TO=$$TO
+
+get-env:
+	bunx hardhat lz:setup:env

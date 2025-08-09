@@ -3,6 +3,9 @@ import path from 'path'
 
 import { task } from 'hardhat/config'
 
+import { MODE } from '.'
+const contract = MODE ? 'Wancash' : 'WancashMock'
+
 task('lz:oapp:peer:get', 'Get peer configuration for MyOFTMock')
     .addParam('eid', 'Destination endpoint ID')
     .addOptionalParam('contract', 'Contract address (auto-detect if not provided)')
@@ -30,7 +33,7 @@ task('lz:oapp:peer:get', 'Get peer configuration for MyOFTMock')
             try {
                 const deploymentPath = path.join(__dirname, `../deployments/${hre.network.name}`)
                 const files = fs.readdirSync(deploymentPath)
-                const myOFTFile = files.find((f) => f.includes('MyOFTMock') && f.endsWith('.json'))
+                const myOFTFile = files.find((f) => f.includes(contract) && f.endsWith('.json'))
 
                 if (myOFTFile) {
                     const deployment = JSON.parse(fs.readFileSync(path.join(deploymentPath, myOFTFile), 'utf8'))
@@ -49,7 +52,7 @@ task('lz:oapp:peer:get', 'Get peer configuration for MyOFTMock')
         }
 
         try {
-            const myOFTMock = await ethers.getContractAt('MyOFTMock', contractAddress, signer)
+            const myOFTMock = await ethers.getContractAt(contract, contractAddress, signer)
 
             console.log(`Getting peer for endpoint ID: ${taskArgs.eid}`)
             console.log(`Local contract: ${contractAddress}`)

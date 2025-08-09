@@ -1,5 +1,7 @@
 import { task } from 'hardhat/config'
 
+import { CI_BSC } from '..'
+
 task('verify:arb', 'Verifies contract on Polygon Amoy')
     .addParam('address', 'Contract address')
     .setAction(async (taskArgs, hre) => {
@@ -11,12 +13,12 @@ task('verify:arb', 'Verifies contract on Polygon Amoy')
             network: 'sepolia-arb',
             address: taskArgs.address,
             constructorArguments: [
-                'MyOFT', // name
-                'MOFT', // symbol
+                'Wancash', // name
+                'WCH', // symbol
                 // endpointV2Deployment.address, // LayerZero's EndpointV2 address
                 process.env.ENDPOINT_LZ,
                 deployer, // owner
-                97, // main chain
+                CI_BSC, // main chain
                 1034000000, // initial supply
             ],
         })

@@ -4,35 +4,36 @@ import { BigNumber, Contract } from 'ethers'
 import { task } from 'hardhat/config'
 dotenv.config()
 
+const MODE = process.env.MODE === 'main'
 // Network configuration mapping
-const NETWORK_CONFIG = {
-    'bsc-testnet': {
-        eid: 40102,
+export const NETWORK_CONFIG = {
+    bsc: {
+        eid: MODE ? process.env.EID_BSC : 40102,
         contractEnvKey: 'BSC_CONTRACT',
         name: 'BSC Testnet',
     },
-    sepolia: {
-        eid: 40161,
+    ethereum: {
+        eid: MODE ? process.env.EID_ETH : 40161,
         contractEnvKey: 'ETH_CONTRACT',
         name: 'Ethereum Sepolia',
     },
-    'sepolia-arb': {
-        eid: 40231,
+    arbitrum: {
+        eid: MODE ? process.env.EID_ARB : 40231,
         contractEnvKey: 'ARB_CONTRACT',
         name: 'Arbitrum Sepolia',
     },
-    amoy: {
-        eid: 40267,
+    polygon: {
+        eid: MODE ? process.env.EID_POLY : 40267,
         contractEnvKey: 'POLY_CONTRACT',
         name: 'Polygon Amoy',
     },
-    fuji: {
-        eid: 40106,
-        contractEnvKey: 'FUJI_CONTRACT',
+    avalance: {
+        eid: MODE ? process.env.EID_AVA : 40106,
+        contractEnvKey: 'AVA_CONTRACT',
         name: 'Avalanche Fuji',
     },
     rootstock: {
-        eid: 40350, // Rootstock testnet EID
+        eid: MODE ? process.env.EID_ROOT : 40350, // Rootstock testnet EID
         contractEnvKey: 'ROOT_CONTRACT',
         name: 'Rootstock Testnet',
     },
@@ -73,23 +74,23 @@ function getAllNetworkInfo() {
 }
 
 const EXPLORER_URLS: Record<NetworkName, string> = {
-    'bsc-testnet': 'https://testnet.bscscan.com/tx/',
-    sepolia: 'https://sepolia.etherscan.io/tx/',
-    amoy: 'https://www.oklink.com/amoy/tx/',
-    fuji: 'https://testnet.snowtrace.io/tx/',
+    bsc: 'https://testnet.bscscan.com/tx/',
+    ethereum: 'https://sepolia.etherscan.io/tx/',
+    polygon: 'https://www.oklink.com/amoy/tx/',
+    avalance: 'https://testnet.snowtrace.io/tx/',
     rootstock: 'https://explorer.testnet.rsk.co/tx/',
-    'sepolia-arb': 'https://sepolia.arbiscan.io/tx/',
+    arbitrum: 'https://sepolia.arbiscan.io/tx/',
     lz: 'https://explorer.layerzero.io/tx/',
 }
 
 const EXTRA_OPTIONS_TO_TRY = [
     // Very Low Gas (Not recommended, for edge testing only)
-    '0x000301001101000000000000000000000000000061a8', // 25,000
-    '0x0003010011010000000000000000000000000000c350', // 50,000
-    '0x000301001101000000000000000000000000000186a0', // 100,000
+    // '0x000301001101000000000000000000000000000061a8', // 25,000
+    // '0x0003010011010000000000000000000000000000c350', // 50,000
+    // '0x000301001101000000000000000000000000000186a0', // 100,000
 
-    // Low Range
-    '0x000301001101000000000000000000000000000249f0', // 150,000
+    // // Low Range
+    // '0x000301001101000000000000000000000000000249f0', // 150,000
     '0x00030100110100000000000000000000000000030d40', // 200,000 (standard)
     '0x0003010011010000000000000000000000000003d090', // 250,000
     '0x000301001101000000000000000000000000000493e0', // 300,000
@@ -233,6 +234,14 @@ export function fmtBN(bn: BigNumber | undefined, ethers: { utils: { formatEther:
     return bn ? ethers.utils.formatEther(bn.toString()) : '-'
 }
 
+function getNetworkInfo(explorerBase: string, srcNetwork: string, tx: { hash: string }): void {
+    if (explorerBase) {
+        console.log(`   🔍 View on Explorer: ${explorerBase}${tx.hash}`)
+    } else {
+        console.log(`   ⚠️ No explorer URL configured for ${srcNetwork}`)
+    }
+}
+
 // ---------- task (tetap mempertahankan alur & logging, tapi ringkas) ----------
 
 task('lz:oft:send', 'Send OFT tokens between any supported networks')
@@ -240,6 +249,7 @@ task('lz:oft:send', 'Send OFT tokens between any supported networks')
     .addParam('to', 'Recipient address')
     .addParam('dst', 'Destination network name (bsc-testnet, sepolia, amoy, fuji, rootstock)')
     .addOptionalParam('minamount', 'Minimum amount to receive')
+    .addOptionalParam('extraoptions', 'Extra options to use')
     .setAction(async (taskArgs, hre) => {
         const { ethers } = hre
         const [signer] = await ethers.getSigners()
@@ -262,7 +272,7 @@ task('lz:oft:send', 'Send OFT tokens between any supported networks')
         const srcContract = getContractAddress(srcNetwork)
         const dstContract = getContractAddress(dstNetwork)
         const srcEid = getNetworkConfig(srcNetwork).eid
-        const dstEid = getNetworkConfig(dstNetwork).eid
+        const dstEid = Number(getNetworkConfig(dstNetwork).eid)
 
         console.log(`Source contract: ${srcContract}`)
         console.log(`Destination contract: ${dstContract}`)
@@ -270,8 +280,7 @@ task('lz:oft:send', 'Send OFT tokens between any supported networks')
 
         // Set default minimum amount if not provided
         const minAmount = taskArgs.minamount || (parseFloat(taskArgs.amount) * 0.98).toString()
-
-        const contract = await ethers.getContractAt('MyOFTMock', srcContract, signer)
+        const contract = await ethers.getContractAt('WancashMock', srcContract, signer)
 
         // PANGGIL helper luar — loop & try/catch ada di sana
         const { workingExtraOptions, quote, resultLog } = await findWorkingExtraOptions(
@@ -308,12 +317,23 @@ task('lz:oft:send', 'Send OFT tokens between any supported networks')
         console.log(`   Gas configuration: ${workingExtraOptions}`)
         quote && console.log(`Estimated fee: ${fmtBN(paddedNativeFee, ethers)} ETH`)
 
+        const threshold = 0.01 // batas fee dalam ETH
+        const allowedEids = [30109, 40267] // EID yang diizinkan
+
+        const feeEth = Number(fmtBN(paddedNativeFee, ethers))
+        const eid = Number(srcEid)
+
+        if (allowedEids.includes(eid)) {
+            console.log(`EID ${eid} skip pengecekan fee`)
+        } else if (feeEth > threshold) {
+            throw new Error(`Gas price too high for EID ${eid}. Fee: ${feeEth} ETH`)
+        }
         const sendParams = {
             dstEid: dstEid,
             to: ethers.utils.hexZeroPad(taskArgs.to, 32),
             amountLD: ethers.utils.parseEther(taskArgs.amount),
             minAmountLD: ethers.utils.parseEther(minAmount),
-            extraOptions: workingExtraOptions,
+            extraOptions: taskArgs.extraoptions || workingExtraOptions,
             composeMsg: '0x',
             oftCmd: '0x',
         }
@@ -336,7 +356,7 @@ task('lz:oft:send', 'Send OFT tokens between any supported networks')
         console.log(`\n🎉 Transaction confirmed!`)
         console.log(`   Block: ${receipt.blockNumber}`)
         console.log(`   Gas used: ${receipt.gasUsed?.toString()}`)
-        console.log(`   Successfully sent ${taskArgs.amount} tokens from ${srcNetwork} to ${dstNetwork}`)
+        console.log(`✅ Successfully sent ${taskArgs.amount} tokens from ${srcNetwork} to:  ➡️ ${dstNetwork}`)
     })
 
 // Network info task
@@ -364,14 +384,6 @@ task('lz:networks:list', 'List all configured networks and their details').setAc
         })
 })
 
-function getNetworkInfo(explorerBase: string, srcNetwork: string, tx: { hash: string }): void {
-    if (explorerBase) {
-        console.log(`   🔍 View on Explorer: ${explorerBase}${tx.hash}`)
-    } else {
-        console.log(`   ⚠️ No explorer URL configured for ${srcNetwork}`)
-    }
-}
-
 // Peer management task
 task('lz:peer:set:auto', 'Set peer between two networks automatically')
     .addParam('src', 'Source network')
@@ -382,7 +394,7 @@ task('lz:peer:set:auto', 'Set peer between two networks automatically')
         {
             const srcContract = getContractAddress(src)
             const dstContract = getContractAddress(dst)
-            const dstEid = getNetworkConfig(dst).eid
+            const dstEid = Number(getNetworkConfig(dst).eid)
 
             console.log(`🔗 Setting peer from ${src} ➡️ ${dst}`)
             await hre.run('lz:oapp:peer:set', {
@@ -393,21 +405,3 @@ task('lz:peer:set:auto', 'Set peer between two networks automatically')
             console.log(`✅ Peer setup complete between: ${src} ➡️ :${dst}`)
         }
     })
-
-// Environment setup helper
-task('lz:setup:env', 'Generate .env template for all networks').setAction(async (taskArgs, hre) => {
-    console.log('📝 .env Template for Cross-Chain Setup:')
-    console.log('='.repeat(50))
-    console.log('# Private key for all networks')
-    console.log('PRIVATE_KEY=your_private_key_here')
-    console.log()
-    console.log('# Contract addresses for each network')
-    Object.entries(NETWORK_CONFIG).forEach(([network, config]) => {
-        console.log(`${config.contractEnvKey}=  # ${config.name} contract address`)
-    })
-    console.log()
-    console.log('# API Keys (if needed)')
-    console.log('ALCHEMY_API_KEY=your_alchemy_key')
-    console.log('GETBLOCK_API_KEY=your_getblock_key')
-    console.log('ANKR_API_KEY=your_ankr_key')
-})
