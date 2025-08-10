@@ -21,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import ThemeToggle from './ThemeToggle.vue'
+import WalletConnect from './WalletConnect.vue'
 
 const isAuthenticated = ref(true) // Ganti dengan state auth sesuai kebutuhan
 </script>
@@ -104,8 +105,9 @@ const isAuthenticated = ref(true) // Ganti dengan state auth sesuai kebutuhan
               </Button>
             </DropdownMenuTrigger>
 
-            <ThemeToggle></ThemeToggle>
+            <WalletConnect />
 
+            <ThemeToggle />
 
             <DropdownMenuContent class="w-56 z-[1000]" :align="'end'" :side="'bottom'" :side-offset="8"
               :avoid-collisions="false">

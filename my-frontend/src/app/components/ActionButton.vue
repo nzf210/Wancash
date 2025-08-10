@@ -28,60 +28,49 @@ interface TestTransaction {
 }
 
 const TEST_TX: TestTransaction = {
-  to: "0x50200216532355Fa9971074Ca352FA706346c04C",
+  to: "0x50200216532355Fa9971074Ca352FA706346c04C", // change to your address
   value: parseGwei('0.00001')
 }
-
-// Wallet connection hooks
+// Composable returns with types
 const { disconnect } = useDisconnect()
 const { open } = useAppKit()
+
 const networkData = unref(useAppKitNetwork()) as UseAppKitNetworkReturn
 const accountData = unref(useAppKitAccount()) as UseAppKitAccountReturn
 
-// Transaction hooks
+// Wagmi hooks with types
 const { data: gas } = useEstimateGas({ ...TEST_TX }) as UseEstimateGasReturnType
 const { data: hash, sendTransaction, error } = useSendTransaction() as UseSendTransactionReturnType
 const { signMessageAsync } = useSignMessage() as UseSignMessageReturnType
 
-// State
+// Reactive data
 const txError = ref<Error | null>(null)
-const isLoading = ref(false)
 
-// Wallet actions
+// Methods
 const openAppKit = () => open()
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const switchToNetwork = async () => {
   try {
-    isLoading.value = true
     await networkData.switchNetwork(networks[1].id as unknown as AppKitNetwork)
   } catch (err) {
     console.error("Network switch error:", err)
     txError.value = err as Error
-  } finally {
-    isLoading.value = false
   }
 }
 
 const handleDisconnect = async () => {
   try {
-    isLoading.value = true
     await disconnect()
   } catch (err) {
     console.error("Disconnect error:", err)
     txError.value = err as Error
-  } finally {
-    isLoading.value = false
   }
 }
 
-// Message signing
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const handleSignMessage = async () => {
   if (!accountData.address) return
 
   try {
-    isLoading.value = true
     const msg = "Hello Reown AppKit!"
     const sig = await signMessageAsync({
       message: msg,
@@ -91,18 +80,13 @@ const handleSignMessage = async () => {
   } catch (err) {
     console.error("Sign message error:", err)
     txError.value = err as Error
-  } finally {
-    isLoading.value = false
   }
 }
 
-// Transaction handling
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const handleSendTx = async () => {
   if (!gas.value) return
 
   try {
-    isLoading.value = true
     await sendTransaction({
       ...TEST_TX,
       gas: gas.value
@@ -110,16 +94,13 @@ const handleSendTx = async () => {
   } catch (err) {
     console.error("Transaction error:", err)
     txError.value = err as Error
-  } finally {
-    isLoading.value = false
   }
 }
 
-// Watch for transaction state changes
+// Watch for changes
 watchEffect(() => {
   if (hash.value) {
     console.log("Transaction hash:", hash.value)
-    txError.value = null
   }
   if (error.value) {
     txError.value = error.value
@@ -129,111 +110,52 @@ watchEffect(() => {
 </script>
 
 <template>
-  <div class="wallet-actions">
-    <div v-if="accountData.isConnected" class="connected-actions">
-      <button @click="handleDisconnect" :disabled="isLoading">
-        Disconnect
-      </button>
-      <!-- <button @click="switchToNetwork" :disabled="isLoading">
-        Switch to {{ networks[1].name }}
-      </button>
-      <button @click="handleSignMessage" :disabled="isLoading">
-        Sign Message
-      </button>
-      <button @click="handleSendTx" :disabled="isLoading || !gas">
-        Send Test Transaction
-      </button>
+  <div>
+    <div v-if="accountData.isConnected">
+      <button @click="handleDisconnect">Disconnect</button>
+      <button @click="switchToNetwork">Switch Network</button>
+      <button @click="handleSignMessage">Sign Message</button>
+      <button @click="handleSendTx">Send Transaction</button>
 
-      <div v-if="hash" class="transaction-info">
-        <h4>Transaction Submitted</h4>
-        <p class="tx-hash">{{ hash }}</p>
-      </div>
-
-      <div v-if="txError" class="error-message">
-        {{ txError.message }}
-      </div> -->
+      <div v-if="hash" class="tx-hash">Transaction Hash: {{ hash }}</div>
+      <div v-if="txError" class="error">{{ txError.message }}</div>
     </div>
-
-    <button v-else @click="openAppKit" class="connect-button">
-      Connect Wallet
-    </button>
+    <button v-else @click="openAppKit">Connect Wallet</button>
   </div>
 </template>
 
 <style scoped>
-.wallet-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 1rem;
-}
-
 button {
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.connect-button {
+  margin: 0.5rem;
+  padding: 0.5rem 1rem;
   background: #4f46e5;
   color: white;
   border: none;
-  width: 100%;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
 }
 
-.connect-button:hover {
+button:hover {
   background: #4338ca;
 }
 
-.connected-actions {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.75rem;
-}
-
-.connected-actions button {
-  background: #f3f4f6;
-  border: 1px solid #e5e7eb;
-  color: #111827;
-}
-
-.connected-actions button:hover {
-  background: #e5e7eb;
-}
-
-.connected-actions button:disabled {
-  background: #f3f4f6;
-  color: #9ca3af;
+button:disabled {
+  background: #9ca3af;
   cursor: not-allowed;
 }
 
-.transaction-info {
-  grid-column: span 2;
-  padding: 1rem;
-  background: #f0fdf4;
-  border-radius: 8px;
-  border: 1px solid #bbf7d0;
-}
-
 .tx-hash {
+  margin-top: 1rem;
+  padding: 0.5rem;
+  background: #f3f4f6;
+  border-radius: 0.375rem;
   font-family: monospace;
   word-break: break-all;
-  font-size: 0.875rem;
-  color: #065f46;
-  margin-top: 0.5rem;
 }
 
-.error-message {
-  grid-column: span 2;
-  padding: 1rem;
-  background: #fef2f2;
-  border-radius: 8px;
-  border: 1px solid #fecaca;
-  color: #b91c1c;
-  font-size: 0.875rem;
+.error {
+  color: #ef4444;
+  margin-top: 1rem;
 }
 </style>
