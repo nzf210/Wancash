@@ -20,6 +20,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import ThemeToggle from './ThemeToggle.vue'
 
 const isAuthenticated = ref(true) // Ganti dengan state auth sesuai kebutuhan
 </script>
@@ -31,7 +32,8 @@ const isAuthenticated = ref(true) // Ganti dengan state auth sesuai kebutuhan
       <!-- Logo dan Menu Navigasi -->
       <div class="flex items-center gap-8">
         <RouterLink to="/" class="flex items-center gap-2">
-          <span class="text-xl font-bold text-primary bg-amber-300">TokenKu</span>
+          <img src="@/assets/image/logo.jpg" alt="Wancash Logo" class="w-8 h-8 rounded-full" />
+          <span class="text-xl font-bold text-primary hover:text-primary/90">Wancash</span>
         </RouterLink>
 
         <NavigationMenu v-if="isAuthenticated">
@@ -101,6 +103,9 @@ const isAuthenticated = ref(true) // Ganti dengan state auth sesuai kebutuhan
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
+
+            <ThemeToggle></ThemeToggle>
+
 
             <DropdownMenuContent class="w-56 z-[1000]" :align="'end'" :side="'bottom'" :side-offset="8"
               :avoid-collisions="false">

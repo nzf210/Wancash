@@ -252,3 +252,27 @@
     @apply bg-background text-foreground;
   }
 }
+
+
+html {
+  transition: color 0.3s ease, background-color 0.3s ease;
+}
+
+.transition-colors {
+  transition-property: color, background-color, border-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+
+.crypto-gradient {
+  background: linear-gradient(
+    to right,
+    hsl(var(--crypto-primary)),
+    hsl(var(--crypto-secondary))
+  );
+}
+
+.dark .special-element {
+  @apply bg-gray-900 text-white;
+}
