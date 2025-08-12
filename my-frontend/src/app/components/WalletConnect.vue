@@ -1,14 +1,14 @@
 <script lang="ts" setup>
-import { ref, unref, watchEffect } from 'vue'
+import { ref, watch, watchEffect } from 'vue'
 import {
-  useDisconnect,
+  // useDisconnect,
   useAppKit,
   useAppKitNetwork,
   useAppKitAccount,
   type UseAppKitAccountReturn,
   type UseAppKitNetworkReturn
 } from "@reown/appkit/vue"
-import { networks } from "@/app/components/config/index"
+// import { networks } from "@/app/components/config/index"
 import {
   useEstimateGas,
   useSendTransaction,
@@ -19,7 +19,12 @@ import {
 } from '@wagmi/vue'
 import { parseGwei } from 'viem'
 import type { Address } from 'viem'
-import type { AppKitNetwork } from '@reown/appkit/networks'
+// import type { AppKitNetwork } from '@reown/appkit/networks'
+import ProfileIcon from './ProfileIcon.vue'
+import { useAuthStore } from '@/app/stores/auth'
+import { formatHexAddress } from '@/utils/format'
+
+const authStore = useAuthStore()
 
 // Type for test transaction
 interface TestTransaction {
@@ -33,10 +38,13 @@ const TEST_TX: TestTransaction = {
 }
 
 // Wallet connection hooks
-const { disconnect } = useDisconnect()
+// const { disconnect } = useDisconnect()
 const { open } = useAppKit()
-const networkData = unref(useAppKitNetwork()) as UseAppKitNetworkReturn
-const accountData = unref(useAppKitAccount()) as UseAppKitAccountReturn
+const { caipNetwork, chainId } = useAppKitNetwork() as unknown as UseAppKitNetworkReturn
+
+console.log('caipNetwork', caipNetwork, chainId)
+const accountData = useAppKitAccount() as unknown as UseAppKitAccountReturn
+
 
 // Transaction hooks
 const { data: gas } = useEstimateGas({ ...TEST_TX }) as UseEstimateGasReturnType
@@ -50,30 +58,53 @@ const isLoading = ref(false)
 // Wallet actions
 const openAppKit = () => open()
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const switchToNetwork = async () => {
+const shortAddres = (address: string) => {
+  if (!address) return
+  return formatHexAddress(address)
+}
+
+
+
+const connectWallet = async () => {
   try {
-    isLoading.value = true
-    await networkData.switchNetwork(networks[1].id as unknown as AppKitNetwork)
-  } catch (err) {
-    console.error("Network switch error:", err)
-    txError.value = err as Error
-  } finally {
-    isLoading.value = false
+    // Misalnya kita mendapatkan data user dari wallet
+    await openAppKit()
+    const address = accountData.address
+    authStore.setUserProfile({
+      avatar: 'userData.avatar',
+      displayName: 'jhonss',
+      initials: shortAddres(address!),
+      email: shortAddres(address!) || ''
+    })
+  } catch (error) {
+    console.error('Failed to connect wallet:', error)
   }
 }
 
-const handleDisconnect = async () => {
-  try {
-    isLoading.value = true
-    await disconnect()
-  } catch (err) {
-    console.error("Disconnect error:", err)
-    txError.value = err as Error
-  } finally {
-    isLoading.value = false
-  }
-}
+watch(
+  () => accountData, // Langsung observe seluruh object
+  (newAccountData) => {
+    console.log('newAccountData', newAccountData)
+    if (newAccountData.isConnected && newAccountData.address && newAccountData.status === 'connected') {
+      authStore.setUserProfile({
+        avatar: '',
+        displayName: 'Jhons',
+        initials: formatHexAddress(newAccountData.address),
+        email: formatHexAddress(newAccountData.address)
+      })
+      authStore.setAuthenticationStatus(newAccountData.isConnected)
+      const appKitConection = localStorage.getItem('@appkit/connection_status')
+      if (appKitConection === 'connected') {
+        authStore.setAuthenticationStatus(true)
+      } else {
+        authStore.handleDisconnect()
+      }
+    }
+  },
+  { deep: true } // Penting: aktifkan deep watch
+)
+
+
 
 // Message signing
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -126,35 +157,16 @@ watchEffect(() => {
     console.error("Transaction error:", error.value)
   }
 })
+
+defineProps<{
+  isMobile: boolean
+}>()
 </script>
 
 <template>
   <div class="wallet-actions">
-    <div v-if="accountData.isConnected" class="connected-actions">
-      <button @click="handleDisconnect" :disabled="isLoading">
-        Disconnect
-      </button>
-      <!-- <button @click="switchToNetwork" :disabled="isLoading">
-        Switch to {{ networks[1].name }}
-      </button>
-      <button @click="handleSignMessage" :disabled="isLoading">
-        Sign Message
-      </button>
-      <button @click="handleSendTx" :disabled="isLoading || !gas">
-        Send Test Transaction
-      </button>
-
-      <div v-if="hash" class="transaction-info">
-        <h4>Transaction Submitted</h4>
-        <p class="tx-hash">{{ hash }}</p>
-      </div>
-
-      <div v-if="txError" class="error-message">
-        {{ txError.message }}
-      </div> -->
-    </div>
-
-    <button v-else @click="openAppKit" class="connect-button">
+    <ProfileIcon v-if="accountData.isConnected && !isMobile" />
+    <button v-if="!accountData.isConnected" @click="connectWallet" class="connect-button">
       Connect Wallet
     </button>
   </div>

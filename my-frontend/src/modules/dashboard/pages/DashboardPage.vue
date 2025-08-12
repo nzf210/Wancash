@@ -1,3 +1,12 @@
+<script setup lang="ts">
+import CardView from '../components/cardView.vue';
+
+</script>
+
 <template>
-  <h1>Dashboard</h1>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-1 pt-20">
+    <CardView />
+    <CardView />
+    <CardView />
+  </div>
 </template>

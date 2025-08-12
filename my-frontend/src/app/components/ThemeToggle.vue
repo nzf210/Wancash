@@ -2,6 +2,7 @@
 import { SunIcon, MoonIcon, DesktopIcon } from '@radix-icons/vue'
 import { useTheme } from '@/app/components/providers/theme-provider'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
 
 const { setTheme, resolvedTheme } = useTheme()
 </script>

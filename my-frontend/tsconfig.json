@@ -17,6 +17,7 @@
     "paths": {
     "@/*": ["./src/*"]
     },
-    "types": ["@thirdweb-dev/vue/client"]
+    "types": ["@thirdweb-dev/vue/client"],
+    "typeRoots": ["node_modules/@types", "src/types"]
   }
 }

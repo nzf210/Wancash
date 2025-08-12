@@ -19,4 +19,15 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+    define: {
+    __DEV__: JSON.stringify(false), // Force Lit production mode
+    'import.meta.env.PROD': JSON.stringify(true) // Jika diperlukan
+  },
+  build: {
+    minify: 'terser',
+    terserOptions: {
+      maxWorkers: 4
+    },
+  }
+
 })

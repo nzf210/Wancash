@@ -68,5 +68,9 @@
     "vite-plugin-node-polyfills": "^0.24.0",
     "vite-plugin-vue-devtools": "^8.0.0",
     "vue-tsc": "^3.0.4"
+  },
+    "browser": {
+    "lit-html": "./node_modules/lit-html/development/lit-html.js",
+    "lit-element": "./node_modules/lit-element/development/lit-element.js"
   }
 }
