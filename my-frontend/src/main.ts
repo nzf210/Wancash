@@ -1,59 +1,41 @@
+// ===== file: main.ts =====
 // src/main.ts
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from '@/app/router/index'
+import {  wagmiConfig } from '@/app/components/config/appkit'
 import { createPinia } from 'pinia'
 import { WagmiPlugin } from '@wagmi/vue'
-import { config } from '@/app/components/config/wagmi'
-import { appkit } from '@/app/components/config/appkit'
-import { VueQueryPlugin } from '@tanstack/vue-query'
+import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import { LitElement } from 'lit'
+
 // Nonaktifkan warning Lit
-LitElement.enableWarning = () => {}
+LitElement.enableWarning = function () {};
 
 import './assets/style.css' // Tailwind + ShadCN
 
-async function checkPersistedSession() {
-  if (localStorage.getItem('walletConnected') === 'true') {
-    try {
-      await appkit.open()
-    } catch (error) {
-      console.error('Auto-connect failed:', error);
-      localStorage.removeItem('walletConnected');
-      throw error;
-    }
-  }
-}
-
-
+// Define adapter typ
 async function initializeApp() {
   const app = createApp(App)
 
-  // Pasang plugin SEBELUM mounting
+  const queryClient = new QueryClient()
+  app.use(WagmiPlugin, { config: wagmiConfig })
+  app.use(VueQueryPlugin, { queryClient })
+  // Setup plugins
   app.use(createPinia())
   app.use(router)
-  app.use(VueQueryPlugin, {
-    queryClientConfig: {
-      defaultOptions: {
-        queries: {
-          refetchOnWindowFocus: false,
-          retry: 3
-        }
-      }
-    }
-  })
-  app.use(WagmiPlugin, { config })
-  app.provide('appkit', appkit)
-
-
-
-// Panggil sebelum mount
-await checkPersistedSession()
-
-  // Tunggu router siap (jika menggunakan route guards)
   await router.isReady()
 
-  // Mount aplikasi
+  // Wait for DOM
+  await new Promise(resolve => {
+    if (document.readyState === 'complete') {
+      resolve(void 0)
+    } else {
+      document.addEventListener('DOMContentLoaded', () => resolve(void 0))
+    }
+  })
+
+  // Mount app
   const mount = () => {
     const rootElement = document.getElementById('app')
     if (!rootElement) {
@@ -64,28 +46,25 @@ await checkPersistedSession()
     app.mount('#app')
   }
 
-  if (document.readyState === 'complete') {
-    mount()
-  } else {
-    document.addEventListener('DOMContentLoaded', mount)
-  }
+  mount()
 }
 
+// Initialize with error handling
 initializeApp().catch((error) => {
-  console.error('Application initialization failed:', error)
-  // Fallback UI error
+  console.error('💥 Application initialization failed:', error)
   document.body.innerHTML = `
-    <div style="padding: 2rem; font-family: sans-serif">
+    <div style="padding: 2rem; font-family: sans-serif; text-align: center;">
       <h1>Application Error</h1>
-      <p>${error.message}</p>
-      <button onclick="window.location.reload()">Reload</button>
+      <p style="color: #666; margin: 1rem 0;">${error.message}</p>
+      <button onclick="window.location.reload()" style="
+        padding: 0.5rem 1rem;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      ">Reload Application</button>
     </div>
   `
 })
 
-
-if (import.meta.hot) {
-  import.meta.hot.on('vite:beforeUpdate', () => {
-    localStorage.removeItem('wagmi.cache')
-  })
-}

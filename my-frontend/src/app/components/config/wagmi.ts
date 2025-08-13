@@ -1,3 +1,4 @@
+// ===== file: wagmi.ts =====
 import { createConfig, type Transport } from '@wagmi/core'
 import { http, type EIP1193RequestFn } from 'viem'
 import {
@@ -25,12 +26,3 @@ export const config = createConfig({
   chains: [...supportedNetworks],
   transports: supportedNetworks.reduce((acc, network) => ({ ...acc, [network.id]: http() }), {}) as Record<number, Transport<string, Record<string, unknown>, EIP1193RequestFn>>,
 })
-
-// transports: {
-//   [mainnet.id]: http(),
-//   [polygon.id]: http(),
-//   [arbitrum.id]: http(),
-//   [avalanche.id]: http(),
-//   [bsc.id]: http(),
-//   [sepolia.id]: http(),
-// },
