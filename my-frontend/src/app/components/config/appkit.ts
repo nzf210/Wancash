@@ -2,7 +2,6 @@
 import { createAppKit } from '@reown/appkit/vue'
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi'
 import { supportedNetworks } from '@/app/components/config/wagmi'
-
 export const projectId = process.env.VITE_PROJECT_ID || "b56e18d47c72ab683b10814fe9495694"
 
 // Buat single wagmiAdapter yang akan digunakan di semua tempat
@@ -25,10 +24,14 @@ export const appkit = createAppKit({
   },
   debug: process.env.VITE_NODE_ENV === 'development',
   enableWalletGuide: true,
-  themeMode: 'light',
+  themeMode: 'dark',
   themeVariables: {
     '--w3m-z-index': 1000
   }
 })
 
 export const wagmiConfig = wagmiAdapter.wagmiConfig
+
+export const updateAppKitTheme = (theme: 'light' | 'dark') => {
+  appkit.setThemeMode(theme)
+}

@@ -14,6 +14,7 @@ LitElement.enableWarning = function () {};
 
 import './assets/style.css' // Tailwind + ShadCN
 
+const pinia = createPinia()
 // Define adapter typ
 async function initializeApp() {
   const app = createApp(App)
@@ -21,8 +22,9 @@ async function initializeApp() {
   const queryClient = new QueryClient()
   app.use(WagmiPlugin, { config: wagmiConfig })
   app.use(VueQueryPlugin, { queryClient })
+
   // Setup plugins
-  app.use(createPinia())
+  app.use(pinia)
   app.use(router)
   await router.isReady()
 
