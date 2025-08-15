@@ -6,5 +6,5 @@
 </template>
 
 <script setup lang="ts">
-import BuyForm from '../components/BuyTokenForm.vue'
+import BuyForm from '../components/buyToken.vue'
 </script>

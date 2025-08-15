@@ -1,14 +1,13 @@
 <script lang="ts" setup>
 import { ref, watch, watchEffect } from 'vue'
 import {
-  // useDisconnect,
   useAppKit,
   useAppKitNetwork,
   useAppKitAccount,
   type UseAppKitAccountReturn,
   type UseAppKitNetworkReturn
 } from "@reown/appkit/vue"
-// import { networks } from "@/app/components/config/index"
+
 import {
   useEstimateGas,
   useSendTransaction,
@@ -19,7 +18,6 @@ import {
 } from '@wagmi/vue'
 import { parseGwei } from 'viem'
 import type { Address } from 'viem'
-// import type { AppKitNetwork } from '@reown/appkit/networks'
 import ProfileIcon from './ProfileIcon.vue'
 import { useAuthStore } from '@/app/stores/auth'
 import { formatHexAddress } from '@/utils/format'
@@ -40,6 +38,7 @@ const TEST_TX: TestTransaction = {
 // Wallet connection hooks
 // const { disconnect } = useDisconnect()
 const { open } = useAppKit()
+const openAppKit = () => open()
 const { caipNetwork, chainId } = useAppKitNetwork() as unknown as UseAppKitNetworkReturn
 
 console.log('caipNetwork', caipNetwork, chainId)
@@ -56,7 +55,7 @@ const txError = ref<Error | null>(null)
 const isLoading = ref(false)
 
 // Wallet actions
-const openAppKit = () => open()
+
 
 const shortAddres = (address: string) => {
   if (!address) return
@@ -87,10 +86,10 @@ watch(
     console.log('newAccountData', newAccountData)
     if (newAccountData.isConnected && newAccountData.address && newAccountData.status === 'connected') {
       authStore.setUserProfile({
-        avatar: '',
-        displayName: 'Jhons',
-        initials: formatHexAddress(newAccountData.address),
-        email: formatHexAddress(newAccountData.address)
+        avatar: 'userData.avatar',
+        displayName: 'jhonss',
+        initials: shortAddres(newAccountData.address!),
+        email: shortAddres(newAccountData.address!) || ''
       })
       authStore.setAuthenticationStatus(newAccountData.isConnected)
       const appKitConection = localStorage.getItem('@appkit/connection_status')
@@ -103,8 +102,6 @@ watch(
   },
   { deep: true } // Penting: aktifkan deep watch
 )
-
-
 
 // Message signing
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
