@@ -1,6 +1,8 @@
 <!-- src/modules/buy-token/pages/BuyTokenPage.vue -->
 <template>
-  <h1 class="text-xl font-bold mb-4">Beli Token</h1>
+  <div class="container mx-auto w-full">
+    <h1 class="text-xl font-bold my-4 bg-red-200 mx-auto w-fit">Buy Wancash</h1>
+  </div>
   <TokenInfo />
   <BuyForm class="mt-6" />
 </template>

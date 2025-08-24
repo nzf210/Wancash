@@ -9,6 +9,7 @@ import 'hardhat-deploy'
 import 'hardhat-contract-sizer'
 import '@nomiclabs/hardhat-ethers'
 import '@layerzerolabs/toolbox-hardhat'
+import '@typechain/hardhat'
 import { HardhatUserConfig, HttpNetworkAccountsUserConfig, LayerZeroHardhatUserConfig } from 'hardhat/types'
 
 import { EndpointId } from '@layerzerolabs/lz-definitions'
@@ -79,6 +80,10 @@ const config: CustomHardhatConfig = {
                 },
             },
         ],
+    },
+    typechain: {
+        outDir: 'types',
+        target: 'ethers-v5',
     },
     networks: {
         bsc: {

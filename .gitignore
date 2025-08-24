@@ -25,3 +25,5 @@ pnpm-error.log
 .DS_Store
 .idea
 Note.MD
+code.yaml
+*/types/

@@ -1,7 +1,6 @@
+//buyToken.vue
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-// import { ethers } from 'ethers'
-// import { BrowserProvider, JsonRpcSigner } from 'ethers/providers'
 import { isHexString, } from 'ethers/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,11 +11,10 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-// import { useToast } from '@/components/ui/toast/use-toast'
 import { toast } from 'vue-sonner'
 import PancakeSwapTokenPurchase from '@/modules/buyToken/composables/usePancakeSwap'
-import { useAppKitAccount, useAppKit } from '@reown/appkit/vue'
-// Types
+import { useAppKitAccount, useAppKit, type UseAppKitAccountReturn } from '@reown/appkit/vue'
+import type { Signer } from 'ethers';
 interface TokenInfo {
   address: string
   symbol: string
@@ -61,41 +59,65 @@ const canBuy = computed(() => {
   return simulationResult.value && bnbAmount.value > 0 && tokenAddress.value
 })
 
-const accountData = useAppKitAccount()
+const accountData = useAppKitAccount() as unknown as UseAppKitAccountReturn & { signer: Signer }
 const appKit = useAppKit()
 // Methods
 watch(
-  () => accountData.value,
-  (newAccount) => {
-    console.log('Account data changed:', newAccount)
-
-    if (newAccount?.isConnected) {
-      connected.value = true
-      // walletAddress.value = newAccount.address
-      console.log('Wallet connected:', newAccount.address)
+  () => accountData,
+  async (newAccount) => {
+    if (newAccount?.isConnected && newAccount.signer) {
+      connected.value = true;
+      tokenPurchase.value = new PancakeSwapTokenPurchase(newAccount.signer);
+      console.log('Wallet connected:', newAccount.address);
     } else {
-      connected.value = false
-      // walletAddress.value = ''
-      console.log('Wallet disconnected')
+      connected.value = false;
+      tokenPurchase.value = null;
     }
   },
-  { immediate: true } // Eksekusi segera saat komponen mount
-)
+  { immediate: true }
+);
 
 
 const simulatePurchase = async () => {
-  if (!tokenAddress.value || !bnbAmount.value || !tokenPurchase.value) return
-  console.log('Simulating purchase...')
+  if (!tokenAddress.value || !bnbAmount.value) return
+
   try {
     loading.value = true
-    simulationResult.value = await tokenPurchase.value.simulatePurchase(
+
+    // Initialize tokenPurchase if not already done
+    if (!tokenPurchase.value && accountData.isConnected && accountData.signer) {
+      tokenPurchase.value = new PancakeSwapTokenPurchase(accountData.signer)
+      await tokenPurchase.value.initialize() // Don't forget to initialize!
+    }
+
+    console.log('Simulating purchase...', tokenAddress.value, bnbAmount.value, accountData.signer)
+    if (!tokenPurchase.value) {
+      toast.error('Wallet not connected or token purchase not initialized')
+      return
+    }
+
+    // Call getTokenPrice
+    const result = await tokenPurchase.value.getTokenPrice(
       tokenAddress.value,
-      parseFloat(bnbAmount.value.toString())
+      bnbAmount.value.toString()
     )
+
+    simulationResult.value = {
+      tokenInfo: {
+        address: tokenAddress.value,
+        symbol: '', // You might want to fetch this separately
+        decimals: 0, // You might want to fetch this separately
+      },
+      bnbAmount: parseFloat(bnbAmount.value.toString()),
+      expectedTokens: result.amountOut,
+      pricePerToken: result.pricePerToken,
+      priceImpact: 'N/A',
+      path: result.path,
+    }
 
     toast({
       title: 'Simulasi Berhasil',
-      description: `Perkiraan akan menerima ${simulationResult.value.expectedTokens} ${simulationResult.value.tokenInfo.symbol}`,
+      description: `Perkiraan akan menerima ${simulationResult.value.expectedTokens} ${simulationResult.value.tokenInfo.symbol || ''}`,
     })
   } catch (error) {
     console.error('Simulation error:', error)
@@ -115,9 +137,10 @@ const buyToken = async () => {
   try {
     loading.value = true
 
+    const bnbWei = BigInt(Math.floor(parseFloat(bnbAmount.value.toString()) * 1e18)).toString()
     transactionResult.value = await tokenPurchase.value.buyTokenWithBNB(
       tokenAddress.value,
-      BigInt(parseFloat(bnbAmount.value.toString()) * 1e18),
+      bnbWei,
       parseFloat(slippage.value.toString())
     ).then((result) => ({
       ...result,
@@ -156,32 +179,32 @@ const validateTokenAddress = (address: string) => {
 <template>
   <Card class="max-w-2xl mx-auto">
     <CardHeader>
-      <CardTitle class="text-center">Pembelian Token via PancakeSwap</CardTitle>
+      <CardTitle class="text-center">Buy Token via PancakeSwap</CardTitle>
     </CardHeader>
 
     <CardContent>
       <div v-if="!accountData.isConnected" class="flex flex-col items-center gap-4">
         <p class="text-sm text-muted-foreground text-center">
-          Hubungkan wallet Anda untuk memulai pembelian token
+          Connect your wallet to start buying tokens
         </p>
         <Button @click="() => { appKit.open() }" :disabled="loading" class="w-full max-w-xs">
-          <span v-if="loading" class="animate-pulse">Menghubungkan...</span>
-          <span v-else>Hubungkan Wallet</span>
+          <span v-if="loading" class="animate-pulse">Connecting...</span>
+          <span v-else>Connect Wallet</span>
         </Button>
       </div>
 
       <div v-else class="space-y-6">
         <div class="space-y-2">
-          <Label for="token-address">Alamat Token</Label>
+          <Label for="token-address">Token Address</Label>
           <Input id="token-address" v-model="tokenAddress" placeholder="0x..."
             :class="{ 'border-destructive': tokenAddress && !validateTokenAddress(tokenAddress) }" />
           <p v-if="tokenAddress && !validateTokenAddress(tokenAddress)" class="text-sm text-destructive">
-            Alamat token tidak valid
+            Invalid token address
           </p>
         </div>
 
         <div class="space-y-2">
-          <Label for="bnb-amount">Jumlah BNB</Label>
+          <Label for="bnb-amount">Number of BNB</Label>
           <Input id="bnb-amount" v-model.number="bnbAmount" type="number" step="0.01" min="0.0001" />
         </div>
 
@@ -193,28 +216,28 @@ const validateTokenAddress = (address: string) => {
         <div class="flex gap-4 pt-2">
           <Button @click="simulatePurchase" :disabled="loading || !tokenAddress || !validateTokenAddress(tokenAddress)"
             class="flex-1">
-            <span v-if="loading">Memproses...</span>
-            <span v-else>Simulasi Pembelian</span>
+            <span v-if="loading">Processing...</span>
+            <span v-else>Purchase Simulation</span>
           </Button>
 
           <Button @click="buyToken" :disabled="loading || !canBuy" class="flex-1" variant="secondary">
-            Beli Token
+            Buy Tokens
           </Button>
         </div>
 
         <div v-if="simulationResult" class="space-y-4 p-4 border rounded-lg">
-          <h3 class="font-medium">Hasil Simulasi</h3>
+          <h3 class="font-medium">Simulation Results</h3>
           <div class="grid grid-cols-2 gap-4 text-sm">
             <div class="space-y-1">
               <p class="text-muted-foreground">Token</p>
               <p>{{ simulationResult.tokenInfo.symbol }}</p>
             </div>
             <div class="space-y-1">
-              <p class="text-muted-foreground">Perkiraan Diterima</p>
+              <p class="text-muted-foreground">Estimated Received</p>
               <p>{{ simulationResult.expectedTokens }} {{ simulationResult.tokenInfo.symbol }}</p>
             </div>
             <div class="space-y-1">
-              <p class="text-muted-foreground">Harga per Token</p>
+              <p class="text-muted-foreground">Price per Token</p>
               <p>{{ simulationResult.pricePerToken.toFixed(8) }} BNB</p>
             </div>
             <div class="space-y-1">
@@ -226,7 +249,7 @@ const validateTokenAddress = (address: string) => {
 
         <div v-if="transactionResult" class="space-y-4 p-4 border rounded-lg"
           :class="{ 'border-destructive': !transactionResult.success }">
-          <h3 class="font-medium">Hasil Transaksi</h3>
+          <h3 class="font-medium">Transaction Results</h3>
           <div class="grid grid-cols-2 gap-4 text-sm">
             <div class="space-y-1">
               <p class="text-muted-foreground">Status</p>
@@ -237,11 +260,11 @@ const validateTokenAddress = (address: string) => {
 
             <template v-if="transactionResult.success">
               <div class="space-y-1">
-                <p class="text-muted-foreground">BNB Dibelanjakan</p>
+                <p class="text-muted-foreground">BNB Spent</p>
                 <p>{{ transactionResult.bnbSpent }}</p>
               </div>
               <div class="space-y-1">
-                <p class="text-muted-foreground">Token Diterima</p>
+                <p class="text-muted-foreground">Amount received</p>
                 <p>{{ transactionResult.expectedTokens }}</p>
               </div>
               <div class="space-y-1 col-span-2">

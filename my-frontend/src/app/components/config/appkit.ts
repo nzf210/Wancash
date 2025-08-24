@@ -35,3 +35,13 @@ export const wagmiConfig = wagmiAdapter.wagmiConfig
 export const updateAppKitTheme = (theme: 'light' | 'dark') => {
   appkit.setThemeMode(theme)
 }
+
+export const getProvider = async () => {
+  const provider = await wagmiConfig.connectors[0].getProvider()
+  return provider
+}
+
+export const getAccounts = async () => {
+  const accounts = await wagmiConfig.connectors[0].getAccounts()
+  return accounts
+}

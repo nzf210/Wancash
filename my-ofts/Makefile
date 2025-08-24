@@ -4,6 +4,12 @@ export
 # Dynamic Cross-Chain Makefile
 .PHONY: help setup-env list-networks
 
+# Colors
+RED=\033[0;31m
+GREEN=\033[0;32m
+YELLOW=\033[0;33m
+NC=\033[0m
+
 # Default target
 help:
 	@echo "🚀 Cross-Chain OFT Commands"
@@ -32,114 +38,20 @@ op:
 
 dev:
 	npx hardhat lz:deploy --tags WancashMock
+	
 dev-main:
 	npx hardhat lz:deploy --tags Wancash
-# Verifikasi Contracts
 
+dev-stk:
+	npx hardhat lz:deploy --tags EnhancedStaking
+
+dev-stkn:
+	npx hardhat lz:deploy --tags EnhancedStakingUsdt
+
+
+# Verifikasi Contracts
 c-conf:
 	npx hardhat lz:oapp:config:get --oapp-config layerzero.config.ts
-
-c-peer:
-	npx hardhat lz:oapp:peers:get --oapp-config layerzero.config.ts --network bsc
-
-set-peers:
-	@echo "Setting up bidirectional peers..."
-	
-	# Set peer from chain1 to chain2
-	npx hardhat --network arbitrum set:peer \
-		--contract $(ETH_CONTRACT) \
-		--eid $(EID_BSC) \
-		--peer $(BSC_CONTRACT) 
-	@sleep 5
-
-	# Set peer from chain2 to chain1
-	npx hardhat --network bsc set:peer \
-		--contract $(BSC_CONTRACT) \
-		--eid $(EID_SEPOLIA) \
-		--peer $(ETH_CONTRACT)
-	@sleep 5
-
-	# Set peer from chain1 to chain3
-	npx hardhat --network bsc set:peer \
-		--contract $(BSC_CONTRACT) \
-		--eid $(EID_AMOY) \
-		--peer $(POLY_CONTRACT)
-	@sleep 5
-
-	# Set peer from chain3 to chain1
-	npx hardhat --network polygon set:peer \
-		--contract $(POLY_CONTRACT) \
-		--eid $(EID_BSC) \
-		--peer $(BSC_CONTRACT)
-	@sleep 5
-
-	# Set peer from chain2 to chain3
-	npx hardhat --network arbitrum set:peer \
-		--contract $(ETH_CONTRACT) \
-		--eid $(EID_AMOY) \
-		--peer $(POLY_CONTRACT)
-	@sleep 5
-
-	# Set peer from chain3 to chain2
-	npx hardhat --network polygon set:peer \
-		--contract $(POLY_CONTRACT) \
-		--eid $(EID_SEPOLIA) \
-		--peer $(ETH_CONTRACT) 	
-	@echo "Peer setup completed! \n"
-
-	@sleep 5
-	@echo "Setting up bidirectional peer from fuji to Sepolia..."
-	# Set peer from chain3 to chain2
-	npx hardhat --network avalance set:peer \
-		--contract $(FUJI_CONTRACT) \
-		--eid $(EID_SEPOLIA) \
-		--peer $(ETH_CONTRACT) 	
-	@echo "Peer setup completed!  \n"
-
-	@sleep 5
-	@echo "Setting up bidirectional peer from fuji to bsc..."
-	# Set peer from chain3 to chain2
-	npx hardhat --network avalance set:peer \
-		--contract $(FUJI_CONTRACT) \
-		--eid $(EID_BSC) \
-		--peer $(BSC_CONTRACT) 	
-	@echo "Peer setup completed! \n"
-
-	@sleep 5
-	@echo "Setting up bidirectional peer from fuji to Amoy..."
-	# Set peer from chain3 to chain2
-	npx hardhat --network avalance set:peer \
-		--contract $(FUJI_CONTRACT) \
-		--eid $(EID_AMOY) \
-		--peer $(POLY_CONTRACT) 	
-	@echo "Peer setup completed! \n"
-
-	@sleep 5
-	@echo "Setting up bidirectional peer from Amoy to fuji..."
-	# Set peer from chain3 to chain2
-	npx hardhat --network polygon set:peer \
-		--contract $(POLY_CONTRACT) \
-		--eid $(EID_FUJI) \
-		--peer $(FUJI_CONTRACT) 	
-	@echo "Peer setup completed! \n"
-
-	@sleep 5
-	@echo "Setting up bidirectional peer from BSC to fuji..."
-	# Set peer from chain3 to chain2
-	npx hardhat --network bsc set:peer \
-		--contract $(BSC_CONTRACT) \
-		--eid $(EID_FUJI) \
-		--peer $(FUJI_CONTRACT) 	
-	@echo "Peer setup completed! \n"
-
-	@sleep 5
-	@echo "Setting up bidirectional peer from Sepolia to fuji..."
-	# Set peer from chain3 to chain2
-	npx hardhat --network arbitrum set:peer \
-		--contract $(ETH_CONTRACT) \
-		--eid $(EID_FUJI) \
-		--peer $(FUJI_CONTRACT) 	
-	@echo "Peer setup completed! \n"
 
 # Universal send command
 send:
@@ -265,6 +177,26 @@ verify-arb:
 	@echo "Verifying contract on Arb Testnet..."
 	npx hardhat verify:arb --address $(ARB_CONTRACT) --network arbitrum
 	@echo "Verification complete!"
+
+#verify contact staking
+v-staking:
+	@if [ -z "$(STK_CONTRACT)" ] || [ -z "$(TOKEN)" ] || [ -z "$(CHANGEABLE)" ]; then \
+		echo "${RED}Error: Missing required parameters${NC}"; \
+		echo "Usage: make verify ADDRESS=0x... TOKEN=0x... CHANGEABLE=[true|false]"; \
+		exit 1; \
+	fi
+	@echo "${YELLOW}Starting verification...${NC}"
+	@echo "Contract: ${GREEN}$(ADDRESS)${NC}"
+	@echo "Token: ${GREEN}$(TOKEN)${NC}"
+	@echo "Changeable: ${GREEN}$(CHANGEABLE)${NC}"
+	@echo "Network: ${GREEN}$(NETWORK)${NC}"
+	@npx hardhat verify:staking \
+		--address $(STK_CONTRACT) \
+		--token $(TOKEN) \
+		--changeable $(CHANGEABLE) \
+		--network $(NETWORK)
+	@echo "${GREEN}✓ Verification completed${NC}"
+
 
 # Mint Token
 mint-bsc:
@@ -409,3 +341,12 @@ set-peer:
 
 get-env:
 	bunx hardhat lz:setup:env
+
+# task for staking contract
+stk-get-address:
+	@echo "contract: $(STK_CONTRACT)"
+	bunx hardhat --network bsc lz:stk:address  --contract $(STK_CONTRACT) 
+
+stk-app-contract:
+	@echo "OFT contract address: $(STK_CONTRACT)"
+	bunx hardhat --network bsc lz:oft:approve --spender $(STK_CONTRACT) 
