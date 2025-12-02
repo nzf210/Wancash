@@ -280,7 +280,7 @@ task('lz:oft:send', 'Send OFT tokens between any supported networks')
 
         // Set default minimum amount if not provided
         const minAmount = taskArgs.minamount || (parseFloat(taskArgs.amount) * 0.98).toString()
-        const contract = await ethers.getContractAt('WancashMock', srcContract, signer)
+        const contract = await ethers.getContractAt('Wancash', srcContract, signer)
 
         // PANGGIL helper luar — loop & try/catch ada di sana
         const { workingExtraOptions, quote, resultLog } = await findWorkingExtraOptions(

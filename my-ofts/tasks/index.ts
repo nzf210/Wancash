@@ -17,3 +17,6 @@ import './staking/approveOFT'
 
 export const MODE = process.env.MODE === 'main'
 export const CI_BSC = MODE ? process.env.CI_BSC : 97
+export const INITIAL_SUPPLY = '21000000000000000000000000000'
+export const contractName = MODE ? 'Wancash' : 'WancashMock'
+export const contractSymbol = MODE ? 'WCH' : 'WCHMock'

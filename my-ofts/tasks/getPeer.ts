@@ -3,8 +3,8 @@ import path from 'path'
 
 import { task } from 'hardhat/config'
 
-import { MODE } from '.'
-const contract = MODE ? 'Wancash' : 'WancashMock'
+// import { MODE } from '.'
+const contract = 'Wancash'
 
 task('lz:oapp:peer:get', 'Get peer configuration for MyOFTMock')
     .addParam('eid', 'Destination endpoint ID')

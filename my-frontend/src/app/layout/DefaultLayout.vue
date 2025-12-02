@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import DynamicNavbar from '@/app/components/NavbarView.vue'
+import FooterView from '@/app/components/FooterView.vue'
 import { useAuthStore } from '@/app/stores/auth'
 import { useNotificationStore } from '@/app/stores/notifications'
 
@@ -47,17 +48,17 @@ const handleNotificationClick = () => {
 </script>
 
 <template>
-  <div id="app">
+  <div id="app" class="min-h-screen flex flex-col">
     <!-- Dynamic Navbar with all props -->
     <DynamicNavbar :user="authStore.isAuthenticated ? currentUser : undefined"
       :notification-count="notificationStore.unreadCount" :is-authenticated="authStore.isAuthenticated"
       :show-wallet-connect="true" :show-theme-toggle="true" @login="handleLogin" @logout="handleLogout"
       @profile-click="handleProfileClick" @settings-click="handleSettingsClick"
       @notification-click="handleNotificationClick" />
-
     <!-- Main content -->
-    <main>
+    <main class="container mx-auto p-4">
       <RouterView />
     </main>
+    <FooterView class="mt-auto h-20" />
   </div>
 </template>

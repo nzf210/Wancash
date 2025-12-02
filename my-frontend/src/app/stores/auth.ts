@@ -64,6 +64,10 @@ export const useAuthStore = defineStore('auth', {
       console.log('setUserProfile', profile)
       this.userProfile = profile
     },
+
+    async logout() {
+
+    },
     clearUserProfile() {
       this.userProfile = null
       this.isAuthenticated = false

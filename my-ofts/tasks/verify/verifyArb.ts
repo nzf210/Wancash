@@ -1,25 +1,25 @@
 import { task } from 'hardhat/config'
 
-import { CI_BSC } from '..'
+import { CI_BSC, INITIAL_SUPPLY, contractName, contractSymbol } from '..'
 
 task('verify:arb', 'Verifies contract on Polygon Amoy')
     .addParam('address', 'Contract address')
     .setAction(async (taskArgs, hre) => {
         // Get the same deployment data used during deploy
-        // const endpointV2Deployment = await hre.deployments.get('EndpointV2')
+        const endpointV2Deployment = await hre.deployments.get('EndpointV2')
         const { deployer } = await hre.getNamedAccounts()
 
         await hre.run('verify:verify', {
             network: 'sepolia-arb',
             address: taskArgs.address,
             constructorArguments: [
-                'Wancash', // name
-                'WCH', // symbol
-                // endpointV2Deployment.address, // LayerZero's EndpointV2 address
-                process.env.ENDPOINT_LZ,
+                contractName, // name
+                contractSymbol, // symbol
+                endpointV2Deployment.address, // LayerZero's EndpointV2 address
+                // process.env.ENDPOINT_LZ,
                 deployer, // owner
                 CI_BSC, // main chain
-                1034000000, // initial supply
+                INITIAL_SUPPLY, // initial supply
             ],
         })
     })

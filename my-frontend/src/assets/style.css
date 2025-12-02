@@ -102,7 +102,7 @@
 
 :root {
 
-  --background: oklch(1 0 0);
+  --background: oklch(1.2 0.02 0.87);
 
   --foreground: oklch(0.145 0 0);
 

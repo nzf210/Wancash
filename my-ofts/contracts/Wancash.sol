@@ -5,10 +5,27 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { OFT } from "@layerzerolabs/oft-evm/contracts/OFT.sol";
 
 contract Wancash is OFT {
+
+    uint16 public immutable mainChainId;
+    
     constructor(
         string memory _name,
         string memory _symbol,
         address _lzEndpoint,
-        address _delegate
-    ) OFT(_name, _symbol, _lzEndpoint, _delegate) Ownable(_delegate) {}
+        address _delegate,
+        uint16 _mainChainId,
+        uint256 _initialSupply
+        
+    ) OFT(_name, _symbol, _lzEndpoint, _delegate) Ownable(_delegate) {
+                mainChainId = _mainChainId;
+        
+        // Only mint initial supply if deployed on main chain
+        if (block.chainid == _mainChainId) {
+            _mint(msg.sender, _initialSupply);
+        }
+    }
+
+    function mint(address, uint256) public virtual {
+        revert("Direct minting disabled - use cross-chain transfer");
+    }
 }

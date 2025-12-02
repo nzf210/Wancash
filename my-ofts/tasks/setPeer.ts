@@ -17,10 +17,11 @@ task('lz:oapp:peer:set', 'Sets peer configuration for MyOFTMock')
         if (chainId === 31337) {
             throw new Error('This task must be run not on Hardhat Network')
         }
+
         console.log(`Network: ${taskArgs.network}`)
         console.log(`Signer: ${signer.address}`)
 
-        const myOFTMock = await ethers.getContractAt('WancashMock', taskArgs.contract, signer)
+        const myOFTMock = await ethers.getContractAt('Wancash', taskArgs.contract, signer)
 
         const peerBytes32 = ethers.utils.hexZeroPad(taskArgs.peer, 32)
         console.log(`Setting peer for endpoint ${taskArgs.eid} to ${peerBytes32}`)
