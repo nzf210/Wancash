@@ -2,7 +2,7 @@ import type { UserProfile } from '@/types/auth'
 import { useDisconnect } from '@reown/appkit/vue'
 import { defineStore } from 'pinia'
 import { appkit } from '../components/config/appkit'
-import { useRouter } from 'vue-router'
+import { useRouter, type Router } from 'vue-router'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -20,6 +20,17 @@ export const useAuthStore = defineStore('auth', {
   },
 
   actions: {
+    goToPortfolio() {
+      const router = useRouter()
+      router.push({ name: 'portfolio' })
+    },
+    goToProfile(router : Router) {
+      router.push({ name: 'profile' })
+    },
+    goToSetting(router : Router) {
+      router.push({ name: 'settings' })
+    },
+
     // Parent akan memanggil ini saat wallet connect
     setAuthenticationStatus(authenticated: boolean) {
       this.isAuthenticated = authenticated
@@ -101,46 +112,5 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    handleProfileClick() {
-      console.log('Profile clicked')
-      // Navigasi ke halaman profile jika diperlukan
-      // this.navigateTo('/profile')
-    },
-
-    handleSettingsClick() {
-      console.log('Settings clicked')
-      // Navigasi ke halaman settings jika diperlukan
-      // this.navigateTo('/settings')
-    },
-
-    // ✅ PERBAIKAN: Method untuk navigasi tanpa reload
-    navigateTo(path: string) {
-      const router = useRouter()
-      router.push(path)
-    },
-
-    // ✅ Method khusus untuk portfolio
-    handlePortfolioClick() {
-      console.log('Navigating to portfolio')
-      this.navigateTo('/portfolio')
-    },
-
-    // ✅ Method khusus untuk transfer
-    handleTransferClick() {
-      console.log('Navigating to transfer')
-      this.navigateTo('/transfer')
-    },
-
-    // ✅ Method khusus untuk redemption
-    handleRedemptionClick() {
-      console.log('Navigating to redemption')
-      this.navigateTo('/redemption')
-    },
-
-    // ✅ Method khusus untuk dashboard
-    handleDashboardClick() {
-      console.log('Navigating to dashboard')
-      this.navigateTo('/')
-    }
   }
 })

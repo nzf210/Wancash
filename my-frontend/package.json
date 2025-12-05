@@ -29,6 +29,7 @@
     "@reown/appkit-adapter-wagmi": "^1.7.19",
     "@tailwindcss/vite": "^4.1.11",
     "@tanstack/vue-query": "^5.83.1",
+    "@vueuse/core": "^14.1.0",
     "@wagmi/core": "^2.19.0",
     "@wagmi/vue": "^0.1.27",
     "class-variance-authority": "^0.7.1",

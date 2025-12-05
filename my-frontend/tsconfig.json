@@ -15,9 +15,10 @@
     "module": "NodeNext",
     "baseUrl": ".",
     "paths": {
-    "@/*": ["./src/*"]
+      "@/*": ["./src/*"]
     },
     "types": ["@thirdweb-dev/vue/client","vue-sonner"],
-    "typeRoots": ["node_modules/@types", "src/types"]
+    "typeRoots": ["node_modules/@types", "src/types"],
+    "ignoreDeprecations": "6.0"
   }
 }

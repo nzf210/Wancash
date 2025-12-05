@@ -1,12 +1,15 @@
-<!-- src/modules/buy-token/pages/BuyTokenPage.vue -->
 <template>
-  <!-- <div class="container mx-auto w-full">
-    <h1 class="text-xl font-bold my-4 mx-auto w-fit">Buy Wancash</h1>
-  </div> -->
-  <!-- <TokenInfo /> -->
-  <BuyForm class="mt-6" />
+  <Portfolio :token="token" class="mt-6" />
 </template>
 
 <script setup lang="ts">
-import BuyForm from '@/modules/bridge/components/BrideToken.vue'
+import Portfolio from '@/modules/portfolio/components/PortfolioUser.vue'
+
+const token = {
+  name: 'Wancash',
+  symbol: 'WAN',
+  address: '0x6b175474e89094c44da98b954eedeac495271d0f',
+  decimals: 18
+}
+
 </script>

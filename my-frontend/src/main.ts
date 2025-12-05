@@ -13,11 +13,22 @@ import { LitElement } from 'lit'
 LitElement.enableWarning = function () {};
 
 import './assets/style.css' // Tailwind + ShadCN
+import type { Router } from 'vue-router'
 
 const pinia = createPinia()
+function initializeStores(router: Router) {
+  // Simpan router di pinia supaya bisa diakses dari store manapun
+  pinia.use(() => ({ $router: router }))
+}
+
 // Define adapter typ
 async function initializeApp() {
   const app = createApp(App)
+  app.use(router)
+  await router.isReady()
+
+  // Initialize stores
+  initializeStores(router)
 
   const queryClient = new QueryClient()
   app.use(WagmiPlugin, { config: wagmiConfig })
@@ -25,7 +36,6 @@ async function initializeApp() {
 
   // Setup plugins
   app.use(pinia)
-  app.use(router)
   await router.isReady()
 
   // Wait for DOM
