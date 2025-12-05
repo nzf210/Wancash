@@ -3,8 +3,8 @@ import buyWancash from './pages/BuyTokenPage.vue'
 
 export default [
   {
-    path: '/buyWancash',
-    name: 'Buy Wancash',
+    path: '/bridgeToken',
+    name: 'Bridge Token',
     component: buyWancash
   }
 ]

@@ -1,7 +1,7 @@
 <template>
   <div class="max-w-sm mx-auto">
     <Card
-      class="w-full bg-gradient-to-br from-purple-50 to-blue-50 border-2 border-purple-200 hover:border-purple-300 transition-all duration-300 hover:shadow-xl">
+      class="w-full bg-gradient-to-br from-purple-50 to-blue-50 dark:from-gray-800 dark:to-gray-900 border-2 border-purple-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-gray-600 transition-all duration-300 hover:shadow-xl dark:hover:shadow-2xl dark:shadow-gray-900">
       <CardHeader class="pb-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-3">
@@ -10,11 +10,12 @@
               SK
             </div>
             <div>
-              <CardTitle class="text-xl font-bold text-gray-800">Staking Wancash Token</CardTitle>
-              <p class="text-sm text-gray-600">SATKING</p>
+              <CardTitle class="text-xl font-bold text-gray-800 dark:text-white">Staking Wancash Token</CardTitle>
+              <p class="text-sm text-gray-600 dark:text-gray-300">SATKING</p>
             </div>
           </div>
-          <Badge variant="secondary" class="bg-green-100 text-green-700 hover:bg-green-200">
+          <Badge variant="secondary"
+            class="bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800">
             Active
           </Badge>
         </div>
@@ -22,35 +23,35 @@
 
       <CardContent class="space-y-4">
         <!-- Price Section -->
-        <div class="bg-white rounded-lg p-4 border">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border dark:border-gray-700">
           <div class="flex justify-between items-center mb-2">
-            <span class="text-sm text-gray-600">Current Price</span>
+            <span class="text-sm text-gray-600 dark:text-gray-400">Current Price</span>
             <span :class="priceChangeClass" class="text-sm font-medium">
               {{ priceChange > 0 ? '+' : '' }}{{ priceChange.toFixed(2) }}%
             </span>
           </div>
-          <div class="text-2xl font-bold text-gray-900">
+          <div class="text-2xl font-bold text-gray-900 dark:text-white">
             ${{ currentPrice.toLocaleString() }}
           </div>
         </div>
 
         <!-- Stats Grid -->
         <div class="grid grid-cols-2 gap-3">
-          <div class="bg-white rounded-lg p-3 border">
-            <div class="text-xs text-gray-500 mb-1">Market Cap</div>
-            <div class="font-semibold text-gray-900">${{ marketCap.toLocaleString() }}</div>
+          <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border dark:border-gray-700">
+            <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Market Cap</div>
+            <div class="font-semibold text-gray-900 dark:text-white">${{ marketCap.toLocaleString() }}</div>
           </div>
-          <div class="bg-white rounded-lg p-3 border">
-            <div class="text-xs text-gray-500 mb-1">Volume 24h</div>
-            <div class="font-semibold text-gray-900">${{ volume24h.toLocaleString() }}</div>
+          <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border dark:border-gray-700">
+            <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Volume 24h</div>
+            <div class="font-semibold text-gray-900 dark:text-white">${{ volume24h.toLocaleString() }}</div>
           </div>
-          <div class="bg-white rounded-lg p-3 border">
-            <div class="text-xs text-gray-500 mb-1">Total Supply</div>
-            <div class="font-semibold text-gray-900">{{ totalSupply.toLocaleString() }}</div>
+          <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border dark:border-gray-700">
+            <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Supply</div>
+            <div class="font-semibold text-gray-900 dark:text-white">{{ totalSupply.toLocaleString() }}</div>
           </div>
-          <div class="bg-white rounded-lg p-3 border">
-            <div class="text-xs text-gray-500 mb-1">Circulating</div>
-            <div class="font-semibold text-gray-900">{{ circulatingSupply.toLocaleString() }}</div>
+          <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border dark:border-gray-700">
+            <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Circulating</div>
+            <div class="font-semibold text-gray-900 dark:text-white">{{ circulatingSupply.toLocaleString() }}</div>
           </div>
         </div>
 
@@ -66,13 +67,15 @@
             </span>
           </Button>
           <Button @click="handleSell" variant="outline"
-            class="flex-1 border-purple-200 text-purple-600 hover:bg-purple-50" :disabled="loading">
+            class="flex-1 border-purple-200 dark:border-gray-600 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-gray-800"
+            :disabled="loading">
             Sell
           </Button>
         </div>
 
         <!-- Quick Info -->
-        <div class="flex items-center justify-between text-xs text-gray-500 pt-2 border-t">
+        <div
+          class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 pt-2 border-t dark:border-gray-700">
           <span>Last updated: {{ lastUpdated }}</span>
           <span class="flex items-center">
             <div class="w-2 h-2 bg-green-400 rounded-full mr-1 animate-pulse"></div>

@@ -64,22 +64,28 @@ const isScrolled = ref(false)
 // Menu items configuration
 const productMenuItems = [
   {
-    title: 'Beli Token',
-    description: 'Beli token untuk kebutuhan Anda',
-    href: '/buyWancash',
+    title: 'Redem',
+    description: 'Redem your token for gold',
+    href: '/redem',
     icon: '💰'
   },
   {
-    title: 'Riwayat Transaksi',
-    description: 'Lihat riwayat pembelian token Anda',
-    href: '/history',
+    title: 'Bridge',
+    description: 'Send your token to other chains',
+    href: '/bridgeToken',
     icon: '📋'
+  },
+  {
+    title: 'Send',
+    description: 'Send your token to other wallet',
+    href: '/sendToken',
+    icon: '💸'
   }
 ]
 
 const navigationItems = [
   {
-    title: 'Bantuan',
+    title: 'Support',
     href: '/help'
   }
 ]
@@ -142,7 +148,7 @@ onUnmounted(() => {
           <NavigationMenuList>
             <NavigationMenuItem>
               <NavigationMenuTrigger class="gap-2">
-                <span>Produk</span>
+                <span>Services</span>
               </NavigationMenuTrigger>
               <NavigationMenuContent>
                 <ul class="grid gap-3 p-6 md:w-[400px] lg:w-[500px]">

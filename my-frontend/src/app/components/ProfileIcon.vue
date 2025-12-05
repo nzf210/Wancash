@@ -36,6 +36,17 @@ const authStore = useAuthStore()
         Profil
       </DropdownMenuItem>
 
+      <DropdownMenuItem @click="authStore.handlePortfolioClick" class="cursor-pointer">
+        <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 8c-4.418 0 8-1.79 8-4s-3.582-4-8-4-8 1.79-8 4 3.582 4 8 4z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 12c4.418 0 8 1.79 8 4s-3.582 4-8 4-8-1.79-8-4 3.582-4 8-4z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 12h16" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16" />
+        </svg>
+        Portfolio
+      </DropdownMenuItem>
       <DropdownMenuItem @click="authStore.handleSettingsClick" class="cursor-pointer">
         <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
