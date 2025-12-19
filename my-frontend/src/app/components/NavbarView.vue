@@ -86,7 +86,7 @@ const productMenuItems = [
 const navigationItems = [
   {
     title: 'Support',
-    href: '/help'
+    href: '/support',
   }
 ]
 
@@ -135,8 +135,9 @@ onUnmounted(() => {
       <!-- Logo -->
       <div class="flex items-center gap-2">
         <RouterLink to="/" class="flex items-center gap-2 group">
-          <img src="@/assets/image/logo.jpg" alt="Wancash Logo" class="w-8 h-8 rounded-full logo-hover" />
-          <span class="text-xl font-bold text-primary transition-colors group-hover:text-primary">
+          <img src="@/assets/image/logo.jpg" alt="Wancash Logo"
+            class="w-8 h-8 rounded-full logo-hover mnnn n nm b bnmhjhhjg hyuumvib-1" />
+          <span class="text-xl font-bold text-primary transition-colors group-hover:text-primary pr-2">
             Wancash
           </span>
         </RouterLink>
@@ -187,7 +188,6 @@ onUnmounted(() => {
         <!-- Wallet Connect Button (Not Authenticated) -->
         <ThemeToggle />
         <WalletConnect v-if="!isAuthenticated" :isMobile="false" />
-
         <!-- Theme Toggle -->
 
         <!-- User Menu (Authenticated) -->

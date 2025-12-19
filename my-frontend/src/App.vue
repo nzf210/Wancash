@@ -6,9 +6,7 @@ provideTheme()
 
 
 <template>
-  <div>
-    <DefaultLayout>
-      <router-view />
-    </DefaultLayout>
-  </div>
+  <DefaultLayout>
+    <router-view />
+  </DefaultLayout>
 </template>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, defineProps, defineEmits } from 'vue'
+// import { ref } from 'vue'
 
 const evmWallets = [
   { name: 'Coinbase Smart Wallet', action: 'Connect', icon: 'https://cryptologos.cc/logos/coinbase-coinbase-logo.svg?v=024' },
@@ -32,7 +32,7 @@ const tonWallets = [
   { name: 'Tonkeeper', action: 'Connect', icon: 'https://cryptologos.cc/logos/ton-ton-logo.svg?v=024' },
 ]
 
-const emit = defineEmits(['close'])
+// const emit = defineEmits(['close'])
 
 </script>
 

@@ -12,7 +12,6 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps } from 'vue'
 
 interface Pool {
   id: number
@@ -21,5 +20,6 @@ interface Pool {
   apy: number
 }
 
-const props = defineProps<{ pool: Pool }>()
+defineProps<{ pool: Pool }>()
+
 </script>

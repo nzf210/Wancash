@@ -1,169 +1,68 @@
-<script lang="ts" setup>
-import { ref, watch, watchEffect } from 'vue'
-import {
-  useAppKit,
-  useAppKitNetwork,
-  useAppKitAccount,
-  type UseAppKitAccountReturn,
-  type UseAppKitNetworkReturn
-} from "@reown/appkit/vue"
-
-import {
-  useEstimateGas,
-  useSendTransaction,
-  useSignMessage,
-  type UseEstimateGasReturnType,
-  type UseSendTransactionReturnType,
-  type UseSignMessageReturnType
-} from '@wagmi/vue'
-import { parseGwei } from 'viem'
-import type { Address } from 'viem'
+<script setup lang="ts">
+import { watch } from 'vue'
+import { useAppKit, useAppKitAccount, type UseAppKitAccountReturn } from '@reown/appkit/vue'
+import { useWalletStore } from '@/app/stores/wallet.store'
 import ProfileIcon from './ProfileIcon.vue'
-import { useAuthStore } from '@/app/stores/auth'
-import { formatHexAddress } from '@/utils/format'
+import { supabase } from '@/utils/supabase'
 
-const authStore = useAuthStore()
-
-// Type for test transaction
-interface TestTransaction {
-  to: Address
-  value: ReturnType<typeof parseGwei>
-}
-
-const TEST_TX: TestTransaction = {
-  to: "0x50200216532355Fa9971074Ca352FA706346c04C",
-  value: parseGwei('0.00001')
-}
-
-// Wallet connection hooks
-// const { disconnect } = useDisconnect()
 const { open } = useAppKit()
-const openAppKit = () => open()
-const { caipNetwork, chainId } = useAppKitNetwork() as unknown as UseAppKitNetworkReturn
-
-console.log('caipNetwork', caipNetwork, chainId)
-const accountData = useAppKitAccount() as unknown as UseAppKitAccountReturn
-
-
-// Transaction hooks
-const { data: gas } = useEstimateGas({ ...TEST_TX }) as UseEstimateGasReturnType
-const { data: hash, sendTransaction, error } = useSendTransaction() as UseSendTransactionReturnType
-const { signMessageAsync } = useSignMessage() as UseSignMessageReturnType
-
-// State
-const txError = ref<Error | null>(null)
-const isLoading = ref(false)
-
-// Wallet actions
-
-
-const shortAddres = (address: string) => {
-  if (!address) return
-  return formatHexAddress(address)
-}
-
-
+const walletStore = useWalletStore()
 
 const connectWallet = async () => {
-  try {
-    // Misalnya kita mendapatkan data user dari wallet
-    await openAppKit()
-    const address = accountData.address
-    authStore.setUserProfile({
-      avatar: 'userData.avatar',
-      displayName: 'jhonss',
-      initials: shortAddres(address!),
-      email: shortAddres(address!) || ''
-    })
-  } catch (error) {
-    console.error('Failed to connect wallet:', error)
+  if (!walletStore.isConnected) {
+    open() // ✅ save the wallet to the store
   }
 }
+
+const accountData = useAppKitAccount() as unknown as UseAppKitAccountReturn
 
 watch(
-  () => accountData, // Langsung observe seluruh object
-  (newAccountData) => {
-    console.log('newAccountData', newAccountData)
-    if (newAccountData.isConnected && newAccountData.address && newAccountData.status === 'connected') {
-      authStore.setUserProfile({
-        avatar: 'userData.avatar',
-        displayName: 'jhonss',
-        initials: shortAddres(newAccountData.address!),
-        email: shortAddres(newAccountData.address!) || ''
-      })
-      authStore.setAuthenticationStatus(newAccountData.isConnected)
-      const appKitConection = localStorage.getItem('@appkit/connection_status')
-      if (appKitConection === 'connected') {
-        authStore.setAuthenticationStatus(true)
-      } else {
-        authStore.handleDisconnect()
-      }
+  () => walletStore.isConnected,
+  async (connected) => {
+    console.log('✅ Wallet address:', walletStore.address)
+    if (!connected || !walletStore.address) return
+
+    const { data: usrData, error: errGet } = await supabase.from('profiles').select('*').eq('wallet_address', walletStore.address)
+    if (errGet) {
+      console.error('❌ Supabase get error:', errGet)
+      return
+    }
+
+    if (usrData && usrData.length > 0) {
+      console.log('✅ Profile already exists')
+      return
+    }
+
+    const { error } = await supabase
+      .from('profiles')
+      .upsert(
+        {
+          wallet_address: walletStore.address,
+          last_login: new Date().toISOString()
+        },
+        { onConflict: 'wallet_address' }
+      )
+    console.log('✅ Wallet ChaindId:', walletStore.chainId)
+
+    if (error) {
+      console.error('❌ Supabase upsert error:', error)
+    } else {
+      console.log('✅ Profile recorded')
     }
   },
-  { deep: true } // Penting: aktifkan deep watch
+  { immediate: true }
 )
-
-// Message signing
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const handleSignMessage = async () => {
-  if (!accountData.address) return
-
-  try {
-    isLoading.value = true
-    const msg = "Hello Reown AppKit!"
-    const sig = await signMessageAsync({
-      message: msg,
-      account: accountData.address as `0x${string}`,
-    })
-    console.log("Signed message:", sig)
-  } catch (err) {
-    console.error("Sign message error:", err)
-    txError.value = err as Error
-  } finally {
-    isLoading.value = false
-  }
-}
-
-// Transaction handling
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const handleSendTx = async () => {
-  if (!gas.value) return
-
-  try {
-    isLoading.value = true
-    await sendTransaction({
-      ...TEST_TX,
-      gas: gas.value
-    })
-  } catch (err) {
-    console.error("Transaction error:", err)
-    txError.value = err as Error
-  } finally {
-    isLoading.value = false
-  }
-}
-
-// Watch for transaction state changes
-watchEffect(() => {
-  if (hash.value) {
-    console.log("Transaction hash:", hash.value)
-    txError.value = null
-  }
-  if (error.value) {
-    txError.value = error.value
-    console.error("Transaction error:", error.value)
-  }
-})
 
 defineProps<{
   isMobile: boolean
 }>()
 </script>
 
+
 <template>
   <div class="wallet-actions">
     <ProfileIcon v-if="accountData.isConnected && !isMobile" />
-    <button v-if="!accountData.isConnected" @click="connectWallet" class="connect-button">
+    <button v-else @click="connectWallet" class="connect-button">
       Connect Wallet
     </button>
   </div>
@@ -216,7 +115,8 @@ button {
 
 .connected-actions button:disabled {
   background: #f3f4f6;
-  color: #9ca3af;
+  color: #333333;
+  /* Updated text color with higher contrast */
   cursor: not-allowed;
 }
 

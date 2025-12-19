@@ -23,6 +23,8 @@ export default defineConfig({
     __DEV__: JSON.stringify(false), // Force Lit production mode
     'import.meta.env.PROD': JSON.stringify(true) // Jika diperlukan
   },
+  envDir: '.',
+  envPrefix: 'VITE_',
   build: {
     minify: 'terser',
     terserOptions: {

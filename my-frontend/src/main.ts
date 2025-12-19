@@ -3,13 +3,13 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from '@/app/router/index'
-import {  wagmiConfig } from '@/app/components/config/appkit'
 import { createPinia } from 'pinia'
-import { WagmiPlugin } from '@wagmi/vue'
+import { WagmiPlugin, type WagmiPluginOptions } from '@wagmi/vue'
+import { wagmiConfig } from '@/app/components/config/appkit'
 import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import { LitElement } from 'lit'
+import { useAuthStore } from './app/stores/auth'
 
-// Nonaktifkan warning Lit
 LitElement.enableWarning = function () {};
 
 import './assets/style.css' // Tailwind + ShadCN
@@ -17,28 +17,19 @@ import type { Router } from 'vue-router'
 
 const pinia = createPinia()
 function initializeStores(router: Router) {
-  // Simpan router di pinia supaya bisa diakses dari store manapun
   pinia.use(() => ({ $router: router }))
 }
-
-// Define adapter typ
 async function initializeApp() {
   const app = createApp(App)
   app.use(router)
   await router.isReady()
-
-  // Initialize stores
   initializeStores(router)
 
-  const queryClient = new QueryClient()
-  app.use(WagmiPlugin, { config: wagmiConfig })
-  app.use(VueQueryPlugin, { queryClient })
-
-  // Setup plugins
   app.use(pinia)
   await router.isReady()
 
-  // Wait for DOM
+  const queryClient = new QueryClient()
+
   await new Promise(resolve => {
     if (document.readyState === 'complete') {
       resolve(void 0)
@@ -47,7 +38,12 @@ async function initializeApp() {
     }
   })
 
-  // Mount app
+  app.use(WagmiPlugin, {config: wagmiConfig} as WagmiPluginOptions)
+  app.use(VueQueryPlugin, { queryClient })
+
+  const auth = useAuthStore()
+  await auth.init()
+
   const mount = () => {
     const rootElement = document.getElementById('app')
     if (!rootElement) {

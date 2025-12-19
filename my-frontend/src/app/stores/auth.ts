@@ -1,27 +1,32 @@
-import type { UserProfile } from '@/types/auth'
+import type { UserProfile } from '@/types/auth.d'
+
 import { useDisconnect } from '@reown/appkit/vue'
 import { defineStore } from 'pinia'
 import { appkit } from '../components/config/appkit'
-import { useRouter, type Router } from 'vue-router'
+import { type Router } from 'vue-router'
+import { supabase } from '@/utils/supabase'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     userProfile: null as UserProfile | null,
+    display_name: null as string | null,
     isLoading: false,
     error: null as Error | null,
     isAuthenticated: localStorage.getItem('@appkit/connection_status') === 'connected' || false,
+    wallet_address: null as string | null,
+    session: undefined as unknown,
+    ready: false
   }),
 
   getters: {
     userAvatar: (state) => state.userProfile?.avatar || 'https://github.com/shadcn.png',
-    userDisplayName: (state) => state.userProfile?.displayName || 'John Doe',
-    userInitials: (state) => state.userProfile?.initials || null,
+    userDisplayName: (state) => state.userProfile?.display_name || 'Wancash User',
+    userInitials: (state) => state.userProfile?.wallet_address || null,
     userEmail: (state) => state.userProfile?.email || null
   },
 
   actions: {
-    goToPortfolio() {
-      const router = useRouter()
+    goToPortfolio(router : Router) {
       router.push({ name: 'portfolio' })
     },
     goToProfile(router : Router) {
@@ -35,7 +40,6 @@ export const useAuthStore = defineStore('auth', {
     setAuthenticationStatus(authenticated: boolean) {
       this.isAuthenticated = authenticated
       localStorage.setItem('walletConnected', String(authenticated))
-
       // Simpan timestamp terakhir
       if (authenticated) {
         localStorage.setItem('lastConnection', Date.now().toString())
@@ -81,6 +85,9 @@ export const useAuthStore = defineStore('auth', {
 
     async logout() {
       // Kosongkan, implementasi di handleDisconnect
+      await supabase.auth.signOut()
+      this.session = null
+      this.userProfile = null
     },
 
     clearUserProfile() {
@@ -110,6 +117,24 @@ export const useAuthStore = defineStore('auth', {
       } finally {
         this.isLoading = false
       }
+    },
+    async init() {
+      const { data } = await supabase.auth.getSession()
+      this.session = data.session
+
+      if (this.session) {
+        await this.fetchProfile()
+      }
+
+      this.ready = true
+    },
+    async fetchProfile() {
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .single()
+
+      this.userProfile = data
     },
 
   }
