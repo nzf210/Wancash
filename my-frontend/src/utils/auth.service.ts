@@ -2,6 +2,10 @@
 import { ref } from 'vue'
 import { toast } from 'vue-sonner'
 
+// import { useAuthStore } from '@/app/stores/auth'
+
+// const authStore = useAuthStore()
+
 export interface User {
   id: string
   wallet_address: string
@@ -238,6 +242,7 @@ class AuthService {
         action: 'logout',
         token: this.authToken.value
       })
+      // authStore.handleDisconnect()
     } catch (error) {
       console.error('Logout error:', error)
     } finally {

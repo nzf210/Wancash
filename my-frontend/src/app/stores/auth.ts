@@ -6,6 +6,9 @@ import { appkit } from '../components/config/appkit'
 import { type Router } from 'vue-router'
 import { supabase } from '@/utils/supabase'
 import { authService } from '@/utils/auth.service'
+// import { useAuthStore as auth } from '@/app/stores/auth'
+
+// const authStore = auth()
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({

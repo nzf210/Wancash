@@ -11,24 +11,31 @@ import { toast } from 'vue-sonner'
 import { useConnection } from '@wagmi/vue'
 import { wagmiConfig } from './config/appkit'
 import { signMessage as signMessageAsync } from '@wagmi/core'
+import { useAuthStore } from '@/app/stores/auth'
 
 const { address, isConnected } = useConnection()
 
+
+const authStore = useAuthStore()
 // Local state
 const isLoading = ref(false)
 const error = ref('')
 const signMessage = ref('')
 const currentNonce = ref('')
 
-// Computed
+// Computed - HAPUS user computed karena sudah dari props
 const isAuthenticated = computed(() => authService.isAuthenticated)
+// const authInitialized = computed(() => authService.initialized.value)
 
-const user = computed(() => authService.user.value)
-const authInitialized = computed(() => authService.initialized.value)
+// Props - SIMPLIFIKASI props
+defineProps<{
+  isMobile: boolean
+}>()
 
+// Computed untuk cek kesamaan wallet - gunakan dari authService
 const isSameWallet = computed(() => {
-  if (!address.value || !user.value) return false
-  return address.value.toLowerCase() === user.value.wallet_address.toLowerCase()
+  if (!address.value || !authService.user.value) return false
+  return address.value.toLowerCase() === authService.user.value.wallet_address.toLowerCase()
 })
 
 const handleAutoLogin = async (): Promise<boolean> => {
@@ -44,7 +51,7 @@ const handleAutoLogin = async (): Promise<boolean> => {
 
     if (valid) {
       if (updatedUser) {
-        // update user state if any changes
+        // Update user state jika ada perubahan
         authService.user.value = updatedUser
         localStorage.setItem('user', JSON.stringify(updatedUser))
       }
@@ -52,7 +59,7 @@ const handleAutoLogin = async (): Promise<boolean> => {
       return true
     }
 
-    // invalid token and request new one
+    // Token invalid, minta sign baru
     return false
   } catch (err: unknown) {
     if (err instanceof Error) {
@@ -77,30 +84,30 @@ const handleSignAndLogin = async () => {
     return
   }
 
-  // check if auto-login is possible
+  // Cek jika auto-login mungkin
   if (isSameWallet.value && authService.isAuthenticated) {
     const autoLoggedIn = await handleAutoLogin()
     if (autoLoggedIn) {
-      return // auto login success, not need to sign
+      return // Auto login sukses, tidak perlu sign
     }
   }
 
-  // auto login or wallet not same, need to sign
+  // Auto login gagal atau wallet berbeda, perlu sign
   isLoading.value = true
   error.value = ''
 
   try {
-    // 1. Request nonce from server
+    // 1. Request nonce dari server
     const nonceResponse = await authService.requestNonce(address.value)
     currentNonce.value = nonceResponse.nonce
     signMessage.value = nonceResponse.message
 
-    // 2. Sign the message with wallet
+    // 2. Sign message dengan wallet
     const signature = await signMessageAsync(wagmiConfig, {
       message: nonceResponse.message
     })
 
-    // 3. Login with signature
+    // 3. Login dengan signature
     await authService.loginWithSignature(
       address.value,
       signature,
@@ -125,34 +132,19 @@ const handleSignAndLogin = async () => {
 
 // Watch untuk auto-login saat page load atau wallet reconnect
 onMounted(() => {
-  console.log('WalletConnect mounted, auth initialized:', authInitialized.value)
-  console.log('Current auth state:', {
-    isAuthenticated: authService.isAuthenticated,
-    user: user.value,
-    address: address.value
-  })
-
-  // is authenticated but wallet not connected
   if (authService.isAuthenticated && !isConnected.value) {
-    console.log('User authenticated but wallet not connected')
-    // showing toast message to connect wallet to continue session
-    toast.error('Please connect your wallet to continue')
+    toast.info('Please connect your wallet to continue')
   }
 })
 
-
-// Watch auto login when wallet connect
+// Watch auto login ketika wallet connect
 watch([isConnected, address], ([newConnected, newAddress]) => {
-  console.log('Wallet connection changed:', { newConnected, newAddress })
 
   if (newConnected && newAddress) {
-    console.log('Wallet connected:', newAddress)
 
-    // check wallet same stored user
-    if (authService.isAuthenticated && user.value) {
-      const isSame = newAddress.toLowerCase() === user.value.wallet_address.toLowerCase()
-      console.log('Is same wallet?', isSame)
-
+    // Cek wallet sama dengan stored user
+    if (authService.isAuthenticated && authService.user.value) {
+      const isSame = newAddress.toLowerCase() === authService.user.value.wallet_address.toLowerCase()
       if (isSame) {
         handleAutoLogin().then(success => {
           if (!success) {
@@ -170,26 +162,35 @@ watch([isConnected, address], ([newConnected, newAddress]) => {
 
 watch(isConnected, (newVal) => {
   if (!newVal && isAuthenticated.value) {
-    console.log('Wallet disconnected but user still authenticated')
-    authService.logout()
+    // console.log('Wallet disconnected but user still authenticated')
+    // authService.logout()
+    authStore.handleDisconnect()
   }
 })
-
-defineProps<{
-  isMobile: boolean
-}>()
 </script>
 
 <template>
   <div class="wallet-actions">
-    <ProfileIcon v-if="accountData.isConnected && isAuthenticated && !isMobile" :user="user" />
+    <ProfileIcon v-if="accountData.isConnected && isAuthenticated && !isMobile" :user="authService.user.value"
+      :auth-stores="{
+        walletAddress: authService.user.value?.wallet_address || null,
+        isConnected: accountData.isConnected,
+        userAvatar: authService.user.value?.avatar_url || null,
+        userDisplayName: authService.user.value?.username || 'User',
+        userInitials: (authService.user.value?.username || 'U').charAt(0).toUpperCase(),
+        userEmail: authService.user.value?.email || null,
+        network: 'Ethereum',
+        balance: '0.00',
+        handleDisconnect: () => {
+          authStore.handleDisconnect()
+        }
+      }" />
     <button v-else @click="connectWallet" class="connect-button" :disabled="isLoading">
       <span v-if="isLoading">Connecting...</span>
       <span v-else>Connect Wallet</span>
     </button>
   </div>
 </template>
-
 
 <style scoped>
 .wallet-actions {
