@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
 import { useAppKit, useAppKitAccount, type UseAppKitAccountReturn } from '@reown/appkit/vue'
 import ProfileIcon from './ProfileIcon.vue'
 
@@ -11,7 +11,6 @@ import { toast } from 'vue-sonner'
 import { useConnection } from '@wagmi/vue'
 import { wagmiConfig } from './config/appkit'
 import { signMessage as signMessageAsync } from '@wagmi/core'
-import { useWalletStore } from '../stores/wallet.store'
 
 const { address, isConnected } = useConnection()
 
@@ -23,20 +22,54 @@ const currentNonce = ref('')
 
 // Computed
 const isAuthenticated = computed(() => authService.isAuthenticated)
-const walletStore = useWalletStore()
 
-const connectWallet = async () => {
-  if (!walletStore.isConnected) {
-    open() // ✅ save the wallet to the store
+const user = computed(() => authService.user.value)
+const authInitialized = computed(() => authService.initialized.value)
+
+const isSameWallet = computed(() => {
+  if (!address.value || !user.value) return false
+  return address.value.toLowerCase() === user.value.wallet_address.toLowerCase()
+})
+
+const handleAutoLogin = async (): Promise<boolean> => {
+  if (!isSameWallet.value || !authService.token.value) return false
+
+  isLoading.value = true
+  error.value = ''
+
+  try {
+    const { valid, user: updatedUser } = await authService.validateTokenWithUser(
+      authService.token.value
+    )
+
+    if (valid) {
+      if (updatedUser) {
+        // update user state if any changes
+        authService.user.value = updatedUser
+        localStorage.setItem('user', JSON.stringify(updatedUser))
+      }
+      console.log('Session restored via auto-login')
+      return true
+    }
+
+    // invalid token and request new one
+    return false
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      error.value = err.message || 'Auto login failed'
+      console.error('Auto login error:', err)
+    }
+    return false
+  } finally {
+    isLoading.value = false
   }
 }
 
-watch([isConnected, address], () => {
-  if (isConnected.value && address.value) {
-    console.log('Wallet connected:', address.value)
-    handleSignAndLogin()
+const connectWallet = async () => {
+  if (!accountData.isConnected) {
+    open()
   }
-})
+}
 
 const handleSignAndLogin = async () => {
   if (!address.value) {
@@ -44,9 +77,17 @@ const handleSignAndLogin = async () => {
     return
   }
 
+  // check if auto-login is possible
+  if (isSameWallet.value && authService.isAuthenticated) {
+    const autoLoggedIn = await handleAutoLogin()
+    if (autoLoggedIn) {
+      return // auto login success, not need to sign
+    }
+  }
+
+  // auto login or wallet not same, need to sign
   isLoading.value = true
   error.value = ''
-
 
   try {
     // 1. Request nonce from server
@@ -55,8 +96,9 @@ const handleSignAndLogin = async () => {
     signMessage.value = nonceResponse.message
 
     // 2. Sign the message with wallet
-    // const signature = signMessageAsync.mutate({message: nonceResponse.message})0
-    const signature = await signMessageAsync(wagmiConfig, { message: nonceResponse.message })
+    const signature = await signMessageAsync(wagmiConfig, {
+      message: nonceResponse.message
+    })
 
     // 3. Login with signature
     await authService.loginWithSignature(
@@ -74,7 +116,6 @@ const handleSignAndLogin = async () => {
       error.value = err.message || 'Authentication failed';
       console.error('Authentication error:', err);
     } else {
-      // Handle the case when err is not an instance of Error
       console.error('Unknown error authenticating:', err);
     }
   } finally {
@@ -82,13 +123,55 @@ const handleSignAndLogin = async () => {
   }
 }
 
-// Watch for wallet connection changes
+// Watch untuk auto-login saat page load atau wallet reconnect
+onMounted(() => {
+  console.log('WalletConnect mounted, auth initialized:', authInitialized.value)
+  console.log('Current auth state:', {
+    isAuthenticated: authService.isAuthenticated,
+    user: user.value,
+    address: address.value
+  })
+
+  // is authenticated but wallet not connected
+  if (authService.isAuthenticated && !isConnected.value) {
+    console.log('User authenticated but wallet not connected')
+    // showing toast message to connect wallet to continue session
+    toast.error('Please connect your wallet to continue')
+  }
+})
+
+
+// Watch auto login when wallet connect
+watch([isConnected, address], ([newConnected, newAddress]) => {
+  console.log('Wallet connection changed:', { newConnected, newAddress })
+
+  if (newConnected && newAddress) {
+    console.log('Wallet connected:', newAddress)
+
+    // check wallet same stored user
+    if (authService.isAuthenticated && user.value) {
+      const isSame = newAddress.toLowerCase() === user.value.wallet_address.toLowerCase()
+      console.log('Is same wallet?', isSame)
+
+      if (isSame) {
+        handleAutoLogin().then(success => {
+          if (!success) {
+            handleSignAndLogin()
+          }
+        })
+      } else {
+        handleSignAndLogin()
+      }
+    } else if (!authService.isAuthenticated) {
+      handleSignAndLogin()
+    }
+  }
+})
+
 watch(isConnected, (newVal) => {
   if (!newVal && isAuthenticated.value) {
-    // Wallet disconnected but user still authenticated
-    // You might want to logout or show warning
-    authService.logout()
     console.log('Wallet disconnected but user still authenticated')
+    authService.logout()
   }
 })
 
@@ -97,15 +180,16 @@ defineProps<{
 }>()
 </script>
 
-
 <template>
   <div class="wallet-actions">
-    <ProfileIcon v-if="accountData.isConnected && !isMobile" />
-    <button v-else @click="connectWallet" class="connect-button">
-      Connect Wallet
+    <ProfileIcon v-if="accountData.isConnected && isAuthenticated && !isMobile" :user="user" />
+    <button v-else @click="connectWallet" class="connect-button" :disabled="isLoading">
+      <span v-if="isLoading">Connecting...</span>
+      <span v-else>Connect Wallet</span>
     </button>
   </div>
 </template>
+
 
 <style scoped>
 .wallet-actions {

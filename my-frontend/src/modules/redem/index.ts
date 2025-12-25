@@ -4,6 +4,10 @@ export default [
   {
     path: '/redem',
     name: 'Redemption Token',
-    component: TransferPage
+    component: TransferPage,
+    meta: {
+      title: 'Redemption Token',
+      requiresAuth: true
+    }
   }
 ]

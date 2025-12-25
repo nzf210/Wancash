@@ -5,6 +5,10 @@ export default [
   {
     path: '/bridgeToken',
     name: 'Bridge Token',
-    component: buyWancash
+    component: buyWancash,
+    meta: {
+      title: 'Bridge Token',
+      requiresAuth: true
+    }
   }
 ]

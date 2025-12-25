@@ -4,7 +4,6 @@ import { provideTheme } from '@/app/components/providers/theme-provider'
 provideTheme()
 </script>
 
-
 <template>
   <DefaultLayout>
     <router-view />

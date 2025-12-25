@@ -34,8 +34,8 @@ export const useBridgeStore = defineStore('bridge', {
         state.fromToken &&
         state.toToken &&
         state.amount &&
-        parseFloat(state.amount) > 0 &&
-        parseFloat(state.amount) >= 10 &&
+        Number.parseFloat(state.amount) > 0 &&
+        Number.parseFloat(state.amount) >= 10 &&
         state.fromChain.id !== state.toChain.id
       )
     },
@@ -43,14 +43,14 @@ export const useBridgeStore = defineStore('bridge', {
     bridgeFee: (state): string => {
       if (!state.amount || !state.fromChain) return '0.00'
       const feePercent = state.fromChain.fee || 0.1
-      const fee = (parseFloat(state.amount) * feePercent) / 100
+      const fee = (Number.parseFloat(state.amount) * feePercent) / 100
       return fee.toFixed(4)
     },
 
     estimatedAmount: (state): string => {
       if (!state.amount) return '0.00'
-      const fee = parseFloat(state.bridgeFee)
-      const estimated = parseFloat(state.amount) - fee
+      const fee = Number.parseFloat(state.bridgeFee)
+      const estimated = Number.parseFloat(state.amount) - fee
       return estimated > 0 ? estimated.toFixed(4) : '0.00'
     }
   },

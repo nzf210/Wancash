@@ -5,6 +5,10 @@ export default [
   {
     path: '/sendToken',
     name: 'Sending Token',
-    component: buyWancash
+    component: buyWancash,
+    meta: {
+      title: 'Sending Token',
+      requiresAuth: true
+    }
   }
 ]

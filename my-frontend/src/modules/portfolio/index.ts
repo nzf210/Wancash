@@ -9,7 +9,11 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/portfolio',
     name: 'portfolio',
-    component: buyWancash
+    component: buyWancash,
+    meta: {
+      title: 'Portfolio',
+      requiresAuth: true
+    }
   }
 ]
 
