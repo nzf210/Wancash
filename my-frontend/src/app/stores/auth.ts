@@ -5,6 +5,7 @@ import { defineStore } from 'pinia'
 import { appkit } from '../components/config/appkit'
 import { type Router } from 'vue-router'
 import { supabase } from '@/utils/supabase'
+import { authService } from '@/utils/auth.service'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -109,6 +110,7 @@ export const useAuthStore = defineStore('auth', {
         this.isLoading = true
         const { disconnect } = useDisconnect()
         await disconnect()
+        authService.logout()
         this.clearUserProfile()
         this.clearSession()
         localStorage.removeItem('walletConnected')

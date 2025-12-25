@@ -1,11 +1,28 @@
 <script setup lang="ts">
-import { watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useAppKit, useAppKitAccount, type UseAppKitAccountReturn } from '@reown/appkit/vue'
-import { useWalletStore } from '@/app/stores/wallet.store'
 import ProfileIcon from './ProfileIcon.vue'
-import { supabase } from '@/utils/supabase'
 
 const { open } = useAppKit()
+const accountData = useAppKitAccount() as unknown as UseAppKitAccountReturn
+
+import { authService } from '@/utils/auth.service'
+import { toast } from 'vue-sonner'
+import { useConnection } from '@wagmi/vue'
+import { wagmiConfig } from './config/appkit'
+import { signMessage as signMessageAsync } from '@wagmi/core'
+import { useWalletStore } from '../stores/wallet.store'
+
+const { address, isConnected } = useConnection()
+
+// Local state
+const isLoading = ref(false)
+const error = ref('')
+const signMessage = ref('')
+const currentNonce = ref('')
+
+// Computed
+const isAuthenticated = computed(() => authService.isAuthenticated)
 const walletStore = useWalletStore()
 
 const connectWallet = async () => {
@@ -14,44 +31,66 @@ const connectWallet = async () => {
   }
 }
 
-const accountData = useAppKitAccount() as unknown as UseAppKitAccountReturn
+watch([isConnected, address], () => {
+  if (isConnected.value && address.value) {
+    console.log('Wallet connected:', address.value)
+    handleSignAndLogin()
+  }
+})
 
-watch(
-  () => walletStore.isConnected,
-  async (connected) => {
-    console.log('✅ Wallet address:', walletStore.address)
-    if (!connected || !walletStore.address) return
+const handleSignAndLogin = async () => {
+  if (!address.value) {
+    toast.error('Wallet not connected')
+    return
+  }
 
-    const { data: usrData, error: errGet } = await supabase.from('profiles').select('*').eq('wallet_address', walletStore.address)
-    if (errGet) {
-      console.error('❌ Supabase get error:', errGet)
-      return
-    }
+  isLoading.value = true
+  error.value = ''
 
-    if (usrData && usrData.length > 0) {
-      console.log('✅ Profile already exists')
-      return
-    }
 
-    const { error } = await supabase
-      .from('profiles')
-      .upsert(
-        {
-          wallet_address: walletStore.address,
-          last_login: new Date().toISOString()
-        },
-        { onConflict: 'wallet_address' }
-      )
-    console.log('✅ Wallet ChaindId:', walletStore.chainId)
+  try {
+    // 1. Request nonce from server
+    const nonceResponse = await authService.requestNonce(address.value)
+    currentNonce.value = nonceResponse.nonce
+    signMessage.value = nonceResponse.message
 
-    if (error) {
-      console.error('❌ Supabase upsert error:', error)
+    // 2. Sign the message with wallet
+    // const signature = signMessageAsync.mutate({message: nonceResponse.message})0
+    const signature = await signMessageAsync(wagmiConfig, { message: nonceResponse.message })
+
+    // 3. Login with signature
+    await authService.loginWithSignature(
+      address.value,
+      signature,
+      nonceResponse.nonce
+    )
+
+    // 4. Clear temporary state
+    signMessage.value = ''
+    currentNonce.value = ''
+
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      error.value = err.message || 'Authentication failed';
+      console.error('Authentication error:', err);
     } else {
-      console.log('✅ Profile recorded')
+      // Handle the case when err is not an instance of Error
+      console.error('Unknown error authenticating:', err);
     }
-  },
-  { immediate: true }
-)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Watch for wallet connection changes
+watch(isConnected, (newVal) => {
+  if (!newVal && isAuthenticated.value) {
+    // Wallet disconnected but user still authenticated
+    // You might want to logout or show warning
+    authService.logout()
+    console.log('Wallet disconnected but user still authenticated')
+  }
+})
 
 defineProps<{
   isMobile: boolean

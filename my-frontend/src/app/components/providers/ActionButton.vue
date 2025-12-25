@@ -8,7 +8,7 @@ import {
   type UseAppKitAccountReturn,
   type UseAppKitNetworkReturn
 } from "@reown/appkit/vue"
-import { networks } from "@/app/components/config/index"
+import { networks } from "@/app/components/config/wagmi"
 import {
   useEstimateGas,
   useSendTransaction,

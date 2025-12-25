@@ -1,5 +1,3 @@
-// ===== file: main.ts =====
-// src/main.ts
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from '@/app/router/index'
@@ -12,7 +10,7 @@ import { useAuthStore } from './app/stores/auth'
 
 LitElement.enableWarning = function () {};
 
-import './assets/style.css' // Tailwind + ShadCN
+import './assets/style.css'
 import type { Router } from 'vue-router'
 
 const pinia = createPinia()
@@ -20,6 +18,8 @@ function initializeStores(router: Router) {
   pinia.use(() => ({ $router: router }))
 }
 async function initializeApp() {
+  try {
+
   const app = createApp(App)
   app.use(router)
   await router.isReady()
@@ -55,24 +55,26 @@ async function initializeApp() {
   }
 
   mount()
+
+  } catch (error : unknown) {
+    const message = error instanceof Error ? error.message : String(error)
+    console.error('💥 Application initialization failed:', error)
+    document.body.innerHTML = `
+      <div style="padding:2rem;font-family:sans-serif;text-align:center;">
+        <h1>Application Error</h1>
+        <p style="color:#666;margin:1rem 0;">${message}</p>
+        <button onclick="window.location.reload()" style="
+          padding:.5rem 1rem;
+          background:#007bff;
+          color:#fff;
+          border:none;
+          border-radius:4px;
+          cursor:pointer;
+        ">Reload Application</button>
+      </div>
+    `
+  }
 }
 
-// Initialize with error handling
-initializeApp().catch((error) => {
-  console.error('💥 Application initialization failed:', error)
-  document.body.innerHTML = `
-    <div style="padding: 2rem; font-family: sans-serif; text-align: center;">
-      <h1>Application Error</h1>
-      <p style="color: #666; margin: 1rem 0;">${error.message}</p>
-      <button onclick="window.location.reload()" style="
-        padding: 0.5rem 1rem;
-        background: #007bff;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-      ">Reload Application</button>
-    </div>
-  `
-})
+await initializeApp()
 
