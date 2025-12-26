@@ -41,7 +41,7 @@ interface ValidateTokenResponse {
 
 class AuthService {
   private readonly baseUrl: string
-  private readonly currentUser = ref<User | null>(null)
+  currentUser = ref<User | null>(null)
   private readonly authToken = ref<string | null>(null)
   private readonly isLoading = ref(false)
   private readonly isInitialized = ref(false) // ✅ TAMBAHKAN: track initialization

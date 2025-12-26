@@ -2,6 +2,7 @@
 import { createAppKit } from '@reown/appkit/vue'
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi'
 import { supportedNetworks } from '@/app/components/config/wagmi'
+
 export const projectId = import.meta.env.VITE_PROJECT_ID || ""
 
 export const wagmiAdapter = new WagmiAdapter({
@@ -19,7 +20,7 @@ export const appkit = createAppKit({
     name: 'Wancash Gold',
     description: 'Wancash gold for exchange and trading purposes',
     url: globalThis.location.origin,
-    icons: ['https://your-app-logo.png']
+    icons: [`${globalThis.location.origin}/wancash.png`]
   },
   debug: import.meta.env.VITE_NODE_ENV === 'development',
   enableWalletGuide: true,

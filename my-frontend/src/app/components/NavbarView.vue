@@ -24,9 +24,11 @@ import ThemeToggle from './ThemeToggle.vue'
 import WalletConnect from './WalletConnect.vue'
 import ProfileIcon from './ProfileIcon.vue'
 import { useAppKitAccount, type UseAppKitAccountReturn } from '@reown/appkit/vue'
+import { authService } from '@/utils/auth.service'
+import { useAuthStore } from '@/app/stores/auth'
 
 const accountData = useAppKitAccount() as unknown as UseAppKitAccountReturn
-const isAuthenticated = accountData.isConnected
+const isAuthenticated = ref<boolean>(authService.isAuthenticated) // accountData.isConnected
 interface Props {
   user?: {
     name?: string
@@ -104,10 +106,6 @@ const closeMobileMenu = () => {
   isMobileMenuOpen.value = false
 }
 
-// Event handlers
-// const handleLogin = () => {
-//   emit('login')
-// }
 
 const handleNotificationClick = () => {
   emit('notificationClick')
@@ -121,6 +119,8 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
 })
+
+const authStore = useAuthStore()
 </script>
 
 <template>
@@ -241,11 +241,20 @@ onUnmounted(() => {
             <SheetHeader>
               <div>
                 <SheetTitle class="text-left">Menu</SheetTitle>
-                <div>
-                  {{ isAuthenticated }}
-                </div>
                 <div class="absolute top-2  right-12" v-if="accountData.isConnected">
-                  <ProfileIcon />
+                  <ProfileIcon :user="authService.user.value" :auth-stores="{
+                    walletAddress: authService.user.value?.wallet_address || null,
+                    isConnected: accountData.isConnected,
+                    userAvatar: authService.user.value?.avatar_url || null,
+                    userDisplayName: authService.user.value?.username || 'User',
+                    userInitials: (authService.user.value?.username || 'U').charAt(0).toUpperCase(),
+                    userEmail: authService.user.value?.email || null,
+                    network: 'Ethereum',
+                    balance: '0.00',
+                    handleDisconnect: () => {
+                      authStore.handleDisconnect()
+                    }
+                  }" />
                 </div>
               </div>
             </SheetHeader>
@@ -273,7 +282,7 @@ onUnmounted(() => {
 
               <!-- Mobile Actions -->
               <div class="space-y-2 pt-4 border-t">
-                <div v-if="!isAuthenticated">
+                <div v-if="!isAuthenticated && !accountData.isConnected">
                   <WalletConnect :is-mobile="true" />
                 </div>
               </div>
