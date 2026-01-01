@@ -1,4 +1,4 @@
-import { authService } from '@/utils/auth.service';
+// src/app/router/index.ts
 import { nextTick } from 'vue';
 import {
   createRouter,
@@ -24,24 +24,6 @@ for (const path in modules) {
   }
 }
 
-// Helper function to validate authentication
-const validateAuthentication = async (): Promise<boolean> => {
-  if (!authService.isAuthenticated) {
-    return false;
-  }
-
-  const token = authService.token.value;
-  if (!token) {
-    return false;
-  }
-
-  try {
-    return await authService.validateToken(token);
-  } catch {
-    return false;
-  }
-};
-
 // Modern Vue Router 4 authentication guard (return-based navigation)
 const authGuard = async (to: RouteLocationNormalized): Promise<void | string | boolean> => {
   const requiresAuth = to.matched.some((record) => record.meta.requiresAuth as boolean | undefined);
@@ -50,13 +32,17 @@ const authGuard = async (to: RouteLocationNormalized): Promise<void | string | b
     return; // Proceed with navigation
   }
 
-  const isAuthenticated = await validateAuthentication();
+  // Lazy import the store to ensure Pinia and other contexts are available
+  const { useAuth } = await import('@/app/composables/useAuth');
+  const { checkAuth, isAuthenticated , user} = useAuth();
 
-  if (isAuthenticated) {
+  await checkAuth();
+
+  if ( user.value && isAuthenticated) {
     return; // Proceed with navigation
   }
 
-  return '/'; // Redirect to login
+  return '/'; // Redirect to login or home route
 };
 
 // Title guard

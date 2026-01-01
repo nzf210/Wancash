@@ -48,6 +48,7 @@ const handleNotificationClick = () => {
 </script>
 
 <template>
+
   <div id="app" class="min-h-screen flex flex-col">
     <!-- Dynamic Navbar with all props -->
     <DynamicNavbar :user="authStore.isAuthenticated ? currentUser : undefined"

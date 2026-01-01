@@ -19,7 +19,12 @@
     "type-check": "vue-tsc --build",
     "lint": "eslint . --fix",
     "format": "prettier --write src/",
-    "gen-types": "bunx supabase gen types typescript --project-id lkukgmezfsezunqhrabg > src/types/supabase.d.ts"
+    "gen-types": "bunx supabase gen types typescript --project-id lkukgmezfsezunqhrabg > src/types/supabase.d.ts",
+    "c:dev": "cd cloude-flare-wancash && bun run dev",
+    "c:deploy": "cd cloude-flare-wancash && bun run deploy",
+    "c:logs": "cd cloude-flare-wancash && bun run logs",
+    "c:test": "cd cloude-flare-wancash && bun run test:local",
+    "c:env": "bun run cloude-flare-wancash/scripts/generate-env-only.ts"
   },
   "dependencies": {
     "@pancakeswap/sdk": "^5.8.15",
@@ -76,7 +81,8 @@
     "vite": "^7.0.6",
     "vite-plugin-node-polyfills": "^0.24.0",
     "vite-plugin-vue-devtools": "^8.0.0",
-    "vue-tsc": "^3.0.4"
+    "vue-tsc": "^3.0.4",
+    "wrangler": "^4.54.0"
   },
   "browser": {
     "lit-html": "./node_modules/lit-html/development/lit-html.js",

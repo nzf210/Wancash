@@ -30,6 +30,16 @@ export default defineConfig({
     terserOptions: {
       maxWorkers: 4
     },
+  },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8787', // Cloudflare Worker local
+        changeOrigin: true,
+        secure: false,
+        ws: true
+      }
+    }
   }
 
 })

@@ -1,17 +1,17 @@
+// src/main.ts
 import { createApp } from 'vue'
 import App from './App.vue'
-import router from '@/app/router/index'
 import { createPinia } from 'pinia'
 import { WagmiPlugin, type WagmiPluginOptions } from '@wagmi/vue'
 import { wagmiConfig } from '@/app/components/config/appkit'
 import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import { LitElement } from 'lit'
-import { useAuthStore } from './app/stores/auth'
-
-LitElement.enableWarning = function () {};
+import router from '@/app/router/index'
+import type { Router } from 'vue-router'
 
 import './assets/style.css'
-import type { Router } from 'vue-router'
+
+LitElement.enableWarning = function () {};
 
 const pinia = createPinia()
 function initializeStores(router: Router) {
@@ -20,41 +20,35 @@ function initializeStores(router: Router) {
 async function initializeApp() {
   try {
 
-  const app = createApp(App)
-  app.use(router)
-  await router.isReady()
-  initializeStores(router)
+    const app = createApp(App)
+    app.use(pinia)  // Install Pinia first to establish the active context
+    app.use(WagmiPlugin, {config: wagmiConfig , reconnectOnMount: true} as WagmiPluginOptions)  // Install Wagmi next
+    app.use(router)  // Install router after Pinia and Wagmi
+    await router.isReady()
+    initializeStores(router)
 
-  app.use(pinia)
-  await router.isReady()
+    const queryClient = new QueryClient()
 
-  const queryClient = new QueryClient()
+    await new Promise(resolve => {
+      if (document.readyState === 'complete') {
+        resolve(void 0)
+      } else {
+        document.addEventListener('DOMContentLoaded', () => resolve(void 0))
+      }
+    })
 
-  await new Promise(resolve => {
-    if (document.readyState === 'complete') {
-      resolve(void 0)
-    } else {
-      document.addEventListener('DOMContentLoaded', () => resolve(void 0))
+    app.use(VueQueryPlugin, { queryClient })
+    const mount = () => {
+      const rootElement = document.getElementById('app')
+      if (!rootElement) {
+        const fallbackElement = document.createElement('div')
+        fallbackElement.id = 'app'
+        document.body.appendChild(fallbackElement)
+      }
+      app.mount('#app')
     }
-  })
 
-  app.use(WagmiPlugin, {config: wagmiConfig} as WagmiPluginOptions)
-  app.use(VueQueryPlugin, { queryClient })
-
-  const auth = useAuthStore()
-  await auth.init()
-
-  const mount = () => {
-    const rootElement = document.getElementById('app')
-    if (!rootElement) {
-      const fallbackElement = document.createElement('div')
-      fallbackElement.id = 'app'
-      document.body.appendChild(fallbackElement)
-    }
-    app.mount('#app')
-  }
-
-  mount()
+    mount()
 
   } catch (error : unknown) {
     const message = error instanceof Error ? error.message : String(error)
@@ -77,4 +71,3 @@ async function initializeApp() {
 }
 
 await initializeApp()
-

@@ -23,7 +23,7 @@ export const appkit = createAppKit({
     icons: [`${globalThis.location.origin}/wancash.png`]
   },
   debug: import.meta.env.VITE_NODE_ENV === 'development',
-  enableWalletGuide: true,
+  enableWalletGuide: false,
   themeMode: 'dark',
   themeVariables: {
     '--w3m-z-index': 1000
