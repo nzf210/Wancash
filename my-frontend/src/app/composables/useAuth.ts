@@ -5,6 +5,7 @@ import { config } from '@/app/components/config/wagmi'  // Import your Wagmi con
 import { z } from 'zod';
 import { toast } from 'vue-sonner';
 import { isAddressEqual } from 'viem';
+import { useRouter } from 'vue-router';
 
 const nonceSchema = z.object({
   address: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
@@ -18,7 +19,7 @@ export const useAuth = () => {
   const chainId = ref<number | undefined>(0);
   const isConnected = ref(false);
   const recentChainChange = ref(false);  // To ignore false disconnects after chain switch
-
+  const router = useRouter()
   // State
   const isAuthenticated = ref(false);
   const user = ref<unknown>(null);
@@ -133,6 +134,13 @@ export const useAuth = () => {
         isAuthenticated.value = false;
         user.value = null;
         toast.info('Logged out successfully');
+        localStorage.removeItem('auth_state');
+        try {
+          await router.push('/');
+        } catch (error) {
+          console.error('Navigation failed:', error);
+        }
+
       } else {
         toast.error('Logout failed: ' + response.statusText);
       }
