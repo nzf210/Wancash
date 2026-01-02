@@ -40,7 +40,7 @@ export default defineConfig(({ mode }) => { // Ambil mode dari Vite (dev/build)
     },
     define: {
       __DEV__: JSON.stringify(mode === 'development'), // Dinamis berdasarkan mode
-      'import.meta.env.PROD': JSON.stringify(mode === 'production'),
+      // 'import.meta.env.PROD': JSON.stringify(mode === 'production'),
     },
     envDir: '.', // Root project
     envPrefix: 'VITE_',

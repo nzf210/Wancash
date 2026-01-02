@@ -3,7 +3,7 @@ import { createAppKit } from '@reown/appkit/vue'
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi'
 import { supportedNetworks } from '@/app/components/config/wagmi'
 
-export const projectId = import.meta.env.VITE_PROJECT_ID || ""
+export const projectId = process.env.VITE_PROJECT_ID || ""
 
 export const wagmiAdapter = new WagmiAdapter({
   networks: [...supportedNetworks],
@@ -22,7 +22,7 @@ export const appkit = createAppKit({
     url: globalThis.location.origin,
     icons: [`${globalThis.location.origin}/wancash.png`]
   },
-  debug: import.meta.env.VITE_NODE_ENV === 'development',
+  debug: process.env.VITE_NODE_ENV === 'development',
   enableWalletGuide: false,
   themeMode: 'dark',
   themeVariables: {

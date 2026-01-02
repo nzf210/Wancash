@@ -15,7 +15,7 @@ import {
   arbitrumSepolia
 } from '@reown/appkit/networks'
 
-export const supportedNetworks = typeof import.meta.env.VITE_NODE_ENV === 'string' && import.meta.env.VITE_NODE_ENV !== 'production' ?
+export const supportedNetworks = typeof process.env.VITE_NODE_ENV === 'string' && process.env.VITE_NODE_ENV !== 'production' ?
                           [sepolia, polygonAmoy, avalancheFuji , bscTestnet, arbitrumSepolia] as const :
                           [mainnet, polygon, arbitrum, avalanche, bsc] as const;
 
