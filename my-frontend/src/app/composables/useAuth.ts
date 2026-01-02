@@ -74,14 +74,16 @@ export const useAuth = () => {
         throw new Error('Ethereum provider not found');
       }
 
-      const signature = await ((globalThis.window.ethereum.request as (args: { method: string; params?: unknown[] }) => Promise<string>))({
-        method: 'eth_signTypedData_v4',
+      const signature = await (globalThis.window.ethereum.request as (args: { method: string; params?: unknown[] }) => Promise<string>)({
+      method: 'eth_signTypedData_v4',
         params: [address, JSON.stringify(message)]
-      });
+     });
 
-      if (!signature) {
-        throw new Error('User rejected signature');
+
+     if (!signature) {
+       throw new Error('User rejected signature');
       }
+
 
       const verifyResponse = await fetch('/api/auth/verify', {
         method: 'POST',
@@ -116,7 +118,7 @@ export const useAuth = () => {
       chainId.value = chain_id;
 
       return data;
-    } finally {
+  } finally {
       loading.value = false;
     }
   };

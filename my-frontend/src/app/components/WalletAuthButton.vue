@@ -182,7 +182,7 @@ const handleAuth = async () => {
     if (error instanceof Error) {
       toast.error(error.message || 'Authentication failed');
     } else {
-      toast.error('Authentication failed');
+      toast.error('Authentication failed.');
     }
   }
 }
