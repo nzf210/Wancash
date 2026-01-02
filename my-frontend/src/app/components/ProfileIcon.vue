@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge'
 import { Copy, User, BriefcaseBusiness, Settings, LogOut } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import { ref } from 'vue' // ✅ TAMBAHKAN
+import ReadContract from './ReadContract.vue'
 
 const { goToPortfolio, goToProfile, goToSettings } = useNavigate()
 
@@ -77,11 +78,6 @@ const formatWalletAddress = (address: string | null): string => {
   return `${address.slice(0, 6)}...${address.slice(-4)}`
 }
 
-const formatBalance = (balance: number | string | null): string => {
-  if (!balance) return '0.00'
-  if (typeof balance === 'string') return balance
-  return balance.toFixed(4)
-}
 
 const copyToClipboard = async () => {
   if (!props.authStores.walletAddress) return
@@ -222,9 +218,7 @@ const copyToClipboard = async () => {
                   {{ authStores.network }}
                 </Badge>
               </div>
-              <div class="text-xl font-bold text-gray-900 dark:text-white mb-1">
-                {{ formatBalance(authStores.balance || 0) }}
-              </div>
+              <ReadContract />
               <div class="flex items-center justify-between text-sm">
                 <span class="text-gray-500 dark:text-gray-400">≈ ${{ (Number(authStores.balance) *
                   3500).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</span>

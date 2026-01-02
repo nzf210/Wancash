@@ -11,7 +11,7 @@ import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig(({ mode }) => { // Ambil mode dari Vite (dev/build)
   // Tentuin target proxy dinamis berdasarkan environment
-  const proxyTarget = process.env.VITE_CLOUDE_WORKER! ?? 'http://localhost:8787'; // Default local buat dev
+  const proxyTarget = process.env.VITE_CLOUDE_WORKER ?? 'http://localhost:8787'; // Default local buat dev
 
   // Pilih agent berdasarkan protocol target (http atau https)
   const isHttps = proxyTarget.startsWith('https://');
