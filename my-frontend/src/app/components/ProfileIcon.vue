@@ -215,11 +215,11 @@ const copyToClipboard = async () => {
           <div>
             <p class="text-xs font-medium mb-2 text-gray-600 dark:text-gray-400 uppercase tracking-wider">BALANCE</p>
             <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border dark:border-gray-700">
-              <div class="flex justify-between items-center mb-1">
-                <span class="text-sm text-gray-600 dark:text-gray-400">ETH Balance</span>
+              <div v-if="authStores.network" class="flex justify-between items-center mb-1">
+                <span class="text-sm text-gray-600 dark:text-gray-400">WCH Balance &nbsp;</span>
                 <Badge variant="outline"
                   class="text-xs px-2 py-0.5 border-purple-200 dark:border-gray-600 text-purple-600 dark:text-purple-400">
-                  Ethereum
+                  {{ authStores.network }}
                 </Badge>
               </div>
               <div class="text-xl font-bold text-gray-900 dark:text-white mb-1">

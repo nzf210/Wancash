@@ -12,10 +12,10 @@
       class="connect-button">
       <span v-if="authLoading" class="spinner"></span>
       <span v-else class="wallet-info">
-        <span class="wallet-address font-thin">
+        <span class="wallet-address text-sm">
           {{ shortenAddress(walletAddress) }}
         </span>
-        <span class="auth-status">(Click to Sign In)</span>
+        <span class="auth-status">(Sign In)</span>
       </span>
     </button>
 
