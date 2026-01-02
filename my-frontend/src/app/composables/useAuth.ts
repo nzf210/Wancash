@@ -161,7 +161,7 @@ export const useAuth = () => {
       const response = await fetch('/api/me', { credentials: 'include' });
       if (response.ok) {
         const data = await response.json();
-        if (walletAddress.value && !isAddressEqual(data.user.address, `0x${walletAddress.value}`)) {
+        if (walletAddress.value && !isAddressEqual(data.user.address, walletAddress.value as `0x${string}`)) {
           await logout();
           return;
         }
@@ -207,7 +207,7 @@ export const useAuth = () => {
     if (savedAuth) {
       const authState = JSON.parse(savedAuth);
       const age = Date.now() - authState.timestamp;
-      if (age < 60 * 60 * 1000 && walletAddress.value && isAddressEqual(authState.walletAddress, `0x${walletAddress.value}`)) {
+      if (age < 60 * 60 * 1000 && walletAddress.value && isAddressEqual(authState.walletAddress as `0x${string}`, walletAddress.value as `0x${string}`)) {
         isAuthenticated.value = authState.authenticated;
         user.value = authState.user;
         console.log('Auth restored from localStorage');
@@ -259,7 +259,7 @@ export const useAuth = () => {
       console.log('Ignoring spurious disconnect after recent chain change');
       return;
     }
-    if (isAuthenticated.value && newAddress && oldAddress && !isAddressEqual(`0x${newAddress}`, `0x${oldAddress}`)) {
+    if (isAuthenticated.value && newAddress && oldAddress && !isAddressEqual(newAddress as `0x${string}`, oldAddress as `0x${string}`)) {
       await logout();
       toast.warning('Wallet address has changed. Please sign in again.');
     }

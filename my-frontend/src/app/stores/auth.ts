@@ -279,7 +279,7 @@ export const useAuthStore = defineStore('auth', {
 
       // Watch for address changes using Vue watch on store state
       watch(() => this.wallet_address, async (newAddress, oldAddress) => {
-        if (this.isAuthenticated && newAddress && oldAddress && !isAddressEqual(`0x${newAddress}`, `0x${oldAddress}`)) {
+        if (this.isAuthenticated && newAddress && oldAddress && !isAddressEqual(newAddress as `0x${string}`, oldAddress as `0x${string}`)) {
           await this.logout()
           toast.warning('Wallet address has changed. Please sign in again.')
         }

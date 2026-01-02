@@ -3,6 +3,7 @@
 import { useReadContract, useConnection } from '@wagmi/vue'
 import { wagmiContractConfig } from '@/app/services/contracts'
 import { computed } from 'vue'
+import { formatUnits } from 'viem'
 
 const { chainId, address: userAddress } = useConnection()
 
@@ -23,16 +24,27 @@ const contract = computed<string>(() => contractAddress[chainId.value ?? 1] ?? '
 
 const { data: balance, isError, isLoading } = useReadContract({
   ...wagmiContractConfig,
-  address: `0x${contract.value}`, // Override address if wagmiContractConfig has a default
+  address: contract.value as `0x${string}`, // Override address if wagmiContractConfig has a default
   functionName: 'balanceOf',
-  args: [`0x${userAddress.value}`], // Assumes querying contract's own balance; replace with user address if needed
+  args: [userAddress.value as `0x${string}`], // Assumes querying contract's own balance; replace with user address if needed
+})
+
+const formattedBalance = computed(() => {
+  if (balance.value !== undefined) {
+    const balanceStr = formatUnits(balance.value, 18)
+    const [integerPart, decimalPart = ''] = balanceStr.split('.')
+    const formattedInteger = (integerPart as string).replaceAll(/\B(?=(\d{3})+(?!\d))/g, ',');
+    const formattedDecimal = decimalPart.padEnd(2, '0').slice(0, 2)
+    return `${formattedInteger}.${formattedDecimal}`
+  }
+  return 'N/A'
 })
 </script>
 
 <template>
   <div>
     <div v-if="isLoading">Loading...</div>
-    <div v-else-if="isError">Please check connection and try again.</div>
-    <div v-else>Balance: {{ balance?.toString() ?? 'N/A' }}</div>
+    <div v-else-if="isError">Retry Conection.</div>
+    <div v-else>Balance: {{ formattedBalance ?? 'N/A' }}</div>
   </div>
 </template>

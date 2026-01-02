@@ -4,10 +4,15 @@ import { useConnection } from '@wagmi/vue'
 
 export const SUPPORTED_CHAINS = [
   { id: 1, name: 'Ethereum', currency: 'ETH' },
+  { id: 56, name: 'BSC', currency: 'ETH' },
+  { id: 97, name: 'BSC Test', currency: 'BSC' },
+  { id: 8453, name: 'Base', currency: 'ETH' },
+  { id: 43114, name: 'Base', currency: 'ETH' },
   { id: 137, name: 'Polygon', currency: 'MATIC' },
-  { id: 42161, name: 'Arbitrum', currency: 'ETH' },
-  { id: 10, name: 'Optimism', currency: 'ETH' },
-  { id: 80002, name: 'Amoy', currency: 'POL' }
+  { id: 11155111, name: 'Sepolia', currency: 'ETH' },
+  { id: 42161, name: 'Arbitrum', currency: 'ARB' },
+  { id: 80002, name: 'Amoy', currency: 'POL' },
+  { id: 43113, name: 'Fuji', currency: 'AVA' }
 ]
 
 export const useChain = () => {
