@@ -34,7 +34,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:8787', // Cloudflare Worker local
+        target: process.env.VITE_CLOUDE_WORKER || 'http://localhost:8787', // Cloudflare Worker local
         changeOrigin: true,
         secure: false,
         ws: true
