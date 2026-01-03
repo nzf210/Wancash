@@ -13,8 +13,8 @@
               </svg>
             </div>
             <div>
-              <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Transfer Token</h1>
-              <p class="text-gray-600 dark:text-gray-300">Kirim token ke alamat wallet lain dengan aman</p>
+              <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Token Transfer</h1>
+              <p class="text-gray-600 dark:text-gray-300">Send tokens to another wallet address securely</p>
             </div>
           </div>
           <Button @click="goToPortfolio"
@@ -23,7 +23,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
-            Lihat Portfolio
+            View Portfolio
           </Button>
         </div>
 
@@ -41,13 +41,13 @@
                   </svg>
                 </div>
                 <div>
-                  <p class="font-semibold text-gray-900 dark:text-white">Wallet belum terhubung</p>
-                  <p class="text-sm text-gray-600 dark:text-gray-400">Hubungkan wallet untuk melakukan transfer</p>
+                  <p class="font-semibold text-gray-900 dark:text-white">Wallet not connected</p>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">Connect wallet to make transfers</p>
                 </div>
               </div>
               <Button @click="connectWallet"
                 class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl px-6">
-                Hubungkan Wallet
+                Connect Wallet
               </Button>
             </div>
           </div>
@@ -67,7 +67,7 @@
             <div class="relative p-8">
               <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div class="text-center md:text-left">
-                  <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Saldo Token Tersedia</p>
+                  <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Available Token Balance</p>
                   <div class="flex items-center justify-center md:justify-start gap-3">
                     <div
                       class="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-400 flex items-center justify-center">
@@ -81,12 +81,12 @@
                   </div>
                 </div>
                 <div class="text-center">
-                  <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Nilai Setara</p>
+                  <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Equivalent Value</p>
                   <p class="text-xl font-bold text-blue-600 dark:text-blue-400">Rp {{ formatCurrency(walletBalance *
                     tokenPrice) }}</p>
                 </div>
                 <div class="text-center md:text-right">
-                  <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Harga Token</p>
+                  <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Token Price</p>
                   <p class="text-lg font-semibold text-gray-900 dark:text-white">Rp {{ formatCurrency(tokenPrice) }} /
                     GLD</p>
                 </div>
@@ -111,8 +111,9 @@
                     </svg>
                   </div>
                   <div>
-                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">Form Transfer</h2>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">Isi detail transfer token ke alamat tujuan</p>
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">Transfer Form</h2>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Fill in token transfer details to the
+                      destination address</p>
                   </div>
                 </div>
 
@@ -120,15 +121,15 @@
                   <!-- Recipient Address -->
                   <div class="space-y-3">
                     <div class="flex items-center justify-between">
-                      <Label for="recipient" class="text-sm font-medium text-gray-900 dark:text-white">Alamat Wallet
-                        Penerima *</Label>
+                      <Label for="recipient" class="text-sm font-medium text-gray-900 dark:text-white">Recipient Wallet
+                        Address *</Label>
                       <Button type="button" @click="showAddressBook = true"
                         class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm">
                         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                         </svg>
-                        Buku Alamat
+                        Address Book
                       </Button>
                     </div>
                     <div class="relative">
@@ -156,18 +157,18 @@
                           d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
                           clip-rule="evenodd" />
                       </svg>
-                      Terdaftar sebagai: {{ recipientName }}
+                      Registered as: {{ recipientName }}
                     </div>
                   </div>
 
                   <!-- Amount -->
                   <div class="space-y-3">
                     <div class="flex items-center justify-between">
-                      <Label for="amount" class="text-sm font-medium text-gray-900 dark:text-white">Jumlah Token
+                      <Label for="amount" class="text-sm font-medium text-gray-900 dark:text-white">Token Amount
                         *</Label>
                       <Button type="button" @click="setMaxAmount"
                         class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm">
-                        Gunakan Max: {{ formatNumber(maxTransferable) }} GLD
+                        Use Max: {{ formatNumber(maxTransferable) }} GLD
                       </Button>
                     </div>
                     <div class="relative">
@@ -191,7 +192,7 @@
                       {{ amountError }}
                     </div>
                     <div class="text-sm text-gray-600 dark:text-gray-400">
-                      Setara dengan: <span class="font-semibold text-blue-600 dark:text-blue-400">Rp {{
+                      Equivalent to: <span class="font-semibold text-blue-600 dark:text-blue-400">Rp {{
                         formatCurrency(equivalentValue) }}</span>
                     </div>
                   </div>
@@ -201,19 +202,19 @@
                     class="p-6 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 rounded-xl border border-gray-200 dark:border-gray-700">
                     <div class="space-y-4">
                       <div class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
-                        <span class="text-sm text-gray-700 dark:text-gray-300">Biaya Jaringan (Gas Fee)</span>
+                        <span class="text-sm text-gray-700 dark:text-gray-300">Network Fee (Gas Fee)</span>
                         <span class="font-medium text-gray-900 dark:text-white">{{ formatNumber(networkFee) }}
                           GLD</span>
                       </div>
                       <div class="flex justify-between items-center py-2">
-                        <span class="text-sm text-gray-700 dark:text-gray-300">Estimasi Waktu</span>
+                        <span class="text-sm text-gray-700 dark:text-gray-300">Estimated Time</span>
                         <span class="font-medium text-gray-900 dark:text-white">{{ estimatedTime }}</span>
                       </div>
                       <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
                         <div class="flex justify-between items-center">
-                          <span class="font-semibold text-gray-900 dark:text-white">Total yang Akan Dikirim</span>
+                          <span class="font-semibold text-gray-900 dark:text-white">Total to be Sent</span>
                           <span class="text-lg font-bold text-blue-600 dark:text-blue-400">{{ formatNumber(totalAmount)
-                          }} GLD</span>
+                            }} GLD</span>
                         </div>
                       </div>
                     </div>
@@ -221,13 +222,12 @@
 
                   <!-- Memo/Note (Optional) -->
                   <div class="space-y-3">
-                    <Label for="memo" class="text-sm font-medium text-gray-900 dark:text-white">Catatan
-                      (Opsional)</Label>
-                    <Textarea id="memo" v-model="form.memo" placeholder="Tambahkan catatan untuk transaksi ini"
+                    <Label for="memo" class="text-sm font-medium text-gray-900 dark:text-white">Note (Optional)</Label>
+                    <Textarea id="memo" v-model="form.memo" placeholder="Add a note for this transaction"
                       class="min-h-[100px] bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 rounded-xl"
                       maxlength="200" />
                     <div class="text-xs text-gray-500 dark:text-gray-400 text-right">
-                      {{ form.memo.length }}/200 karakter
+                      {{ form.memo.length }}/200 characters
                     </div>
                   </div>
 
@@ -238,10 +238,10 @@
                     <div class="grid gap-1.5">
                       <Label for="transfer-terms"
                         class="text-sm font-medium leading-none cursor-pointer text-gray-900 dark:text-white">
-                        Saya telah memverifikasi alamat penerima dan jumlah transfer
+                        I have verified the recipient address and transfer amount
                       </Label>
                       <p class="text-sm text-gray-600 dark:text-gray-400">
-                        Pastikan alamat tujuan sudah benar karena transaksi tidak dapat dibatalkan.
+                        Ensure the destination address is correct as transactions cannot be cancelled.
                       </p>
                     </div>
                   </div>
@@ -264,7 +264,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                Lanjutkan ke Preview
+                Continue to Preview
               </Button>
             </div>
           </div>
@@ -284,7 +284,7 @@
                         clip-rule="evenodd" />
                     </svg>
                   </div>
-                  <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Informasi Transfer</h3>
+                  <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Transfer Information</h3>
                 </div>
 
                 <div class="space-y-4">
@@ -294,12 +294,12 @@
                       GLD</span>
                   </div>
                   <div class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
-                    <span class="text-sm text-gray-600 dark:text-gray-400">Maksimum per Transaksi</span>
+                    <span class="text-sm text-gray-600 dark:text-gray-400">Maximum per Transaction</span>
                     <span class="font-semibold text-gray-900 dark:text-white">{{ formatNumber(maxTransferPerTx) }}
                       GLD</span>
                   </div>
                   <div class="flex justify-between items-center py-2">
-                    <span class="text-sm text-gray-600 dark:text-gray-400">Batas Harian</span>
+                    <span class="text-sm text-gray-600 dark:text-gray-400">Daily Limit</span>
                     <span class="font-semibold text-gray-900 dark:text-white">{{ formatNumber(dailyLimit) }} GLD</span>
                   </div>
                   <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
@@ -332,11 +332,11 @@
                         clip-rule="evenodd" />
                     </svg>
                   </div>
-                  <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Transfer Terakhir</h3>
+                  <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Recent Transfers</h3>
                 </div>
 
                 <div v-if="recentTransfers.length === 0" class="text-center py-6">
-                  <p class="text-gray-500 dark:text-gray-400">Belum ada riwayat transfer</p>
+                  <p class="text-gray-500 dark:text-gray-400">No transfer history yet</p>
                 </div>
                 <div v-else class="space-y-3">
                   <div v-for="transfer in recentTransfers.slice(0, 3)" :key="transfer.id"
@@ -354,7 +354,7 @@
                   </div>
                   <Button @click="goToHistory"
                     class="w-full mt-4 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 rounded-xl">
-                    Lihat Semua Riwayat
+                    View All History
                   </Button>
                 </div>
               </div>
@@ -364,7 +364,7 @@
             <div
               class="relative bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-xl overflow-hidden">
               <div class="p-6">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">Aksi Cepat</h3>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">Quick Actions</h3>
 
                 <div class="space-y-4">
                   <Button @click="scanQR"
@@ -383,7 +383,7 @@
                       <path
                         d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1v-1h4v1a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H20a1 1 0 001-1v-10a1 1 0 00-1-1H3z" />
                     </svg>
-                    Kirim ke Kontak
+                    Send to Contact
                   </Button>
                   <Button @click="copyOwnAddress"
                     class="w-full justify-start bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 rounded-xl">
@@ -392,7 +392,7 @@
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
-                    Salin Alamat Saya
+                    Copy My Address
                   </Button>
                 </div>
               </div>
@@ -406,16 +406,16 @@
     <Dialog :open="showAddressBook" @update:open="showAddressBook = $event">
       <DialogContent class="sm:max-w-md bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800">
         <DialogHeader>
-          <DialogTitle class="text-gray-900 dark:text-white">Buku Alamat</DialogTitle>
+          <DialogTitle class="text-gray-900 dark:text-white">Address Book</DialogTitle>
           <DialogDescription class="text-gray-600 dark:text-gray-400">
-            Pilih dari kontak yang pernah Anda kirim sebelumnya
+            Select from contacts you've sent to before
           </DialogDescription>
         </DialogHeader>
         <div class="space-y-4 py-4">
-          <Input placeholder="Cari nama atau alamat..." v-model="addressBookSearch"
+          <Input placeholder="Search name or address..." v-model="addressBookSearch"
             class="w-full bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 rounded-xl" />
           <div v-if="filteredAddressBook.length === 0" class="text-center py-6">
-            <p class="text-gray-500 dark:text-gray-400">Tidak ada kontak yang ditemukan</p>
+            <p class="text-gray-500 dark:text-gray-400">No contacts found</p>
           </div>
           <div v-else class="space-y-2 max-h-60 overflow-y-auto">
             <div v-for="contact in filteredAddressBook" :key="contact.address"
@@ -427,7 +427,7 @@
               </div>
               <Button
                 class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl px-4">
-                Pilih
+                Select
               </Button>
             </div>
           </div>
@@ -435,11 +435,11 @@
         <DialogFooter class="flex-col sm:flex-row gap-2">
           <Button @click="showAddressBook = false"
             class="flex-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-700 rounded-xl">
-            Tutup
+            Close
           </Button>
           <Button @click="showAddContact = true"
             class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl">
-            Tambah Kontak Baru
+            Add New Contact
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -449,16 +449,17 @@
     <Dialog :open="showAddContact" @update:open="showAddContact = $event">
       <DialogContent class="sm:max-w-md bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800">
         <DialogHeader>
-          <DialogTitle class="text-gray-900 dark:text-white">Tambah Kontak Baru</DialogTitle>
+          <DialogTitle class="text-gray-900 dark:text-white">Add New Contact</DialogTitle>
         </DialogHeader>
         <div class="space-y-6 py-4">
           <div class="space-y-3">
-            <Label for="contact-name" class="text-sm font-medium text-gray-900 dark:text-white">Nama Kontak</Label>
-            <Input id="contact-name" v-model="newContact.name" placeholder="Masukkan nama kontak"
+            <Label for="contact-name" class="text-sm font-medium text-gray-900 dark:text-white">Contact Name</Label>
+            <Input id="contact-name" v-model="newContact.name" placeholder="Enter contact name"
               class="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 rounded-xl" />
           </div>
           <div class="space-y-3">
-            <Label for="contact-address" class="text-sm font-medium text-gray-900 dark:text-white">Alamat Wallet</Label>
+            <Label for="contact-address" class="text-sm font-medium text-gray-900 dark:text-white">Wallet
+              Address</Label>
             <Input id="contact-address" v-model="newContact.address" placeholder="0x..."
               class="font-mono bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 rounded-xl" />
           </div>
@@ -466,11 +467,11 @@
         <DialogFooter class="flex-col sm:flex-row gap-2">
           <Button @click="showAddContact = false"
             class="flex-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-700 rounded-xl">
-            Batal
+            Cancel
           </Button>
           <Button @click="saveContact" :disabled="!newContact.name || !newContact.address"
             class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed">
-            Simpan
+            Save
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -482,26 +483,26 @@
         <DialogHeader>
           <DialogTitle class="text-gray-900 dark:text-white">Preview Transfer</DialogTitle>
           <DialogDescription class="text-gray-600 dark:text-gray-400">
-            Tinjau detail transfer sebelum mengonfirmasi
+            Review transfer details before confirming
           </DialogDescription>
         </DialogHeader>
         <div class="space-y-6 py-4">
           <div class="space-y-4">
             <div class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
-              <span class="text-gray-600 dark:text-gray-400">Penerima:</span>
+              <span class="text-gray-600 dark:text-gray-400">Recipient:</span>
               <div class="text-right">
                 <p class="font-semibold text-gray-900 dark:text-white">{{ recipientName || 'Unknown' }}</p>
                 <p class="text-sm text-gray-500 dark:text-gray-400 font-mono">{{ shortenAddress(form.recipientAddress)
-                }}</p>
+                  }}</p>
               </div>
             </div>
             <div class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
-              <span class="text-gray-600 dark:text-gray-400">Jumlah:</span>
+              <span class="text-gray-600 dark:text-gray-400">Amount:</span>
               <span class="text-lg font-bold text-blue-600 dark:text-blue-400">{{ formatNumber(Number(form.amount)) }}
                 GLD</span>
             </div>
             <div class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
-              <span class="text-gray-600 dark:text-gray-400">Biaya Jaringan:</span>
+              <span class="text-gray-600 dark:text-gray-400">Network Fee:</span>
               <span class="font-medium text-gray-900 dark:text-white">{{ formatNumber(networkFee) }} GLD</span>
             </div>
             <div class="flex justify-between items-center py-2">
@@ -510,23 +511,23 @@
                 GLD</span>
             </div>
             <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
-              <p class="text-gray-600 dark:text-gray-400 mb-2">Catatan:</p>
+              <p class="text-gray-600 dark:text-gray-400 mb-2">Note:</p>
               <p class="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 p-3 rounded-xl">{{
-                form.memo || 'Tidak ada catatan' }}</p>
+                form.memo || 'No note' }}</p>
             </div>
           </div>
         </div>
         <DialogFooter class="flex-col sm:flex-row gap-2">
           <Button @click="showPreview = false"
             class="flex-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-700 rounded-xl">
-            Kembali
+            Back
           </Button>
           <Button @click="confirmTransfer"
             class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
-            Konfirmasi Transfer
+            Confirm Transfer
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -536,14 +537,14 @@
     <Dialog :open="isLoading">
       <DialogContent class="sm:max-w-md bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800">
         <DialogHeader>
-          <DialogTitle class="text-gray-900 dark:text-white">Memproses Transfer</DialogTitle>
+          <DialogTitle class="text-gray-900 dark:text-white">Processing Transfer</DialogTitle>
         </DialogHeader>
         <div class="flex flex-col items-center justify-center py-8">
           <div
             class="w-16 h-16 border-4 border-blue-200 dark:border-blue-800 border-t-blue-600 dark:border-t-blue-400 rounded-full animate-spin mb-4">
           </div>
-          <p class="text-center text-gray-600 dark:text-gray-400">Harap tunggu, transfer sedang diproses...</p>
-          <p class="text-center text-sm text-gray-500 dark:text-gray-400 mt-2">Jangan tutup halaman ini</p>
+          <p class="text-center text-gray-600 dark:text-gray-400">Please wait, transfer is being processed...</p>
+          <p class="text-center text-sm text-gray-500 dark:text-gray-400 mt-2">Do not close this page</p>
         </div>
       </DialogContent>
     </Dialog>
@@ -552,7 +553,7 @@
     <Dialog :open="showSuccess">
       <DialogContent class="sm:max-w-md bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800">
         <DialogHeader>
-          <DialogTitle class="text-center text-green-600 dark:text-green-400">Transfer Berhasil!</DialogTitle>
+          <DialogTitle class="text-center text-green-600 dark:text-green-400">Transfer Successful!</DialogTitle>
         </DialogHeader>
         <div class="flex flex-col items-center justify-center py-4">
           <div
@@ -563,10 +564,10 @@
             </svg>
           </div>
           <p class="text-center font-semibold text-gray-900 dark:text-white mb-2">{{ formatNumber(Number(form.amount))
-          }} GLD berhasil dikirim!</p>
-          <p class="text-center text-gray-600 dark:text-gray-400 mb-1">Ke: {{ recipientName ||
+            }} GLD successfully sent!</p>
+          <p class="text-center text-gray-600 dark:text-gray-400 mb-1">To: {{ recipientName ||
             shortenAddress(form.recipientAddress) }}</p>
-          <p class="text-center text-sm text-gray-500 dark:text-gray-400">Hash Transaksi:</p>
+          <p class="text-center text-sm text-gray-500 dark:text-gray-400">Transaction Hash:</p>
           <div class="flex items-center gap-2 mt-2">
             <code
               class="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded font-mono text-gray-900 dark:text-white">
@@ -584,11 +585,11 @@
         <DialogFooter class="flex-col sm:flex-row gap-2">
           <Button @click="showSuccess = false"
             class="flex-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-700 rounded-xl">
-            Tutup
+            Close
           </Button>
           <Button @click="goToHistory"
             class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl">
-            Lihat Riwayat
+            View History
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -600,13 +601,16 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
-// import {
-//   Card,
-//   CardContent,
-//   CardDescription,
-//   CardHeader,
-//   CardTitle
-// } from '@/components/ui/card'
+/**
+ // import {
+ //   Card,
+ //   CardContent,
+ //   CardDescription,
+ //   CardHeader,
+ //   CardTitle
+ // } from '@/components/ui/card'
+ *
+*/
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -678,7 +682,7 @@ const minimumTransfer = ref<number>(1)
 const maxTransferPerTx = ref<number>(10000)
 const dailyLimit = ref<number>(50000)
 const networkFee = ref<number>(0.01)
-const estimatedTime = ref<string>('~15 detik')
+const estimatedTime = ref<string>('~15 seconds')
 
 // Address book
 const addressBookSearch = ref<string>('')
@@ -699,9 +703,9 @@ const transactionHash = ref<string>('')
 
 // Recent transfers (mock data)
 const recentTransfers = ref<Transfer[]>([
-  { id: 1, recipientShort: '0x742d...0a1b', amount: 100, time: '2 jam lalu', status: 'Berhasil' },
-  { id: 2, recipientShort: '0x98dC...5C5C', amount: 50.5, time: '1 hari lalu', status: 'Berhasil' },
-  { id: 3, recipientShort: '0x3f5C...f0bE', amount: 1000, time: '3 hari lalu', status: 'Berhasil' },
+  { id: 1, recipientShort: '0x742d...0a1b', amount: 100, time: '2 hours ago', status: 'Successful' },
+  { id: 2, recipientShort: '0x98dC...5C5C', amount: 50.5, time: '1 day ago', status: 'Successful' },
+  { id: 3, recipientShort: '0x3f5C...f0bE', amount: 1000, time: '3 days ago', status: 'Successful' },
 ])
 
 // Computed properties
@@ -710,12 +714,12 @@ const maxTransferable = computed<number>(() => {
 })
 
 const equivalentValue = computed<number>(() => {
-  const amount = parseFloat(form.value.amount) || 0
+  const amount = Number.parseFloat(form.value.amount) || 0
   return amount * tokenPrice.value
 })
 
 const totalAmount = computed<number>(() => {
-  const amount = parseFloat(form.value.amount) || 0
+  const amount = Number.parseFloat(form.value.amount) || 0
   return amount + networkFee.value
 })
 
@@ -730,7 +734,7 @@ const filteredAddressBook = computed<Contact[]>(() => {
 })
 
 const isFormValid = computed<boolean>(() => {
-  const amount = parseFloat(form.value.amount)
+  const amount = Number.parseFloat(form.value.amount)
   return form.value.recipientAddress.trim() !== '' &&
     amount >= minimumTransfer.value &&
     amount <= maxTransferable.value &&
@@ -772,7 +776,7 @@ const validateAddress = (): void => {
 
   // Basic Ethereum address validation
   if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
-    addressError.value = 'Format alamat wallet tidak valid'
+    addressError.value = 'Invalid wallet address format'
     recipientName.value = ''
     return
   }
@@ -792,19 +796,19 @@ const validateAddress = (): void => {
 }
 
 const validateAmount = (): void => {
-  const amount = parseFloat(form.value.amount)
+  const amount = Number.parseFloat(form.value.amount)
 
-  if (!amount || isNaN(amount)) {
+  if (!amount || Number.isNaN(amount)) {
     amountError.value = ''
     return
   }
 
   if (amount < minimumTransfer.value) {
-    amountError.value = `Minimum transfer adalah ${minimumTransfer.value} GLD`
+    amountError.value = `Minimum transfer is ${minimumTransfer.value} GLD`
   } else if (amount > maxTransferable.value) {
-    amountError.value = `Maksimum transfer adalah ${formatNumber(maxTransferable.value)} GLD`
+    amountError.value = `Maximum transfer is ${formatNumber(maxTransferable.value)} GLD`
   } else if (amount > walletBalance.value - networkFee.value) {
-    amountError.value = 'Saldo tidak mencukupi'
+    amountError.value = 'Insufficient balance'
   } else {
     amountError.value = ''
   }
@@ -824,9 +828,9 @@ const selectContact = (contact: Contact): void => {
 
 const saveContact = (): void => {
   if (newContact.value.name.trim() && newContact.value.address.trim()) {
-    // Validasi format address sebelum menyimpan
+    // Validate address format before saving
     if (!/^0x[a-fA-F0-9]{40}$/.test(newContact.value.address.trim())) {
-      toast.error('Format alamat wallet tidak valid')
+      toast.error('Invalid wallet address format')
       return
     }
 
@@ -838,7 +842,7 @@ const saveContact = (): void => {
     // Save to localStorage
     localStorage.setItem('addressBook', JSON.stringify(addressBook.value))
 
-    toast.success('Kontak berhasil ditambahkan')
+    toast.success('Contact added successfully')
     newContact.value = { name: '', address: '' }
     showAddContact.value = false
   }
@@ -865,7 +869,7 @@ const confirmTransfer = async (): Promise<void> => {
       () => hexChars[Math.floor(Math.random() * 16)]).join('')
 
     // Update wallet balance
-    const amount = parseFloat(form.value.amount) || 0
+    const amount = Number.parseFloat(form.value.amount) || 0
     walletBalance.value -= (amount + networkFee.value)
 
     // Add to recent transfers
@@ -873,12 +877,12 @@ const confirmTransfer = async (): Promise<void> => {
       id: Date.now(),
       recipientShort: shortenAddress(form.value.recipientAddress),
       amount: amount,
-      time: 'Baru saja',
-      status: 'Berhasil'
+      time: 'Just now',
+      status: 'Successful'
     })
 
-    toast.success('Transfer berhasil!', {
-      description: `${formatNumber(amount)} GLD berhasil dikirim`,
+    toast.success('Transfer successful!', {
+      description: `${formatNumber(amount)} GLD successfully sent`,
       duration: 5000,
     })
   }, 2000)
@@ -895,15 +899,15 @@ const resetForm = (): void => {
   amountError.value = ''
   recipientName.value = ''
 
-  toast.info('Form telah direset')
+  toast.info('Form has been reset')
 }
 
 const connectWallet = (): void => {
-  toast.info('Fitur wallet connection akan diimplementasikan')
+  toast.info('Wallet connection feature will be implemented')
 }
 
 const scanQR = (): void => {
-  toast.info('Fitur QR scanner akan diimplementasikan')
+  toast.info('QR scanner feature will be implemented')
 }
 
 const copyOwnAddress = async (): Promise<void> => {
@@ -913,20 +917,20 @@ const copyOwnAddress = async (): Promise<void> => {
 
   try {
     await navigator.clipboard.writeText(mockAddress)
-    toast.success('Alamat berhasil disalin ke clipboard')
+    toast.success('Address successfully copied to clipboard')
   } catch (error) {
-    console.error('Gagal menyalin alamat:', error)
-    toast.error('Gagal menyalin alamat')
+    console.error('Failed to copy address:', error)
+    toast.error('Failed to copy address')
   }
 }
 
 const copyTransactionHash = async (): Promise<void> => {
   try {
     await navigator.clipboard.writeText(transactionHash.value)
-    toast.success('Hash transaksi berhasil disalin')
+    toast.success('Transaction hash successfully copied')
   } catch (error) {
-    console.error('Gagal menyalin hash transaksi:', error)
-    toast.error('Gagal menyalin hash transaksi')
+    console.error('Failed to copy transaction hash:', error)
+    toast.error('Failed to copy transaction hash')
   }
 }
 
@@ -945,7 +949,7 @@ onMounted((): void => {
   if (savedAddressBook) {
     try {
       const parsed = JSON.parse(savedAddressBook)
-      // Validasi data yang di-load
+      // Validate loaded data
       if (Array.isArray(parsed) && parsed.every(item =>
         typeof item === 'object' &&
         'name' in item &&

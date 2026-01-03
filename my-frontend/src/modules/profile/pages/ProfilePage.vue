@@ -1,14 +1,12 @@
 <template>
   <div class="min-h-screen bg-gradient-to-b from-background to-card/50 p-4 md:p-6 transition-colors">
-    <div class="max-w-6xl mx-auto">
-      <!-- Header -->
+    <div class="max-w-6xl mx-auto"> <!-- Header -->
       <div class="mb-8">
-        <h1 class="text-3xl font-bold text-foreground">Profil & Pengaturan</h1>
-        <p class="text-muted-foreground mt-2">Kelola informasi profil dan preferensi akun Anda</p>
+        <h1 class="text-3xl font-bold text-foreground">Profile & Settings</h1>
+        <p class="text-muted-foreground mt-2">Manage your profile information and account preferences</p>
       </div>
-
       <div class="flex flex-col lg:flex-row gap-6">
-        <!-- Sidebar Navigasi -->
+        <!-- Navigation Sidebar -->
         <div class="lg:w-1/4">
           <Card class="sticky top-6 border-border bg-card shadow-soft">
             <CardContent class="p-4">
@@ -27,17 +25,17 @@
           </Card>
         </div>
 
-        <!-- Konten Utama -->
+        <!-- Main Content -->
         <div class="lg:w-3/4">
-          <!-- Tab Profil -->
+          <!-- Profile Tab -->
           <Card v-if="activeTab === 'profile'" class="mb-6 border-border bg-card shadow-soft card-glow">
             <CardHeader class="bg-gradient-to-r from-primary/10 to-primary/5 border-b border-border pb-4">
               <CardTitle class="flex items-center text-foreground">
                 <User class="mr-2 h-5 w-5 text-primary" />
-                Informasi Profil
+                Profile Information
               </CardTitle>
               <CardDescription class="text-muted-foreground">
-                Informasi pribadi Anda dan bagaimana tampil di platform
+                Your personal information and how you appear on the platform
               </CardDescription>
             </CardHeader>
             <CardContent class="pt-6">
@@ -45,15 +43,15 @@
             </CardContent>
           </Card>
 
-          <!-- Tab Pengaturan Akun -->
+          <!-- Account Settings Tab -->
           <Card v-if="activeTab === 'account'" class="mb-6 border-border bg-card shadow-soft card-glow">
             <CardHeader class="bg-gradient-to-r from-primary/10 to-primary/5 border-b border-border pb-4">
               <CardTitle class="flex items-center text-foreground">
                 <Settings class="mr-2 h-5 w-5 text-primary" />
-                Pengaturan Akun
+                Account Settings
               </CardTitle>
               <CardDescription class="text-muted-foreground">
-                Kelola preferensi dan keamanan akun Anda
+                Manage your account preferences and security
               </CardDescription>
             </CardHeader>
             <CardContent class="pt-6">
@@ -61,15 +59,15 @@
             </CardContent>
           </Card>
 
-          <!-- Tab Notifikasi -->
+          <!-- Notifications Tab -->
           <Card v-if="activeTab === 'notifications'" class="mb-6 border-border bg-card shadow-soft card-glow">
             <CardHeader class="bg-gradient-to-r from-primary/10 to-primary/5 border-b border-border pb-4">
               <CardTitle class="flex items-center text-foreground">
                 <Bell class="mr-2 h-5 w-5 text-primary" />
-                Preferensi Notifikasi
+                Notification Preferences
               </CardTitle>
               <CardDescription class="text-muted-foreground">
-                Atur bagaimana Anda menerima notifikasi
+                Configure how you receive notifications
               </CardDescription>
             </CardHeader>
             <CardContent class="pt-6">
@@ -78,15 +76,15 @@
             </CardContent>
           </Card>
 
-          <!-- Tab Privasi -->
+          <!-- Privacy Tab -->
           <Card v-if="activeTab === 'privacy'" class="mb-6 border-border bg-card shadow-soft card-glow">
             <CardHeader class="bg-gradient-to-r from-primary/10 to-primary/5 border-b border-border pb-4">
               <CardTitle class="flex items-center text-foreground">
                 <Shield class="mr-2 h-5 w-5 text-primary" />
-                Privasi & Keamanan
+                Privacy & Security
               </CardTitle>
               <CardDescription class="text-muted-foreground">
-                Kelola pengaturan privasi dan keamanan akun Anda
+                Manage your account privacy and security settings
               </CardDescription>
             </CardHeader>
             <CardContent class="pt-6">

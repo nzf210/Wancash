@@ -9,5 +9,13 @@
       "source": "/api/:path*",
       "destination": "https://cloude-flare-wancash.syahrilsymd-39e.workers.dev/api/:path*"
     }
+  ],
+  "routes": [
+    {
+      "handle": "filesystem",
+      "src": "/(.*)",
+      "dest": "/index.html",
+      "status": 200
+    }
   ]
 }

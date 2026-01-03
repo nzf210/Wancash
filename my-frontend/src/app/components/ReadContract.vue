@@ -44,7 +44,7 @@ const formattedBalance = computed(() => {
 <template>
   <div>
     <div v-if="isLoading">Loading...</div>
-    <div v-else-if="isError">Retry Conection.</div>
-    <div v-else>Balance: {{ formattedBalance ?? 'N/A' }}</div>
+    <div v-else-if="isError">Retry Conection...</div>
+    <div v-else>{{ formattedBalance ?? 'N/A' }}</div>
   </div>
 </template>

@@ -1,27 +1,22 @@
 <template>
-  <div class="space-y-6">
-    <!-- Bahasa -->
+  <div class="space-y-6"> <!-- Language -->
     <div class="space-y-4">
-      <h3 class="text-lg font-semibold text-foreground">Preferensi Bahasa & Wilayah</h3>
+      <h3 class="text-lg font-semibold text-foreground">Language & Region Preferences</h3>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <Label for="language" class="text-foreground">Bahasa</Label>
-          <Select v-model="localSettings.language">
+        <div> <Label for="language" class="text-foreground">Language</Label> <Select v-model="localSettings.language">
             <SelectTrigger class="mt-1 bg-background border-input text-foreground">
-              <SelectValue placeholder="Pilih bahasa" />
+              <SelectValue placeholder="Select language" />
             </SelectTrigger>
             <SelectContent class="bg-popover border-border">
               <SelectItem value="id">Bahasa Indonesia</SelectItem>
               <SelectItem value="en">English</SelectItem>
             </SelectContent>
-          </Select>
-        </div>
-
+          </Select> </div>
         <div>
-          <Label for="timezone" class="text-foreground">Zona Waktu</Label>
+          <Label for="timezone" class="text-foreground">Timezone</Label>
           <Select v-model="localSettings.timezone">
             <SelectTrigger class="mt-1 bg-background border-input text-foreground">
-              <SelectValue placeholder="Pilih zona waktu" />
+              <SelectValue placeholder="Select timezone" />
             </SelectTrigger>
             <SelectContent class="bg-popover border-border">
               <SelectItem value="Asia/Jakarta">Jakarta (GMT+7)</SelectItem>
@@ -33,9 +28,9 @@
       </div>
     </div>
 
-    <!-- Tema -->
+    <!-- Theme -->
     <div class="space-y-4">
-      <h3 class="text-lg font-semibold text-foreground">Tema</h3>
+      <h3 class="text-lg font-semibold text-foreground">Theme</h3>
       <div class="flex flex-wrap gap-4">
         <div v-for="themeOption in themes" :key="themeOption.value"
           class="cursor-pointer transition-transform hover:scale-[1.02]"
@@ -46,7 +41,7 @@
               : 'border-border hover:border-primary/50'
           ]">
             <div class="flex h-full">
-              <!-- Preview tema -->
+              <!-- Theme preview -->
               <div class="w-1/3 border-r" :class="themeOption.sidebar"></div>
               <div class="w-2/3 p-1">
                 <div class="h-2 w-full mb-1 rounded" :class="themeOption.content"></div>
@@ -59,18 +54,18 @@
       </div>
     </div>
 
-    <!-- Mata Uang -->
+    <!-- Currency -->
     <div class="space-y-4">
-      <h3 class="text-lg font-semibold text-foreground">Mata Uang</h3>
+      <h3 class="text-lg font-semibold text-foreground">Currency</h3>
       <div>
-        <Label for="currency" class="text-foreground">Mata Uang Default</Label>
+        <Label for="currency" class="text-foreground">Default Currency</Label>
         <Select v-model="localSettings.currency">
           <SelectTrigger class="mt-1 bg-background border-input text-foreground">
-            <SelectValue placeholder="Pilih mata uang" />
+            <SelectValue placeholder="Select currency" />
           </SelectTrigger>
           <SelectContent class="bg-popover border-border">
             <SelectItem value="IDR">Rupiah (IDR)</SelectItem>
-            <SelectItem value="USD">Dollar AS (USD)</SelectItem>
+            <SelectItem value="USD">US Dollar (USD)</SelectItem>
             <SelectItem value="EUR">Euro (EUR)</SelectItem>
           </SelectContent>
         </Select>
@@ -84,7 +79,7 @@
         Reset
       </Button>
       <Button @click="saveSettings" class="bg-primary text-primary-foreground hover:bg-primary/90">
-        Simpan Pengaturan
+        Save Settings
       </Button>
     </div>
   </div>

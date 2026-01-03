@@ -1,32 +1,28 @@
 <template>
-  <div class="space-y-6">
-    <!-- Visibilitas Profil -->
+  <div class="space-y-6"> <!-- Profile Visibility -->
     <div class="space-y-4">
-      <h3 class="text-lg font-semibold text-foreground">Visibilitas Profil</h3>
-      <div>
-        <Label for="profileVisibility" class="text-foreground">Siapa yang dapat melihat profil Anda?</Label>
-        <Select v-model="localPrivacy.profileVisibility">
+      <h3 class="text-lg font-semibold text-foreground">Profile Visibility</h3>
+      <div> <Label for="profileVisibility" class="text-foreground">Who can see your profile?</Label> <Select
+          v-model="localPrivacy.profileVisibility">
           <SelectTrigger class="mt-1 bg-background border-input text-foreground">
-            <SelectValue placeholder="Pilih visibilitas" />
+            <SelectValue placeholder="Select visibility" />
           </SelectTrigger>
           <SelectContent class="bg-popover border-border">
-            <SelectItem value="public">Publik (Semua orang)</SelectItem>
-            <SelectItem value="followers">Hanya Pengikut</SelectItem>
-            <SelectItem value="private">Pribadi (Hanya Anda)</SelectItem>
+            <SelectItem value="public">Public (Everyone)</SelectItem>
+            <SelectItem value="followers">Followers Only</SelectItem>
+            <SelectItem value="private">Private (Only You)</SelectItem>
           </SelectContent>
-        </Select>
-      </div>
+        </Select> </div>
     </div>
-
-    <!-- Pengaturan Privasi -->
+    <!-- Privacy Settings -->
     <div class="space-y-4">
-      <h3 class="text-lg font-semibold text-foreground">Pengaturan Privasi</h3>
+      <h3 class="text-lg font-semibold text-foreground">Privacy Settings</h3>
       <div class="space-y-3">
         <div
           class="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-primary/5 to-primary/10 border border-border hover:bg-accent/50 transition-colors">
           <div>
-            <h4 class="font-medium text-foreground">Tampilkan Status Online</h4>
-            <p class="text-sm text-muted-foreground">Izinkan orang lain melihat kapan Anda online</p>
+            <h4 class="font-medium text-foreground">Show Online Status</h4>
+            <p class="text-sm text-muted-foreground">Allow others to see when you are online</p>
           </div>
           <Switch v-model:checked="localPrivacy.showOnlineStatus" class="data-[state=checked]:bg-primary" />
         </div>
@@ -34,8 +30,8 @@
         <div
           class="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-primary/5 to-primary/10 border border-border hover:bg-accent/50 transition-colors">
           <div>
-            <h4 class="font-medium text-foreground">Izinkan Penandaan</h4>
-            <p class="text-sm text-muted-foreground">Izinkan orang lain menandai Anda dalam posting</p>
+            <h4 class="font-medium text-foreground">Allow Tagging</h4>
+            <p class="text-sm text-muted-foreground">Allow others to tag you in posts</p>
           </div>
           <Switch v-model:checked="localPrivacy.allowTagging" class="data-[state=checked]:bg-primary" />
         </div>
@@ -43,36 +39,36 @@
         <div
           class="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-primary/5 to-primary/10 border border-border hover:bg-accent/50 transition-colors">
           <div>
-            <h4 class="font-medium text-foreground">Izinkan Mesin Pencari</h4>
-            <p class="text-sm text-muted-foreground">Izinkan mesin pencari mengindeks profil Anda</p>
+            <h4 class="font-medium text-foreground">Allow Search Engines</h4>
+            <p class="text-sm text-muted-foreground">Allow search engines to index your profile</p>
           </div>
           <Switch v-model:checked="localPrivacy.searchEngineIndex" class="data-[state=checked]:bg-primary" />
         </div>
       </div>
     </div>
 
-    <!-- Keamanan -->
+    <!-- Security -->
     <div class="space-y-4">
-      <h3 class="text-lg font-semibold text-foreground">Keamanan Akun</h3>
+      <h3 class="text-lg font-semibold text-foreground">Account Security</h3>
       <div class="space-y-3">
         <Button variant="outline" class="w-full justify-start border-input hover:bg-accent hover:text-accent-foreground"
           @click="changePassword">
           <Lock class="mr-2 h-4 w-4 text-muted-foreground" />
-          Ubah Kata Sandi
+          Change Password
         </Button>
 
         <Button variant="outline"
           class="w-full justify-start text-warning border-input hover:bg-warning/10 hover:text-warning"
           @click="manageSessions">
           <Shield class="mr-2 h-4 w-4" />
-          Kelola Sesi Login
+          Manage Login Sessions
         </Button>
 
         <Button variant="outline"
           class="w-full justify-start text-destructive border-input hover:bg-destructive/10 hover:text-destructive"
           @click="deleteAccount">
           <Trash2 class="mr-2 h-4 w-4" />
-          Hapus Akun
+          Delete Account
         </Button>
       </div>
     </div>
@@ -83,11 +79,12 @@
         Reset
       </Button>
       <Button @click="savePrivacy" class="bg-primary text-primary-foreground hover:bg-primary/90">
-        Simpan Pengaturan
+        Save Settings
       </Button>
     </div>
   </div>
 </template>
+
 
 <script lang="ts" setup>
 import { ref, watch } from 'vue'

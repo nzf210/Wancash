@@ -14,10 +14,10 @@
                 clip-rule="evenodd" />
             </svg>
           </div>
-          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Redemption Token dengan Emas</h1>
+          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Token Redemption with Gold</h1>
         </div>
-        <p class="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">Tukarkan token Anda dengan emas fisik yang akan
-          dikirim ke alamat Anda</p>
+        <p class="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">Exchange your tokens for physical gold that will
+          be shipped to your address</p>
       </div>
 
       <!-- Wallet Connection Check -->
@@ -38,9 +38,9 @@
                     clip-rule="evenodd" />
                 </svg>
               </div>
-              <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Wallet Belum Terhubung</h3>
+              <h3 class="text-xl font-bold text-gray-900 dark:text-white">Wallet Not Connected</h3>
               <p class="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
-                Anda perlu menghubungkan wallet terlebih dahulu untuk melanjutkan proses redemption token
+                You need to connect your wallet first to continue the token redemption process
               </p>
               <Button @click="connectWallet"
                 class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
@@ -48,7 +48,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
                 </svg>
-                Hubungkan Wallet
+                Connect Wallet
               </Button>
             </div>
           </div>
@@ -70,21 +70,23 @@
                       clip-rule="evenodd" />
                   </svg>
                 </div>
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Data Profil Tersedia</h3>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Profile Data Available</h3>
               </div>
 
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                  <Label class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Lengkap</Label>
-                  <p class="font-medium text-gray-900 dark:text-white">{{ userProfile.name }}</p>
+                  <Label class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="profile-name">Full
+                    Name</Label>
+                  <p class="font-medium text-gray-900 dark:text-white" id="profile-name">{{ userProfile.name }}</p>
                 </div>
                 <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                  <Label class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">No. Handphone</Label>
-                  <p class="font-medium text-gray-900 dark:text-white">{{ userProfile.phone }}</p>
+                  <Label class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="phone-number">Phone
+                    Number</Label>
+                  <p class="font-medium text-gray-900 dark:text-white" id="phone-number">{{ userProfile.phone }}</p>
                 </div>
                 <div class="md:col-span-2 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                  <Label class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Alamat</Label>
-                  <p class="font-medium text-gray-900 dark:text-white">{{ userProfile.address }}</p>
+                  <Label class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="address">Address</Label>
+                  <p class="font-medium text-gray-900 dark:text-white" id="address">{{ userProfile.address }}</p>
                 </div>
               </div>
 
@@ -94,10 +96,10 @@
                 <div class="grid gap-1.5">
                   <Label for="use-profile-data"
                     class="text-sm font-medium leading-none cursor-pointer text-gray-900 dark:text-white">
-                    Gunakan data profil untuk pengiriman
+                    Use profile data for shipping
                   </Label>
                   <p class="text-sm text-gray-600 dark:text-gray-400">
-                    Data akan otomatis terisi ke form di bawah
+                    Data will be automatically filled into the form below
                   </p>
                 </div>
               </div>
@@ -119,13 +121,13 @@
                       clip-rule="evenodd" />
                   </svg>
                 </div>
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Data Penerima</h3>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Recipient Data</h3>
               </div>
 
               <div class="space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div class="space-y-2">
-                    <Label for="phone" class="text-sm font-medium text-gray-900 dark:text-white">Nomor Handphone <span
+                    <Label for="phone" class="text-sm font-medium text-gray-900 dark:text-white">Phone Number <span
                         class="text-red-500">*</span></Label>
                     <div class="relative">
                       <svg class="absolute left-3 top-3 w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
@@ -139,8 +141,8 @@
                   </div>
 
                   <div class="space-y-2">
-                    <Label for="telegram" class="text-sm font-medium text-gray-900 dark:text-white">Username
-                      Telegram</Label>
+                    <Label for="telegram" class="text-sm font-medium text-gray-900 dark:text-white">Telegram
+                      Username</Label>
                     <div class="relative">
                       <svg class="absolute left-3 top-3 w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
                         <path
@@ -152,8 +154,8 @@
                   </div>
 
                   <div class="space-y-2">
-                    <Label for="whatsapp" class="text-sm font-medium text-gray-900 dark:text-white">Nomor
-                      WhatsApp</Label>
+                    <Label for="whatsapp" class="text-sm font-medium text-gray-900 dark:text-white">WhatsApp
+                      Number</Label>
                     <div class="relative">
                       <svg class="absolute left-3 top-3 w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
                         <path
@@ -162,35 +164,37 @@
                       <Input id="whatsapp" v-model="form.whatsapp" placeholder="081234567890"
                         class="pl-10 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 rounded-xl" />
                     </div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">Jika tidak diisi, kami akan menggunakan nomor
-                      handphone untuk WhatsApp</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">If not filled, we will use the phone number for
+                      WhatsApp</p>
                   </div>
                 </div>
 
                 <div class="space-y-2">
-                  <Label for="name" class="text-sm font-medium text-gray-900 dark:text-white">Nama Lengkap Penerima
+                  <Label for="name" class="text-sm font-medium text-gray-900 dark:text-white">Recipient Full Name
                     <span class="text-red-500">*</span></Label>
                   <div class="relative">
                     <svg class="absolute left-3 top-3 w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
                         clip-rule="evenodd" />
                     </svg>
-                    <Input id="name" v-model="form.name" placeholder="Nama lengkap sesuai KTP"
+                    <Input id="name" v-model="form.name" placeholder="Full name according to ID card"
                       class="pl-10 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 rounded-xl"
                       required />
                   </div>
                 </div>
 
                 <div class="space-y-2">
-                  <Label for="address" class="text-sm font-medium text-gray-900 dark:text-white">Alamat Lengkap
-                    Pengiriman <span class="text-red-500">*</span></Label>
+                  <Label for="address-detail" class="text-sm font-medium text-gray-900 dark:text-white">Complete
+                    Shipping
+                    Address <span class="text-red-500">*</span></Label>
                   <div class="relative">
                     <svg class="absolute left-3 top-3 w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd"
                         d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
                         clip-rule="evenodd" />
                     </svg>
-                    <Textarea id="address" v-model="form.address" placeholder="Alamat lengkap termasuk kode pos"
+                    <Textarea id="address-detail" v-model="form.address"
+                      placeholder="Complete address including postal code"
                       class="pl-10 min-h-[100px] bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 rounded-xl"
                       required />
                   </div>
@@ -214,7 +218,7 @@
                       d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1v-1h4v1a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H20a1 1 0 001-1v-10a1 1 0 00-1-1H3zM14 7h2v6h-2V7z" />
                   </svg>
                 </div>
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Biaya Pengiriman</h3>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Shipping Cost</h3>
               </div>
 
               <div class="space-y-4">
@@ -224,7 +228,7 @@
                       <input type="radio" id="shipping-included" v-model="shippingOption" value="included"
                         class="h-4 w-4 border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:focus:ring-blue-400" />
                       <Label for="shipping-included" class="text-gray-900 dark:text-white cursor-pointer">
-                        Token sudah termasuk biaya pengiriman
+                        Token already includes shipping cost
                       </Label>
                     </div>
                   </div>
@@ -233,7 +237,7 @@
                       <input type="radio" id="shipping-separate" v-model="shippingOption" value="separate"
                         class="h-4 w-4 border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:focus:ring-blue-400" />
                       <Label for="shipping-separate" class="text-gray-900 dark:text-white cursor-pointer">
-                        Bayar terpisah untuk biaya pengiriman
+                        Pay separately for shipping cost
                       </Label>
                     </div>
                   </div>
@@ -244,17 +248,16 @@
                   class="mt-6 p-6 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 rounded-xl border border-gray-200 dark:border-gray-700">
                   <div class="space-y-4">
                     <div class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
-                      <span class="text-gray-700 dark:text-gray-300">Jumlah Token untuk Emas:</span>
+                      <span class="text-gray-700 dark:text-gray-300">Token Amount for Gold:</span>
                       <span class="font-semibold text-gray-900 dark:text-white">{{ tokenGold }} Token</span>
                     </div>
                     <div class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
-                      <span class="text-gray-700 dark:text-gray-300">Biaya Pengiriman:</span>
+                      <span class="text-gray-700 dark:text-gray-300">Shipping Cost:</span>
                       <span class="font-semibold text-gray-900 dark:text-white">{{ shippingCost }} Token</span>
                     </div>
                     <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
                       <div class="flex justify-between items-center">
-                        <span class="text-lg font-bold text-gray-900 dark:text-white">Total Token yang
-                          Dibutuhkan:</span>
+                        <span class="text-lg font-bold text-gray-900 dark:text-white">Total Token Required:</span>
                         <span class="text-xl font-bold text-blue-600 dark:text-blue-400">{{ totalToken }} Token</span>
                       </div>
                     </div>
@@ -279,34 +282,34 @@
                       clip-rule="evenodd" />
                   </svg>
                 </div>
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Ringkasan Redemption</h3>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Redemption Summary</h3>
               </div>
 
               <div class="space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                    <p class="text-sm text-gray-600 dark:text-gray-400">Emas yang akan dikirim</p>
-                    <p class="font-semibold text-gray-900 dark:text-white">5 gram (24 karat)</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Gold to be shipped</p>
+                    <p class="font-semibold text-gray-900 dark:text-white">5 grams (24 karat)</p>
                   </div>
                   <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                    <p class="text-sm text-gray-600 dark:text-gray-400">Estimasi nilai</p>
-                    <p class="font-semibold text-gray-900 dark:text-white">Rp 5.000.000</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Estimated value</p>
+                    <p class="font-semibold text-gray-900 dark:text-white">Rp 5,000,000</p>
                   </div>
                   <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                    <p class="text-sm text-gray-600 dark:text-gray-400">Metode pengiriman</p>
-                    <p class="font-semibold text-gray-900 dark:text-white">Kurir khusus (3-5 hari kerja)</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Shipping method</p>
+                    <p class="font-semibold text-gray-900 dark:text-white">Special courier (3-5 business days)</p>
                   </div>
                   <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                    <p class="text-sm text-gray-600 dark:text-gray-400">Asuransi pengiriman</p>
-                    <p class="font-semibold text-gray-900 dark:text-white">Termasuk</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Shipping insurance</p>
+                    <p class="font-semibold text-gray-900 dark:text-white">Included</p>
                   </div>
                 </div>
 
                 <div
                   class="p-6 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 rounded-xl border border-blue-200 dark:border-blue-800">
                   <div class="flex justify-between items-center">
-                    <span class="text-xl font-bold text-gray-900 dark:text-white">Total Token:</span>
-                    <span class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ totalToken }} Token</span>
+                    <span class="text-xl font-bold text-gray-900 dark:text-white">Total Tokens:</span>
+                    <span class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ totalToken }} Tokens</span>
                   </div>
                 </div>
 
@@ -316,10 +319,10 @@
                   <div class="grid gap-1.5">
                     <Label for="terms"
                       class="text-sm font-medium leading-none cursor-pointer text-gray-900 dark:text-white">
-                      Saya menyetujui syarat dan ketentuan yang berlaku
+                      I agree to the applicable terms and conditions
                     </Label>
                     <p class="text-sm text-gray-600 dark:text-gray-400">
-                      Dengan mencentang ini, Anda menyetujui semua syarat dan ketentuan redemption token dengan emas.
+                      By checking this, you agree to all terms and conditions for token redemption with gold.
                     </p>
                   </div>
                 </div>
@@ -335,14 +338,14 @@
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
-            Batal
+            Cancel
           </Button>
           <Button @click="submitRedemption"
             class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
-            Konfirmasi Redemption
+            Confirm Redemption
           </Button>
         </div>
       </div>
@@ -351,14 +354,14 @@
       <Dialog :open="isLoading">
         <DialogContent class="sm:max-w-md bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800">
           <DialogHeader>
-            <DialogTitle class="text-gray-900 dark:text-white">Memproses Redemption</DialogTitle>
+            <DialogTitle class="text-gray-900 dark:text-white">Processing Redemption</DialogTitle>
           </DialogHeader>
           <div class="flex flex-col items-center justify-center py-8">
             <div
               class="w-16 h-16 border-4 border-blue-200 dark:border-blue-800 border-t-blue-600 dark:border-t-blue-400 rounded-full animate-spin mb-4">
             </div>
-            <p class="text-center text-gray-600 dark:text-gray-400">Harap tunggu sebentar, kami sedang memproses
-              permintaan Anda...</p>
+            <p class="text-center text-gray-600 dark:text-gray-400">Please wait a moment, we are processing your
+              request...</p>
           </div>
         </DialogContent>
       </Dialog>
@@ -367,7 +370,7 @@
       <Dialog :open="showSuccess">
         <DialogContent class="sm:max-w-md bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800">
           <DialogHeader>
-            <DialogTitle class="text-center text-gray-900 dark:text-white">Redemption Berhasil!</DialogTitle>
+            <DialogTitle class="text-center text-gray-900 dark:text-white">Redemption Successful!</DialogTitle>
           </DialogHeader>
           <div class="flex flex-col items-center justify-center py-4">
             <div
@@ -377,17 +380,17 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <p class="text-center text-gray-700 dark:text-gray-300 mb-2">Permintaan redemption token Anda telah berhasil
-              dikirim.</p>
-            <p class="text-center text-gray-600 dark:text-gray-400 text-sm">Emas fisik akan segera dikirim ke alamat
-              yang Anda berikan.</p>
-            <p class="text-center text-gray-600 dark:text-gray-400 text-sm mt-2">Anda akan mendapatkan notifikasi via
-              WhatsApp/Telegram mengenai status pengiriman.</p>
+            <p class="text-center text-gray-700 dark:text-gray-300 mb-2">Your token redemption request has been
+              successfully submitted.</p>
+            <p class="text-center text-gray-600 dark:text-gray-400 text-sm">Physical gold will be shipped to the address
+              you provided shortly.</p>
+            <p class="text-center text-gray-600 dark:text-gray-400 text-sm mt-2">You will receive notifications via
+              WhatsApp/Telegram regarding the shipping status.</p>
           </div>
           <DialogFooter class="flex flex-col sm:flex-row gap-2">
             <Button @click="showSuccess = false"
               class="flex-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-700 rounded-xl">
-              Tutup
+              Close
             </Button>
             <Button @click="goToDashboard"
               class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl">
@@ -395,7 +398,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
               </svg>
-              Kembali ke Dashboard
+              Back to Dashboard
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -408,13 +411,16 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
-// import {
-//   Card,
-//   CardContent,
-//   CardDescription,
-//   CardHeader,
-//   CardTitle
-// } from '@/components/ui/card'
+/**
+ *
+ // import {
+  //   Card,
+  //   CardContent,
+  //   CardDescription,
+  //   CardHeader,
+  //   CardTitle
+  // } from '@/components/ui/card'
+  */
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -478,7 +484,7 @@ watch(useProfileData, (value) => {
       name: userProfile.value.name,
       address: userProfile.value.address
     }
-    toast.success('Data profil telah diisi otomatis')
+    toast.success('Profile data has been auto-filled')
   } else {
     form.value = {
       phone: '',
@@ -497,8 +503,8 @@ onMounted(() => {
   walletConnected.value = storedWalletStatus === 'true'
 
   if (walletConnected.value) {
-    toast.success('Wallet sudah terhubung', {
-      description: 'Anda dapat melanjutkan proses redemption.'
+    toast.success('Wallet already connected', {
+      description: 'You can continue the redemption process.'
     })
   }
 })
@@ -511,32 +517,32 @@ const connectWallet = () => {
     localStorage.setItem('walletConnected', 'true')
     isLoading.value = false
 
-    toast.success('Wallet Berhasil Terhubung!', {
-      description: 'Wallet Anda telah terhubung dengan aplikasi.',
+    toast.success('Wallet Successfully Connected!', {
+      description: 'Your wallet has been connected to the application.',
       duration: 3000,
     })
   }, 1500)
 }
 
 const cancelRedemption = () => {
-  toast('Membatalkan redemption...', {
-    description: 'Apakah Anda yakin ingin membatalkan proses redemption?',
+  toast('Cancelling redemption...', {
+    description: 'Are you sure you want to cancel the redemption process?',
     action: {
-      label: 'Ya, Batalkan',
+      label: 'Yes, Cancel',
       onClick: () => {
         resetForm()
         walletConnected.value = false
         localStorage.removeItem('walletConnected')
-        toast.info('Redemption dibatalkan', {
-          description: 'Proses redemption telah dibatalkan.'
+        toast.info('Redemption cancelled', {
+          description: 'The redemption process has been cancelled.'
         })
       }
     },
     cancel: {
-      label: 'Tidak',
+      label: 'No',
       onClick: () => {
-        toast('Dibatalkan', {
-          description: 'Proses redemption tetap berlanjut.'
+        toast('Cancelled', {
+          description: 'The redemption process continues.'
         })
       }
     }
@@ -546,23 +552,23 @@ const cancelRedemption = () => {
 const submitRedemption = () => {
   // Validate form
   if (!form.value.phone || !form.value.name || !form.value.address) {
-    toast.error('Data Tidak Lengkap', {
-      description: 'Harap lengkapi semua data penerima yang diperlukan.',
+    toast.error('Incomplete Data', {
+      description: 'Please complete all required recipient data.',
       duration: 4000,
     })
     return
   }
 
   if (!agreeTerms.value) {
-    toast.error('Persetujuan Diperlukan', {
-      description: 'Anda harus menyetujui syarat dan ketentuan untuk melanjutkan.',
+    toast.error('Agreement Required', {
+      description: 'You must agree to the terms and conditions to continue.',
       duration: 4000,
     })
     return
   }
 
   // Show loading toast
-  const loadingToast = toast.loading('Memproses redemption Anda...', {
+  const loadingToast = toast.loading('Processing your redemption...', {
     duration: Infinity,
   })
 
@@ -577,8 +583,8 @@ const submitRedemption = () => {
     toast.dismiss(loadingToast)
 
     // Show success toast
-    toast.success('Redemption Berhasil Diproses!', {
-      description: 'Permintaan redemption Anda telah dikirim dan sedang diproses.',
+    toast.success('Redemption Successfully Processed!', {
+      description: 'Your redemption request has been sent and is being processed.',
       duration: 5000,
     })
 
@@ -610,8 +616,8 @@ const goToDashboard = () => {
   showSuccess.value = false
   router.push('/dashboard')
 
-  toast('Kembali ke Dashboard', {
-    description: 'Anda akan diarahkan ke dashboard utama.',
+  toast('Returning to Dashboard', {
+    description: 'You will be redirected to the main dashboard.',
     duration: 2000,
   })
 }

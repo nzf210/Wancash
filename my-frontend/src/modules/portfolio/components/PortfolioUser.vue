@@ -1,3 +1,4 @@
+```
 <template>
   <div class="min-h-screen bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-950 p-4 md:p-6">
     <div class="max-w-7xl mx-auto">
@@ -13,8 +14,8 @@
               </svg>
             </div>
             <div>
-              <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Portfolio & Riwayat</h1>
-              <p class="text-gray-600 dark:text-gray-300">Kelola aset token Anda dan pantau semua transaksi</p>
+              <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Portfolio & History</h1>
+              <p class="text-gray-600 dark:text-gray-300">Manage your token assets and monitor all transactions</p>
             </div>
           </div>
           <div class="flex items-center gap-3">
@@ -52,14 +53,14 @@
                 </svg>
               </div>
               <div>
-                <p class="font-semibold text-gray-900 dark:text-white">Wallet belum terhubung</p>
-                <p class="text-sm text-gray-600 dark:text-gray-400">Hubungkan wallet untuk melihat portfolio dan riwayat
+                <p class="font-semibold text-gray-900 dark:text-white">Wallet not connected</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Connect wallet to view portfolio and history
                 </p>
               </div>
             </div>
             <Button @click="connectWallet"
               class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl px-6">
-              Hubungkan Wallet
+              Connect Wallet
             </Button>
           </div>
         </div>
@@ -77,9 +78,9 @@
 
             <div class="relative p-8">
               <div class="flex items-center justify-between mb-8">
-                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Ringkasan Portfolio</h2>
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Portfolio Summary</h2>
                 <div class="flex items-center gap-2">
-                  <span class="text-sm text-gray-600 dark:text-gray-400">Update: {{ lastUpdate }}</span>
+                  <span class="text-sm text-gray-600 dark:text-gray-400">Updated: {{ lastUpdate }}</span>
                   <Button @click="refreshData" size="sm"
                     class="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -121,7 +122,7 @@
                           d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
-                    <span class="text-sm font-medium text-green-600 dark:text-green-400">Tersedia</span>
+                    <span class="text-sm font-medium text-green-600 dark:text-green-400">Available</span>
                   </div>
                   <p class="text-2xl font-bold text-gray-900 dark:text-white mb-1">{{ formatNumber(availableBalance) }}
                     GLD</p>
@@ -140,12 +141,12 @@
                           d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                       </svg>
                     </div>
-                    <span class="text-sm font-medium text-amber-600 dark:text-amber-400">Terkunci</span>
+                    <span class="text-sm font-medium text-amber-600 dark:text-amber-400">Locked</span>
                   </div>
                   <p class="text-2xl font-bold text-gray-900 dark:text-white mb-1">{{ formatNumber(lockedBalance) }} GLD
                   </p>
                   <p class="text-lg font-semibold text-amber-600 dark:text-amber-400">Rp {{ formatCurrency(lockedValue)
-                    }}</p>
+                  }}</p>
                 </div>
 
                 <!-- Token Price -->
@@ -159,7 +160,7 @@
                           clip-rule="evenodd" />
                       </svg>
                     </div>
-                    <span class="text-sm font-medium text-purple-600 dark:text-purple-400">Harga</span>
+                    <span class="text-sm font-medium text-purple-600 dark:text-purple-400">Price</span>
                   </div>
                   <p class="text-2xl font-bold text-gray-900 dark:text-white mb-1">Rp {{ formatCurrency(tokenPrice) }}
                   </p>
@@ -209,7 +210,7 @@
           <!-- Send Token History -->
           <div v-if="activeTab === 'send'" class="space-y-6">
             <div class="flex items-center justify-between mb-6">
-              <h3 class="text-xl font-bold text-gray-900 dark:text-white">Riwayat Transfer Token</h3>
+              <h3 class="text-xl font-bold text-gray-900 dark:text-white">Token Transfer History</h3>
               <div class="flex items-center gap-3">
                 <div class="relative">
                   <svg class="absolute left-3 top-2.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor"
@@ -217,15 +218,15 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
-                  <input v-model="searchQuery" type="text" placeholder="Cari alamat atau jumlah..."
+                  <input v-model="searchQuery" type="text" placeholder="Search address or amount..."
                     class="pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
                 <select v-model="filterStatus"
                   class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <option value="all">Semua Status</option>
-                  <option value="success">Berhasil</option>
+                  <option value="all">All Status</option>
+                  <option value="success">Successful</option>
                   <option value="pending">Pending</option>
-                  <option value="failed">Gagal</option>
+                  <option value="failed">Failed</option>
                 </select>
               </div>
             </div>
@@ -239,22 +240,22 @@
                     <tr>
                       <th
                         class="px-6 py-4 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                        Tanggal</th>
+                        Date</th>
                       <th
                         class="px-6 py-4 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                        Penerima</th>
+                        Recipient</th>
                       <th
                         class="px-6 py-4 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                        Jumlah</th>
+                        Amount</th>
                       <th
                         class="px-6 py-4 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                        Biaya</th>
+                        Fee</th>
                       <th
                         class="px-6 py-4 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                         Status</th>
                       <th
                         class="px-6 py-4 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                        Aksi</th>
+                        Action</th>
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
@@ -265,7 +266,7 @@
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
-                        Tidak ada riwayat transfer
+                        No transfer history
                       </td>
                     </tr>
                     <tr v-for="transaction in filteredSendTransactions" :key="transaction.id"
@@ -307,14 +308,14 @@
                             transaction.status === 'pending' ? 'bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-400' :
                               'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-400'
                         ]">
-                          {{ transaction.status === 'success' ? 'Berhasil' : transaction.status === 'pending' ?
-                            'Pending' : 'Gagal' }}
+                          {{ transaction.status === 'success' ? 'Successful' : transaction.status === 'pending' ?
+                            'Pending' : 'Failed' }}
                         </span>
                       </td>
                       <td class="px-6 py-4 whitespace-nowrap">
                         <button @click="viewTransactionDetails(transaction)"
                           class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium">
-                          Detail
+                          Details
                         </button>
                       </td>
                     </tr>
@@ -326,21 +327,21 @@
               <div v-if="filteredSendTransactions.length > 0"
                 class="px-6 py-4 border-t border-gray-200 dark:border-gray-800 flex items-center justify-between">
                 <div class="text-sm text-gray-500 dark:text-gray-400">
-                  Menampilkan {{ Math.min((currentPage - 1) * itemsPerPage + 1, filteredSendTransactions.length) }}-{{
-                    Math.min(currentPage * itemsPerPage, filteredSendTransactions.length) }} dari {{
-                    filteredSendTransactions.length }} transaksi
+                  Showing {{ Math.min((currentPage - 1) * itemsPerPage + 1, filteredSendTransactions.length) }}-{{
+                    Math.min(currentPage * itemsPerPage, filteredSendTransactions.length) }} of {{
+                    filteredSendTransactions.length }} transactions
                 </div>
                 <div class="flex items-center gap-2">
                   <button @click="prevPage" :disabled="currentPage === 1"
                     class="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                    Sebelumnya
+                    Previous
                   </button>
                   <span class="text-sm text-gray-700 dark:text-gray-300">
-                    Halaman {{ currentPage }} dari {{ totalPages }}
+                    Page {{ currentPage }} of {{ totalPages }}
                   </span>
                   <button @click="nextPage" :disabled="currentPage === totalPages"
                     class="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                    Selanjutnya
+                    Next
                   </button>
                 </div>
               </div>
@@ -350,14 +351,14 @@
           <!-- Bridge Token History -->
           <div v-else-if="activeTab === 'bridge'" class="space-y-6">
             <div class="flex items-center justify-between mb-6">
-              <h3 class="text-xl font-bold text-gray-900 dark:text-white">Riwayat Bridge Token</h3>
+              <h3 class="text-xl font-bold text-gray-900 dark:text-white">Token Bridge History</h3>
               <div class="flex items-center gap-3">
                 <select v-model="bridgeFilterStatus"
                   class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <option value="all">Semua Status</option>
-                  <option value="completed">Selesai</option>
-                  <option value="processing">Diproses</option>
-                  <option value="failed">Gagal</option>
+                  <option value="all">All Status</option>
+                  <option value="completed">Completed</option>
+                  <option value="processing">Processing</option>
+                  <option value="failed">Failed</option>
                 </select>
               </div>
             </div>
@@ -377,8 +378,8 @@
                             'bg-red-500'
                       ]"></div>
                       <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        {{ bridge.status === 'completed' ? 'Selesai' : bridge.status === 'processing' ? 'Diproses' :
-                          'Gagal' }}
+                        {{ bridge.status === 'completed' ? 'Completed' : bridge.status === 'processing' ? 'Processing' :
+                          'Failed' }}
                       </span>
                     </div>
                     <span class="text-xs text-gray-500 dark:text-gray-400">{{ formatDate(bridge.date) }}</span>
@@ -395,7 +396,7 @@
                         </svg>
                       </div>
                       <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ bridge.fromChain }}</p>
-                      <p class="text-xs text-gray-500 dark:text-gray-400">Dari</p>
+                      <p class="text-xs text-gray-500 dark:text-gray-400">From</p>
                     </div>
 
                     <div class="relative flex-1 mx-4">
@@ -422,23 +423,23 @@
                         </svg>
                       </div>
                       <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ bridge.toChain }}</p>
-                      <p class="text-xs text-gray-500 dark:text-gray-400">Ke</p>
+                      <p class="text-xs text-gray-500 dark:text-gray-400">To</p>
                     </div>
                   </div>
 
                   <!-- Amount and Details -->
                   <div class="space-y-3">
                     <div class="flex justify-between items-center">
-                      <span class="text-sm text-gray-600 dark:text-gray-400">Jumlah:</span>
+                      <span class="text-sm text-gray-600 dark:text-gray-400">Amount:</span>
                       <span class="font-semibold text-gray-900 dark:text-white">{{ formatNumber(bridge.amount) }}
                         GLD</span>
                     </div>
                     <div class="flex justify-between items-center">
-                      <span class="text-sm text-gray-600 dark:text-gray-400">Biaya Bridge:</span>
+                      <span class="text-sm text-gray-600 dark:text-gray-400">Bridge Fee:</span>
                       <span class="text-gray-900 dark:text-white">{{ formatNumber(bridge.fee) }} GLD</span>
                     </div>
                     <div class="flex justify-between items-center">
-                      <span class="text-sm text-gray-600 dark:text-gray-400">Estimasi Waktu:</span>
+                      <span class="text-sm text-gray-600 dark:text-gray-400">Estimated Time:</span>
                       <span class="text-gray-900 dark:text-white">{{ bridge.estimatedTime }}</span>
                     </div>
                     <div v-if="bridge.transactionHash" class="pt-3 border-t border-gray-200 dark:border-gray-700">
@@ -449,7 +450,7 @@
                         </code>
                         <button @click="copyHash(bridge.transactionHash)"
                           class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-xs">
-                          Salin
+                          Copy
                         </button>
                       </div>
                     </div>
@@ -459,7 +460,7 @@
                   <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
                     <button @click="viewBridgeDetails(bridge)"
                       class="w-full py-2 text-center text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-900/30 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors">
-                      Lihat Detail
+                      View Details
                     </button>
                   </div>
                 </div>
@@ -476,13 +477,13 @@
                     d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
-              <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Belum ada riwayat bridge</h4>
+              <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No bridge history yet</h4>
               <p class="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
-                Anda belum melakukan bridge token antar jaringan. Cobalah bridge token untuk melihat riwayatnya di sini.
+                You haven't performed any token bridge between networks. Try bridging tokens to see history here.
               </p>
               <Button @click="goToBridge"
                 class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl px-6">
-                Coba Bridge Token
+                Try Bridge Token
               </Button>
             </div>
           </div>
@@ -493,26 +494,26 @@
           <div
             class="relative bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-xl overflow-hidden">
             <div class="p-6">
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">Statistik Transaksi</h3>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">Transaction Statistics</h3>
 
               <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div class="text-center">
                   <div class="text-2xl font-bold text-gray-900 dark:text-white mb-1">{{ totalSendTransactions }}</div>
-                  <p class="text-sm text-gray-600 dark:text-gray-400">Total Transfer</p>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">Total Transfers</p>
                 </div>
                 <div class="text-center">
                   <div class="text-2xl font-bold text-green-600 dark:text-green-400 mb-1">{{ successfulSendTransactions
-                    }}</div>
-                  <p class="text-sm text-gray-600 dark:text-gray-400">Transfer Berhasil</p>
+                  }}</div>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">Successful Transfers</p>
                 </div>
                 <div class="text-center">
                   <div class="text-2xl font-bold text-gray-900 dark:text-white mb-1">{{ totalBridgeTransactions }}</div>
-                  <p class="text-sm text-gray-600 dark:text-gray-400">Total Bridge</p>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">Total Bridges</p>
                 </div>
                 <div class="text-center">
                   <div class="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-1">{{
                     formatCurrency(totalBridgeVolume) }}</div>
-                  <p class="text-sm text-gray-600 dark:text-gray-400">Volume Bridge</p>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">Bridge Volume</p>
                 </div>
               </div>
             </div>
@@ -525,7 +526,7 @@
     <Dialog :open="showTransactionDetails" @update:open="showTransactionDetails = $event">
       <DialogContent class="sm:max-w-md bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800">
         <DialogHeader>
-          <DialogTitle class="text-gray-900 dark:text-white">Detail Transaksi</DialogTitle>
+          <DialogTitle class="text-gray-900 dark:text-white">Transaction Details</DialogTitle>
         </DialogHeader>
         <div v-if="selectedTransaction" class="space-y-6 py-4">
           <!-- Transaction Info -->
@@ -538,22 +539,22 @@
                   selectedTransaction.status === 'pending' ? 'text-amber-600 dark:text-amber-400' :
                     'text-red-600 dark:text-red-400'
               ]">
-                {{ selectedTransaction.status === 'success' ? 'Berhasil' : selectedTransaction.status === 'pending' ?
-                  'Pending' : 'Gagal' }}
+                {{ selectedTransaction.status === 'success' ? 'Successful' : selectedTransaction.status === 'pending' ?
+                  'Pending' : 'Failed' }}
               </span>
             </div>
             <div class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
-              <span class="text-gray-600 dark:text-gray-400">Tanggal:</span>
+              <span class="text-gray-600 dark:text-gray-400">Date:</span>
               <span class="font-medium text-gray-900 dark:text-white">{{ formatDateTime(selectedTransaction.date)
-                }}</span>
+              }}</span>
             </div>
             <div class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
-              <span class="text-gray-600 dark:text-gray-400">Jumlah:</span>
+              <span class="text-gray-600 dark:text-gray-400">Amount:</span>
               <span class="font-bold text-red-600 dark:text-red-400">-{{ formatNumber(selectedTransaction.amount) }}
                 GLD</span>
             </div>
             <div class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
-              <span class="text-gray-600 dark:text-gray-400">Biaya:</span>
+              <span class="text-gray-600 dark:text-gray-400">Fee:</span>
               <span class="text-gray-900 dark:text-white">{{ formatNumber(selectedTransaction.fee) }} GLD</span>
             </div>
             <div class="flex justify-between items-center py-2">
@@ -565,12 +566,12 @@
 
           <!-- Recipient Info -->
           <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
-            <p class="text-sm font-medium text-gray-900 dark:text-white mb-2">Penerima:</p>
+            <p class="text-sm font-medium text-gray-900 dark:text-white mb-2">Recipient:</p>
             <div class="p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
               <p class="font-medium text-gray-900 dark:text-white">{{ selectedTransaction.recipientName || 'Unknown' }}
               </p>
               <p class="text-sm text-gray-500 dark:text-gray-400 font-mono break-all">{{ selectedTransaction.recipient
-                }}</p>
+              }}</p>
             </div>
           </div>
 
@@ -583,7 +584,7 @@
               </code>
               <button @click="copyHash(selectedTransaction.hash)"
                 class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm">
-                Salin
+                Copy
               </button>
             </div>
           </div>
@@ -591,7 +592,7 @@
         <DialogFooter>
           <Button @click="showTransactionDetails = false"
             class="w-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-700 rounded-xl">
-            Tutup
+            Close
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -608,8 +609,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog' // sesuaikan path jika pakai shadcn
-import { Button } from '@/components/ui/button' // sesuaikan path
+} from '@/components/ui/dialog' // adjust path if using shadcn
+import { Button } from '@/components/ui/button' // adjust path
 
 const router = useRouter()
 
@@ -729,7 +730,7 @@ const bridgeTransactions = ref<BridgeTransaction[]>([
     amount: 5000,
     fee: 25,
     status: 'completed',
-    estimatedTime: '15 menit',
+    estimatedTime: '15 minutes',
     transactionHash: '0x3b5c7d9e2f4a6b8c0d2e4f6a8b0c2d3e5f7a9b1c3d5e7f9a1b3c5d7e9f1a3b5c7',
   },
   {
@@ -740,7 +741,7 @@ const bridgeTransactions = ref<BridgeTransaction[]>([
     amount: 3200,
     fee: 18,
     status: 'completed',
-    estimatedTime: '10 menit',
+    estimatedTime: '10 minutes',
     transactionHash: '0x4c6d8e0f2a4b6c8e0f2a4b6c8e0f2a4b6c8e0f2a4b6c8e0f2a4b6c8e0f2a4b6c8',
   },
   {
@@ -751,7 +752,7 @@ const bridgeTransactions = ref<BridgeTransaction[]>([
     amount: 1800,
     fee: 12,
     status: 'processing',
-    estimatedTime: '20 menit',
+    estimatedTime: '20 minutes',
     transactionHash: '0x5d7e9f1a3b5c7d9e2f4a6b8c0d2e4f6a8b0c2d3e5f7a9b1c3d5e7f9a1b3c5d7e9',
   },
   {
@@ -762,7 +763,7 @@ const bridgeTransactions = ref<BridgeTransaction[]>([
     amount: 4200,
     fee: 22,
     status: 'completed',
-    estimatedTime: '25 menit',
+    estimatedTime: '25 minutes',
     transactionHash: '0x6e8f0a2b4c6d8e0f2a4b6c8e0f2a4b6c8e0f2a4b6c8e0f2a4b6c8e0f2a4b6c8e0',
   },
 ])
@@ -803,10 +804,13 @@ const totalPages = computed(() =>
   Math.ceil(filteredSendTransactions.value.length / itemsPerPage)
 )
 
+/**
+*
 // const paginatedTransactions = computed(() => {
 //   const start = (currentPage.value - 1) * itemsPerPage
 //   return filteredSendTransactions.value.slice(start, start + itemsPerPage)
 // })
+*/
 
 const totalSendTransactions = computed(() => sendTransactions.value.length)
 const successfulSendTransactions = computed(() =>
@@ -844,9 +848,9 @@ const viewBridgeDetails = (bridge: BridgeTransaction) => {
 const copyHash = async (hash: string) => {
   try {
     await navigator.clipboard.writeText(hash)
-    alert('Hash berhasil disalin!')
+    alert('Hash successfully copied!')
   } catch (err) {
-    console.error('Gagal menyalin hash', err)
+    console.error('Failed to copy hash', err)
   }
 }
 
