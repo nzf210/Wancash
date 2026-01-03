@@ -78,7 +78,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch } from 'vue'
+import { ref, toRaw, watch } from 'vue'
 import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
 
@@ -92,11 +92,11 @@ const props = defineProps({
 const emit = defineEmits(['update:notifications'])
 
 // Data lokal
-const localNotifications = ref(structuredClone(props.notifications))
+const localNotifications = ref(structuredClone(toRaw(props.notifications)))
 
 // Watch for prop changes
 watch(() => props.notifications, (newVal) => {
-  localNotifications.value = structuredClone(newVal)
+  localNotifications.value = structuredClone(toRaw(newVal))
 }, { deep: true })
 
 // Methods
@@ -106,6 +106,6 @@ const saveNotifications = () => {
 }
 
 const resetNotifications = () => {
-  localNotifications.value = structuredClone(props.notifications)
+  localNotifications.value = structuredClone(toRaw(props.notifications))
 }
 </script>
