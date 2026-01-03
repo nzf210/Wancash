@@ -429,17 +429,17 @@ const resetForm = () => {
 }
 
 const handleFileUpload = (event: Event) => {
-  const files = (event.target as HTMLInputElement).files
+  const files = (event.target as HTMLInputElement).files;
   if (files !== null) {
-    for (const element of files) {
-      if (element.size <= 5 * 1024 * 1024) { // 5MB limit
+    for (const element of Array.from(files)) {  // Add Array.from here
+      if (element.size <= 5 * 1024 * 1024) {
         attachments.value.push({ name: element.name });
       } else {
         alert(`File ${element.name} exceeds the maximum size of 5MB`);
       }
     }
   }
-}
+};
 
 const removeAttachment = (index: number) => {
   if (index >= 0 && index < attachments.value.length) {
