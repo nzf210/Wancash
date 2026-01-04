@@ -42,9 +42,9 @@ const formattedBalance = computed(() => {
 </script>
 
 <template>
-  <div>
+  <div class="text-foreground">
     <div v-if="isLoading">Loading...</div>
-    <div v-else-if="isError">Retry Conection...</div>
+    <div v-else-if="isError">Retry Connection...</div>
     <div v-else>{{ formattedBalance ?? 'N/A' }}</div>
   </div>
 </template>

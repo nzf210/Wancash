@@ -259,7 +259,7 @@
                 </div>
                 <div>
                   <div class="font-semibold text-gray-800 dark:text-white">Email</div>
-                  <div class="text-gray-600 dark:text-gray-400">support@satkingtoken.com</div>
+                  <div class="text-gray-600 dark:text-gray-400">support@wancash.org</div>
                 </div>
               </div>
 
@@ -397,7 +397,7 @@ const contactTypes = [
 
 // Quick FAQs
 const quickFAQs = [
-  { id: 1, question: 'How to stake SATKING?' },
+  { id: 1, question: 'How to stake Wancash?' },
   { id: 2, question: 'What is the minimum deposit for staking?' },
   { id: 3, question: 'What fees are charged?' },
   { id: 4, question: 'How to claim rewards?' },

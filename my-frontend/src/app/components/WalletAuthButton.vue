@@ -7,6 +7,13 @@
       {{ connecting ? 'Connecting...' : 'Connect Wallet' }}
     </button>
 
+    <div v-if="authLoading" class="flex flex-row">
+      <span class="mt-1 pr-1">
+        <Spinner />
+      </span>
+      <span class="auth-loading">Loading...</span>
+    </div>
+
     <!-- State 2: Connected but Not Authenticated -->
     <button v-else-if="isConnected && !isAuthenticated" @click="handleAuth" :disabled="authLoading"
       class="connect-button">
@@ -48,6 +55,7 @@ import { toast } from 'vue-sonner'
 import ProfileIcon from './ProfileIcon.vue'
 import type { EIP1193Provider } from 'viem'
 import { useAppKit, useAppKitAccount, type UseAppKitAccountReturn } from '@reown/appkit/vue'
+import { Spinner } from '@/components/ui/spinner'
 
 defineProps<{
   isMobile: boolean

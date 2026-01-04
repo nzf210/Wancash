@@ -10,8 +10,8 @@
               SK
             </div>
             <div>
-              <CardTitle class="text-xl font-bold text-gray-800 dark:text-white">Staking Wancash Token</CardTitle>
-              <p class="text-sm text-gray-600 dark:text-gray-300">SATKING</p>
+              <CardTitle class="text-xl font-bold text-gray-800 dark:text-white">Wancash Token</CardTitle>
+              <p class="text-sm text-gray-600 dark:text-gray-300">WCH</p>
             </div>
           </div>
           <Badge variant="secondary"
@@ -60,7 +60,7 @@
           <Button @click="handleBuy"
             class="flex-1 bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700"
             :disabled="loading">
-            <span v-if="!loading">Buy SATKING</span>
+            <span v-if="!loading">Buy Wancash</span>
             <span v-else class="flex items-center">
               <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
               Processing...
@@ -126,7 +126,7 @@ const handleBuy = async (): Promise<void> => {
   try {
     // Simulasi API call
     await new Promise(resolve => setTimeout(resolve, 2000))
-    console.log('Buy transaction initiated for SATKING token')
+    console.log('Buy transaction initiated for Wancash token')
     // Di sini bisa ditambahkan logic untuk membuka modal atau redirect ke exchange
   } catch (error) {
     console.error('Buy transaction failed:', error)
@@ -140,7 +140,7 @@ const handleSell = async (): Promise<void> => {
   try {
     // Simulasi API call
     await new Promise(resolve => setTimeout(resolve, 1500))
-    console.log('Sell transaction initiated for SATKING token')
+    console.log('Sell transaction initiated for Wancash token')
     // Di sini bisa ditambahkan logic untuk membuka modal atau redirect ke exchange
   } catch (error) {
     console.error('Sell transaction failed:', error)
