@@ -16,8 +16,8 @@ const handleMouseMove = (e: MouseEvent) => {
   // Smooth follow pakai lerp
   const updatePosition = () => {
     if (!follower.value) return
-    const currentX = parseFloat(follower.value.style.left || '0')
-    const currentY = parseFloat(follower.value.style.top || '0')
+    const currentX = Number.parseFloat(follower.value.style.left || '0')
+    const currentY = Number.parseFloat(follower.value.style.top || '0')
 
     const lerpX = currentX + (x - currentX) * 0.15
     const lerpY = currentY + (y - currentY) * 0.15
@@ -35,7 +35,7 @@ const handleMouseEnter = () => (isHovering.value = true)
 const handleMouseLeave = () => (isHovering.value = false)
 
 onMounted(() => {
-  window.addEventListener('mousemove', handleMouseMove)
+  globalThis.addEventListener('mousemove', handleMouseMove)
   document.querySelectorAll('a, button, [role="button"], .cursor-pointer').forEach(el => {
     el.addEventListener('mouseenter', handleMouseEnter)
     el.addEventListener('mouseleave', handleMouseLeave)
@@ -43,7 +43,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
-  window.removeEventListener('mousemove', handleMouseMove)
+  globalThis.window.removeEventListener('mousemove', handleMouseMove)
 })
 
 </script>
