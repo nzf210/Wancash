@@ -58,7 +58,7 @@
                       SK
                     </div>
                     <div>
-                      <div class="font-semibold text-white">Staking Wancash Token (SATKING)</div>
+                      <div class="font-semibold text-white">Staking Wancash Token (WCH)</div>
                       <div class="text-sm text-blue-muted">Current Price: ${{ currentPrice.toLocaleString() }}</div>
                     </div>
                   </div>

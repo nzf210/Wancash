@@ -10,7 +10,7 @@
               WCH
             </div>
             <div>
-              <CardTitle class="text-xl font-bold text-gray-800 dark:text-white">Wancash Token</CardTitle>
+              <CardTitle class="md:text-xl font-bold text-gray-800 dark:text-white">Wancash Token</CardTitle>
               <p class="text-sm text-gray-600 dark:text-gray-300">WCH</p>
             </div>
           </div>
@@ -26,11 +26,11 @@
         <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border dark:border-gray-700">
           <div class="flex justify-between items-center mb-2">
             <span class="text-sm text-gray-600 dark:text-gray-400">Current Price</span>
-            <span :class="priceChangeClass" class="text-sm font-medium">
+            <span :class="priceChangeClass" class="md:text-sm font-medium">
               {{ priceChange > 0 ? '+' : '' }}{{ priceChange.toFixed(2) }}%
             </span>
           </div>
-          <div class="text-2xl font-bold text-gray-900 dark:text-white">
+          <div class="text-[13px] md:text-base font-bold text-gray-900 dark:text-white">
             ${{ currentPrice.toLocaleString() }}
           </div>
         </div>
@@ -39,19 +39,25 @@
         <div class="grid grid-cols-2 gap-3">
           <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border dark:border-gray-700">
             <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Market Cap</div>
-            <div class="font-semibold text-gray-900 dark:text-white">${{ marketCap.toLocaleString() }}</div>
+            <div class="text-[13px] md:text-base font-semibold text-gray-900 dark:text-white">${{
+              marketCap.toLocaleString()
+              }}</div>
           </div>
           <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border dark:border-gray-700">
             <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Volume 24h</div>
-            <div class="font-semibold text-gray-900 dark:text-white">${{ volume24h.toLocaleString() }}</div>
+            <div class="text-[13px] md:text-base font-semibold text-gray-900 dark:text-white">${{
+              volume24h.toLocaleString() }}</div>
           </div>
           <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border dark:border-gray-700">
-            <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Supply</div>
-            <div class="font-semibold text-gray-900 dark:text-white">{{ totalSupply.toLocaleString() }}</div>
+            <div class="text-xs sm:text-xs md:text-sm text-gray-500 dark:text-gray-400 mb-1">Total Supply</div>
+            <div class="text-[13px] md:text-base font-semibold text-gray-900 dark:text-white">
+              {{ totalSupply.toLocaleString() }}
+            </div>
           </div>
           <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border dark:border-gray-700">
             <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Circulating</div>
-            <div class="font-semibold text-gray-900 dark:text-white">{{ circulatingSupply.toLocaleString() }}</div>
+            <div class="text-[13px] md:text-base font-semibold text-gray-900 dark:text-white">{{
+              circulatingSupply.toLocaleString() }}</div>
           </div>
         </div>
 
