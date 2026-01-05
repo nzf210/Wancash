@@ -199,15 +199,15 @@ const disconnectWallet = async () => {
   try {
     if (isAuthenticated.value) {
       await logout();
-      toast.info('Signed out');
+      console.info('Signed out');
     }
     await walletDisconnect();
     showDropdown.value = false;
   } catch (error: unknown) {
     if (error instanceof Error) {
-      toast.error(error.message || 'Disconnect failed');
+      console.error(error.message || 'Disconnect failed');
     } else {
-      toast.error('Disconnect failed');
+      console.error('Disconnect failed');
     }
   }
 }

@@ -7,7 +7,7 @@
           <div class="flex items-center space-x-3">
             <div
               class="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
-              SK
+              WCH
             </div>
             <div>
               <CardTitle class="text-xl font-bold text-gray-800 dark:text-white">Wancash Token</CardTitle>
@@ -109,7 +109,7 @@ const currentPrice = ref<number>(0.00245)
 const priceChange = ref<number>(12.45)
 const marketCap = ref<number>(125000000)
 const volume24h = ref<number>(8750000)
-const totalSupply = ref<number>(1000000000)
+const totalSupply = ref<number>(21000000000)
 const circulatingSupply = ref<number>(750000000)
 const lastUpdated = ref<string>('')
 

@@ -126,15 +126,15 @@ onBeforeUnmount(() => {
           <ul class="space-y-2">
             <li class="flex items-center text-gray-700 dark:text-gray-300">
               <div class="w-2 h-2 bg-purple-500 rounded-full mr-3"></div>
-              Q4 2023: Staking Platform Launch
+              Q4 2026: CEX Listings & Wallet
             </li>
             <li class="flex items-center text-gray-700 dark:text-gray-300">
               <div class="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
-              Q1 2024: CEX Listings & Wallet
+              Q1 2027: Staking Platform Launch
             </li>
             <li class="flex items-center text-gray-700 dark:text-gray-300">
               <div class="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-              Q2 2024: Merchant Adoption
+              Q2 2028: Merchant Adoption
             </li>
           </ul>
         </div>
@@ -152,7 +152,7 @@ onBeforeUnmount(() => {
                      transition-colors cursor-pointer" title="Twitter">
               <span class="text-sky-600 dark:text-sky-400 font-medium">TW</span>
             </a>
-            <a href="https://wancash.finance" class="w-10 h-10 bg-purple-100 hover:bg-purple-200 dark:bg-purple-500/20
+            <a href="https://wancash.org" class="w-10 h-10 bg-purple-100 hover:bg-purple-200 dark:bg-purple-500/20
                      dark:hover:bg-purple-500/40 rounded-lg flex items-center justify-center
                      transition-colors cursor-pointer" title="Website">
               <span class="text-purple-600 dark:text-purple-400 font-medium">WEB</span>
