@@ -5,50 +5,60 @@ import {
   createWebHistory,
   type RouteLocationNormalized,
   type RouteRecordRaw,
-} from 'vue-router';
+  type NavigationGuardNext,
+} from 'vue-router'
 
-// Automatically import routes from module index files
+// Workaround for TypeScript import.meta.glob issue
 const modules = import.meta.glob('@/modules/**/index.ts', { eager: true });
 
 const routes: RouteRecordRaw[] = [];
 
-for (const path in modules) {
-  // Each index.ts in modules must export default RouteRecordRaw[]
-  const mod = (modules[path] as { default: RouteRecordRaw | RouteRecordRaw[] }).default;
-  if (mod) {
-    if (Array.isArray(mod)) {
-      routes.push(...mod);
+// Process module imports
+Object.keys(modules).forEach((path) => {
+  const module = modules[path];
+  const routeModule = module?.default;
+  if (routeModule && typeof routeModule === 'object' && routeModule !== null) {
+    if (Array.isArray(routeModule)) {
+      routes.push(...routeModule);
     } else {
-      routes.push(mod);
+      routes.push(routeModule as RouteRecordRaw);
     }
   }
-}
+});
 
-// Modern Vue Router 4 authentication guard (return-based navigation)
-const authGuard = async (to: RouteLocationNormalized): Promise<void | string | boolean> => {
-  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth as boolean | undefined);
+// Rest of your code remains the same...
+const authGuard = async (
+  to: RouteLocationNormalized,
+  from: RouteLocationNormalized,
+  next: NavigationGuardNext
+): Promise<void> => {
+  const requiresAuth = to.matched.some((record) => record.meta?.requiresAuth as boolean | undefined);
 
   if (!requiresAuth) {
-    return; // Proceed with navigation
+    next();
+    return;
   }
 
-  // Lazy import the store to ensure Pinia and other contexts are available
-  const { useAuth } = await import('@/app/composables/useAuth');
-  const { checkAuth, isAuthenticated , user} = useAuth();
+  try {
+    const { useAuth } = await import('@/app/composables/useAuth');
+    const { checkAuth, isAuthenticated, user } = useAuth();
 
-  await checkAuth();
+    await checkAuth();
 
-  if ( user.value && isAuthenticated) {
-    return; // Proceed with navigation
+    if (user.value && isAuthenticated.value) {
+      next();
+    } else {
+      next('/');
+    }
+  } catch (error) {
+    console.error('Auth guard error:', error);
+    next('/');
   }
-
-  return '/'; // Redirect to login or home route
 };
 
-// Title guard
 const titleGuard = (to: RouteLocationNormalized) => {
-  const defaultTitle = 'Wancash'; // Replace with your application name
-  const pageTitle = to.meta.title as string | undefined;
+  const defaultTitle = 'Wancash';
+  const pageTitle = to.meta?.title as string | undefined;
 
   nextTick(() => {
     document.title = pageTitle ? `${pageTitle} | ${defaultTitle}` : defaultTitle;

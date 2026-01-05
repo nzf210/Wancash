@@ -16,7 +16,6 @@ import {
 } from '@reown/appkit/networks'
 
 const itsProd: boolean = (import.meta as unknown as { env: { VITE_NODE_ENV: string } }).env.VITE_NODE_ENV !== 'production';
-console.log(`itsProd: ${itsProd}`,'process.env.VITE_NODE_ENV:', (import.meta as unknown as { env: { VITE_NODE_ENV: string } }).env.VITE_NODE_ENV)
 
 export const supportedNetworks = itsProd ?
   [sepolia, polygonAmoy, avalancheFuji, bscTestnet, arbitrumSepolia] as const :
