@@ -29,16 +29,16 @@
         <div class="lg:w-3/4">
           <!-- Profile Tab -->
           <Card v-if="activeTab === 'profile'" class="mb-6 border-border bg-card shadow-soft card-glow">
-            <CardHeader class="bg-gradient-to-r from-primary/10 to-primary/5 border-b border-border pb-4">
-              <CardTitle class="flex items-center text-foreground">
+            <CardHeader class="bg-gradient-to-r from-primary/10 to-primary/5 border-b border-border pb-0">
+              <CardTitle class="flex items-center text-foreground translate-y-3">
                 <User class="mr-2 h-5 w-5 text-primary" />
                 Profile Information
               </CardTitle>
-              <CardDescription class="text-muted-foreground">
+              <CardDescription class="text-muted-foreground translate-y-3">
                 Your personal information and how you appear on the platform
               </CardDescription>
             </CardHeader>
-            <CardContent class="pt-6">
+            <CardContent class="pt-2">
               <ProfileForm :user="user" @update:user="handleUserUpdate" />
             </CardContent>
           </Card>
@@ -46,11 +46,11 @@
           <!-- Account Settings Tab -->
           <Card v-if="activeTab === 'account'" class="mb-6 border-border bg-card shadow-soft card-glow">
             <CardHeader class="bg-gradient-to-r from-primary/10 to-primary/5 border-b border-border pb-4">
-              <CardTitle class="flex items-center text-foreground">
+              <CardTitle class="flex items-center text-foreground translate-y-3">
                 <Settings class="mr-2 h-5 w-5 text-primary" />
                 Account Settings
               </CardTitle>
-              <CardDescription class="text-muted-foreground">
+              <CardDescription class="text-muted-foreground translate-y-3">
                 Manage your account preferences and security
               </CardDescription>
             </CardHeader>
@@ -62,11 +62,11 @@
           <!-- Notifications Tab -->
           <Card v-if="activeTab === 'notifications'" class="mb-6 border-border bg-card shadow-soft card-glow">
             <CardHeader class="bg-gradient-to-r from-primary/10 to-primary/5 border-b border-border pb-4">
-              <CardTitle class="flex items-center text-foreground">
+              <CardTitle class="flex items-center text-foreground translate-y-3">
                 <Bell class="mr-2 h-5 w-5 text-primary" />
                 Notification Preferences
               </CardTitle>
-              <CardDescription class="text-muted-foreground">
+              <CardDescription class="text-muted-foreground translate-y-3">
                 Configure how you receive notifications
               </CardDescription>
             </CardHeader>
@@ -79,11 +79,11 @@
           <!-- Privacy Tab -->
           <Card v-if="activeTab === 'privacy'" class="mb-6 border-border bg-card shadow-soft card-glow">
             <CardHeader class="bg-gradient-to-r from-primary/10 to-primary/5 border-b border-border pb-4">
-              <CardTitle class="flex items-center text-foreground">
+              <CardTitle class="flex items-center text-foreground translate-y-3">
                 <Shield class="mr-2 h-5 w-5 text-primary" />
                 Privacy & Security
               </CardTitle>
-              <CardDescription class="text-muted-foreground">
+              <CardDescription class="text-muted-foreground translate-y-3">
                 Manage your account privacy and security settings
               </CardDescription>
             </CardHeader>

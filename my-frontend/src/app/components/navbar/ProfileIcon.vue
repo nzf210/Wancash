@@ -2,7 +2,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
-import { useNavigate } from '../composables/useNavigate'
+import { useNavigate } from '../../composables/useNavigate'
 import {
   Tooltip,
   TooltipContent,
@@ -12,15 +12,10 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Copy, User, BriefcaseBusiness, Settings, LogOut } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
-import { ref } from 'vue' // ✅ TAMBAHKAN
-import ReadContract from './ReadContract.vue'
+import { computed } from 'vue'
+import ReadContract from '../ReadContract.vue'
 
 const { goToPortfolio, goToProfile, goToSettings } = useNavigate()
-
-// ✅ TAMBAHKAN: State untuk mengontrol tooltip visibility
-const isTooltipOpen = ref(false)
-const showTooltip = () => isTooltipOpen.value = true
-const hideTooltip = () => isTooltipOpen.value = false
 
 // Props
 const props = defineProps<{
@@ -37,13 +32,12 @@ const props = defineProps<{
   }
 }>()
 
-// ✅ PERBAIKAN: Helper untuk mendapatkan avatar fallback
-const getAvatarFallback = () => {
-  if (props.authStores.userInitials && props.authStores.userInitials.trim() !== '') {
+// Computed properties
+const avatarFallback = computed(() => {
+  if (props.authStores.userInitials?.trim()) {
     return props.authStores.userInitials
   }
 
-  // Fallback ke display name pertama atau 'U'
   if (props.authStores.userDisplayName) {
     const initials = props.authStores.userDisplayName
       .split(' ')
@@ -51,33 +45,23 @@ const getAvatarFallback = () => {
       .join('')
       .toUpperCase()
       .slice(0, 2)
-
     return initials || 'U'
   }
 
   return 'U'
-}
+})
 
-// ✅ PERBAIKAN: Helper untuk mendapatkan avatar src
-const getAvatarSrc = () => {
-  if (props.authStores.userAvatar && props.authStores.userAvatar.trim() !== '') {
+const avatarSrc = computed(() => {
+  if (props.authStores.userAvatar?.trim()) {
     return props.authStores.userAvatar
   }
-
-  // Generate avatar warna berdasarkan wallet address
-  if (props.authStores.walletAddress) {
-    // Fallback ke avatar placeholder jika tidak ada gambar
-    return null
-  }
-
   return null
-}
+})
 
 const formatWalletAddress = (address: string | null): string => {
   if (!address) return 'Not connected'
   return `${address.slice(0, 6)}...${address.slice(-4)}`
 }
-
 
 const copyToClipboard = async () => {
   if (!props.authStores.walletAddress) return
@@ -90,41 +74,46 @@ const copyToClipboard = async () => {
     toast.error('Failed to copy address')
   }
 }
+
+// Event handlers
+const handleAvatarError = (e: Event) => {
+  const target = e.target as HTMLElement
+  target.style.display = 'none'
+}
+
+const handleDisconnect = () => {
+  props.authStores.handleDisconnect()
+}
 </script>
 
 <template>
   <TooltipProvider>
-    <Tooltip :open="isTooltipOpen" :on-open-change="(open: boolean) => isTooltipOpen = open">
+    <Tooltip>
       <TooltipTrigger as-child>
-        <div class="relative inline-block" @mouseenter="showTooltip" @mouseleave="hideTooltip" @click="hideTooltip">
+        <div class="relative inline-block">
           <DropdownMenu>
             <DropdownMenuTrigger as-child>
-              <Button variant="ghost" class="relative h-10 w-10 rounded-full hover:bg-accent p-0"
-                @mouseenter="showTooltip" @mouseleave="hideTooltip">
+              <Button variant="ghost" class="relative h-10 w-10 rounded-full hover:bg-accent p-0">
                 <Avatar class="h-10 w-10">
-                  <AvatarImage :src="getAvatarSrc() ?? 'avatar-placeholder.png'" :alt="authStores.userDisplayName"
-                    @error="(e: Event) => {
-                      const target = e.target as HTMLElement
-                      target.style.display = 'none'
-                    }" />
+                  <AvatarImage :src="avatarSrc || 'avatar-placeholder.png'" :alt="authStores.userDisplayName"
+                    @error="handleAvatarError" />
                   <AvatarFallback class="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-                    {{ getAvatarFallback() }}
+                    {{ avatarFallback }}
                   </AvatarFallback>
                 </Avatar>
 
-                <!-- Connection indicator dot -->
                 <div v-if="authStores.isConnected"
-                  class="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-background">
-                </div>
+                  class="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-background" />
               </Button>
             </DropdownMenuTrigger>
 
-            <DropdownMenuContent class="w-56 z-[1000]" align="end" :side-offset="8" @pointerenter="hideTooltip"
-              @focus="hideTooltip">
+            <DropdownMenuContent class="w-56 z-[1000]" align="end" :side-offset="8">
               <DropdownMenuLabel class="font-normal">
                 <div class="flex flex-col space-y-1">
                   <p class="text-sm font-medium leading-none">{{ authStores.userDisplayName }}</p>
-                  <p class="text-xs leading-none text-muted-foreground">{{ authStores.userEmail }}</p>
+                  <p v-if="authStores.userEmail" class="text-xs leading-none text-muted-foreground">
+                    {{ authStores.userEmail }}
+                  </p>
                   <p v-if="authStores.walletAddress" class="text-xs font-mono text-gray-500">
                     {{ formatWalletAddress(authStores.walletAddress) }}
                   </p>
@@ -149,7 +138,7 @@ const copyToClipboard = async () => {
 
               <DropdownMenuSeparator />
 
-              <DropdownMenuItem @click="authStores.handleDisconnect"
+              <DropdownMenuItem @click="handleDisconnect"
                 class="text-red-600 focus:bg-red-50 focus:text-red-600 cursor-pointer">
                 <LogOut class="mr-2 h-4 w-4" />
                 <span>Disconnect</span>
@@ -160,25 +149,20 @@ const copyToClipboard = async () => {
       </TooltipTrigger>
 
       <TooltipContent side="bottom" align="end"
-        class="z-[1001] p-0 border-2 transition-all duration-300 hover:shadow-xl dark:hover:shadow-2xl dark:shadow-gray-900"
-        :side-offset="5" :hide-when-detached="false" @pointerenter="showTooltip" @pointerleave="hideTooltip" :class="isTooltipOpen
-          ? 'border-purple-300 dark:border-gray-600'
-          : 'border-purple-200 dark:border-gray-700'">
-
-        <!-- Background gradient -->
-        <div
-          class="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-gray-800 dark:to-gray-900 p-4 rounded-[calc(0.5rem-2px)]">
-
+        class="z-[1001] p-0 border-2 transition-all duration-300 border-purple-300 dark:border-gray-600"
+        :side-offset="5">
+        <div class="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-gray-800 dark:to-gray-900 p-4 rounded-md">
           <!-- Wallet Address Section -->
           <div class="mb-4">
-            <p class="text-xs font-medium mb-2 text-gray-600 dark:text-gray-400 uppercase tracking-wider">WALLET ADDRESS
+            <p class="text-xs font-medium mb-2 text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+              WALLET ADDRESS
             </p>
             <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border dark:border-gray-700">
               <div class="flex items-center justify-between">
                 <p class="font-mono text-sm text-gray-900 dark:text-white font-medium truncate mr-2">
                   {{ formatWalletAddress(authStores.walletAddress) }}
                 </p>
-                <Button variant="ghost" size="icon"
+                <Button v-if="authStores.walletAddress" variant="ghost" size="icon"
                   class="h-7 w-7 flex-shrink-0 hover:bg-purple-50 dark:hover:bg-gray-700" @click="copyToClipboard"
                   title="Copy address">
                   <Copy class="h-3.5 w-3.5 text-gray-500 dark:text-gray-400" />
@@ -188,11 +172,10 @@ const copyToClipboard = async () => {
           </div>
 
           <!-- Status & Network Section -->
-          <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-200 dark:border-gray-700">
+          <div v-if="authStores.isConnected"
+            class="flex items-center justify-between mb-4 pb-3 border-b border-gray-200 dark:border-gray-700">
             <div class="flex items-center gap-2">
-              <div class="relative">
-                <div class="w-2 h-2 rounded-full bg-green-500"></div>
-              </div>
+              <div class="w-2 h-2 rounded-full bg-green-500"></div>
               <div>
                 <span class="text-sm font-medium text-green-700 dark:text-green-300">
                   Connected
@@ -202,14 +185,16 @@ const copyToClipboard = async () => {
             </div>
 
             <Badge v-if="authStores.network" variant="secondary"
-              class="bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800 text-xs px-2 py-0.5">
+              class="bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 text-xs px-2 py-0.5">
               {{ authStores.network }}
             </Badge>
           </div>
 
           <!-- Balance Section -->
-          <div>
-            <p class="text-xs font-medium mb-2 text-gray-600 dark:text-gray-400 uppercase tracking-wider">BALANCE</p>
+          <div v-if="authStores.balance !== undefined">
+            <p class="text-xs font-medium mb-2 text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+              BALANCE
+            </p>
             <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border dark:border-gray-700">
               <div v-if="authStores.network" class="flex justify-between items-center mb-1">
                 <span class="text-sm text-gray-600 dark:text-gray-400">WCH Balance &nbsp;</span>
@@ -220,8 +205,12 @@ const copyToClipboard = async () => {
               </div>
               <ReadContract />
               <div class="flex items-center justify-between text-sm">
-                <span class="text-gray-500 dark:text-gray-400">≈ ${{ (Number(authStores.balance) *
-                  3500).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</span>
+                <span class="text-gray-500 dark:text-gray-400">
+                  ≈ ${{ (Number(authStores.balance) * 3500).toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                  }) }}
+                </span>
                 <div class="flex items-center">
                   <div class="w-2 h-2 bg-green-400 rounded-full mr-1"></div>
                   <span class="text-xs text-green-600 dark:text-green-400">Live</span>

@@ -65,7 +65,7 @@ onBeforeUnmount(() => {
           <span class="text-2xl font-bold text-white">W</span>
         </div>
         <div>
-          <h1 class="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-500
+          <h1 class="text-xl md:text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-500
                      dark:from-purple-400 dark:to-blue-300 bg-clip-text text-transparent">
             Wancash Token
           </h1>
@@ -75,7 +75,7 @@ onBeforeUnmount(() => {
 
       <!-- Moto Utama -->
       <div class="mb-8">
-        <blockquote class="text-xl italic border-l-4 border-purple-500 pl-6 py-2
+        <blockquote class=" md:text-xl italic border-l-4 border-purple-500 pl-6 py-2
                           text-gray-800 dark:text-gray-200">
           "Decentralizing finance, empowering communities — one token at a time."
         </blockquote>
@@ -87,7 +87,7 @@ onBeforeUnmount(() => {
 
       <!-- Profil Singkat -->
       <div class="mb-8">
-        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">About Wancash</h2>
+        <h2 class="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-4">About Wancash</h2>
         <p class="text-gray-700 dark:text-gray-300 leading-relaxed">
           Wancash is a decentralized utility token designed to facilitate fast, low-cost
           transactions while providing sustainable rewards through staking. Built on a secure
@@ -98,7 +98,7 @@ onBeforeUnmount(() => {
 
       <!-- Key Features -->
       <div class="mb-8">
-        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Why Choose Wancash?</h2>
+        <h2 class="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-4">Why Choose Wancash?</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="flex items-start p-3 bg-gray-100 dark:bg-gray-800/50 rounded-lg">
             <span class="text-green-600 dark:text-green-400 mr-3">✓</span>
@@ -122,7 +122,7 @@ onBeforeUnmount(() => {
       <!-- Roadmap & Community -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div>
-          <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3">Roadmap</h3>
+          <h3 class="md:text-xl font-bold text-gray-900 dark:text-white mb-3">Roadmap</h3>
           <ul class="space-y-2">
             <li class="flex items-center text-gray-700 dark:text-gray-300">
               <div class="w-2 h-2 bg-purple-500 rounded-full mr-3"></div>
@@ -140,7 +140,7 @@ onBeforeUnmount(() => {
         </div>
 
         <div>
-          <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3">Join Community</h3>
+          <h3 class="md:text-xl font-bold text-gray-900 dark:text-white mb-3">Join Community</h3>
           <div class="flex space-x-4">
             <a href="https://t.me/wancash" class="w-10 h-10 bg-blue-100 hover:bg-blue-200 dark:bg-blue-500/20
                      dark:hover:bg-blue-500/40 rounded-lg flex items-center justify-center

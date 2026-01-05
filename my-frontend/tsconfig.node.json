@@ -12,8 +12,8 @@
     "noEmit": true,
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
 
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
+    "module": "es2022",
+    "moduleResolution": "bundler",
     "types": ["node"]
   }
 }

@@ -54,8 +54,8 @@
                 <div class="bg-blue-elevated rounded-lg p-4 mb-6">
                   <div class="flex items-center space-x-3">
                     <div
-                      class="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold">
-                      SK
+                      class="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-[10px]">
+                      WCH
                     </div>
                     <div>
                       <div class="font-semibold text-white">Staking Wancash Token (WCH)</div>

@@ -171,7 +171,7 @@ export const useAuthStore = defineStore('auth', {
             await this.checkAuth()
           } else {
             this.isAuthenticated = false
-            toast.warning('Session expired. Please sign in again.')
+            toast.warning('Session expired... Please sign in again.')
           }
         }
       } catch (error: unknown) {

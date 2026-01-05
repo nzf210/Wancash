@@ -26,7 +26,7 @@
         <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border dark:border-gray-700">
           <div class="flex justify-between items-center mb-2">
             <span class="text-sm text-gray-600 dark:text-gray-400">Current Price</span>
-            <span :class="priceChangeClass" class="md:text-sm font-medium">
+            <span :class="priceChangeClass" class="text-[13px] md:text-sm font-medium">
               {{ priceChange > 0 ? '+' : '' }}{{ priceChange.toFixed(2) }}%
             </span>
           </div>
@@ -41,7 +41,7 @@
             <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Market Cap</div>
             <div class="text-[13px] md:text-base font-semibold text-gray-900 dark:text-white">${{
               marketCap.toLocaleString()
-              }}</div>
+            }}</div>
           </div>
           <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border dark:border-gray-700">
             <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Volume 24h</div>

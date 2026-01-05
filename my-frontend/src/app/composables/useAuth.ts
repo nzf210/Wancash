@@ -12,7 +12,6 @@ const nonceSchema = z.object({
   chainId: z.coerce.number().int().positive()
 })
 
-// Interface untuk message dari backend
 interface BackendMessage {
   domain: {
     name: string;
@@ -34,7 +33,6 @@ interface BackendMessage {
   };
 }
 
-// Interface untuk response dari backend
 interface NonceResponse {
   nonce: string;
   message: BackendMessage;
@@ -54,10 +52,25 @@ export const useAuth = () => {
   const router = useRouter()
 
   const isAuthenticated = ref(false)
-  const user = ref<unknown>(null)
+  const user = ref<{
+    id?: string;
+    name?: string;
+    email?: string;
+    picture?: string;
+    avatar?: string;
+  }>({
+    id: '',
+    name: '',
+    email: '',
+    picture: ''
+  })
+
   const loading = ref(false)
 
-  // Watch for account changes
+  const lastToastTimeAuth = ref(0)
+  const lastToastTimeSign = ref(0)
+  const hasSessionInLocalStorage = ref(false)
+
   watchAccount(wagmiAdapter.wagmiConfig, {
     onChange: (account) => {
       isConnected.value = account.status === 'connected'
@@ -73,12 +86,10 @@ export const useAuth = () => {
     }
   })
 
-  // Deteksi device type
   const isMobileDevice = (): boolean => {
     return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
   }
 
-  // Get current account info
   const getCurrentAccount = () => {
     const account = getAccount(wagmiAdapter.wagmiConfig)
     return {
@@ -89,7 +100,6 @@ export const useAuth = () => {
     }
   }
 
-  // Request nonce dari backend
   const requestNonce = async (address: string, chain_id: number): Promise<NonceResponse> => {
     if (!address || !chain_id) {
       throw new Error('Wallet not connected.')
@@ -124,17 +134,14 @@ export const useAuth = () => {
     return await response.json()
   }
 
-  // Sign message dengan wagmi signTypedData menggunakan struktur dari backend
   const signMessageWithWagmi = async (
     address: string,
     message: BackendMessage
   ): Promise<string> => {
     try {
-      // Konversi issuedAt dan expirationTime dari ISO string ke timestamp
       const issuedAtTimestamp = Math.floor(new Date(message.message.issuedAt).getTime() / 1000)
       const expirationTimeTimestamp = Math.floor(new Date(message.message.expirationTime).getTime() / 1000)
 
-      // Bangun typed data sesuai dengan struktur backend
       const typedData: TypedDataDefinition = {
         domain: {
           name: message.domain.name,
@@ -178,7 +185,6 @@ export const useAuth = () => {
     }
   }
 
-  // Sign message dengan provider langsung (fallback)
   const signMessageWithProvider = async (
     address: string,
     message: BackendMessage
@@ -196,22 +202,17 @@ export const useAuth = () => {
         throw new Error('Cannot get provider from connector')
       }
 
-      // Gunakan message langsung dari backend tanpa modifikasi
       const typedDataForSigning = message
 
       let signature
 
-      // Coba berbagai signing methods
       try {
-        // Method 1: eth_signTypedData_v4 (recommended)
         signature = await provider.request({
           method: 'eth_signTypedData_v4',
           params: [address, JSON.stringify(typedDataForSigning)]
         })
       } catch (e) {
         console.warn('eth_signTypedData_v4 failed, trying v3:', e)
-
-        // Method 2: eth_signTypedData (v3)
         signature = await provider.request({
           method: 'eth_signTypedData',
           params: [address, typedDataForSigning]
@@ -233,20 +234,16 @@ export const useAuth = () => {
     }
   }
 
-  // Main signing function dengan fallback
   const signMessage = async (address: string, message: BackendMessage): Promise<string> => {
     try {
-      // Try wagmi signTypedData first
       return await signMessageWithWagmi(address, message)
     } catch (wagmiError) {
       console.warn('Wagmi signing failed, trying provider fallback:', wagmiError)
 
       try {
-        // Fallback to provider signing
         return await signMessageWithProvider(address, message)
       } catch (providerError: unknown) {
         if (providerError instanceof Error) {
-          // For mobile devices, suggest manual signing
           if (isMobileDevice()) {
             throw new Error('Please open your wallet app to sign the message')
           }
@@ -257,7 +254,6 @@ export const useAuth = () => {
     }
   }
 
-  // Main login function
   const login = async (address: string, chain_id: number): Promise<unknown> => {
     if (!address || !chain_id) {
       throw new Error('Wallet not connected')
@@ -266,22 +262,18 @@ export const useAuth = () => {
     loading.value = true
 
     try {
-      // 1. Get nonce dari backend
       const { message } = await requestNonce(address, chain_id)
 
-      // Pastikan address dalam message sama dengan yang login
       if (message.message.address.toLowerCase() !== address.toLowerCase()) {
         throw new Error('Address in message does not match connected address')
       }
 
-      // 2. Sign message menggunakan struktur dari backend
       const signature = await signMessage(address, message)
 
       if (!signature) {
         throw new Error('User rejected signature or signing failed')
       }
 
-      // 3. Verify signature dengan backend - kirimkan message lengkap dari backend
       const verifyResponse = await fetch('/api/auth/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -289,7 +281,7 @@ export const useAuth = () => {
         body: JSON.stringify({
           address: address,
           signature,
-          message, // Kirim message lengkap dari backend
+          message,
           chainId: chain_id
         })
       })
@@ -301,9 +293,9 @@ export const useAuth = () => {
 
       const data = await verifyResponse.json()
 
-      // 4. Update state
       isAuthenticated.value = true
       user.value = data.user
+      hasSessionInLocalStorage.value = true
 
       localStorage.setItem('auth_state', JSON.stringify({
         authenticated: true,
@@ -320,10 +312,8 @@ export const useAuth = () => {
       toast.success('Successfully signed in!')
       return data
     } catch (error: unknown) {
-
       if (error instanceof Error) {
         console.error('Login error:', error.message)
-        // Handle specific error cases
         if (error.message.includes('User rejected') || error.message.includes('denied')) {
           toast.error('Signature request was rejected')
         } else if (error.message.includes('Please open your wallet app')) {
@@ -343,13 +333,11 @@ export const useAuth = () => {
     }
   }
 
-  // Auto-login ketika wallet connect
   const autoLoginOnConnect = async () => {
     const account = getCurrentAccount()
 
     if (account.isConnected && account.address && account.chainId) {
       try {
-        // Cek apakah sudah authenticated
         if (!isAuthenticated.value) {
           await login(account.address, account.chainId)
         }
@@ -359,7 +347,6 @@ export const useAuth = () => {
     }
   }
 
-  // Logout function
   const logout = async (): Promise<void> => {
     try {
       const response = await fetch('/api/auth/logout', {
@@ -372,8 +359,9 @@ export const useAuth = () => {
 
       if (response.ok) {
         isAuthenticated.value = false
-        user.value = null
+        user.value = {}
         activeConnector.value = null
+        hasSessionInLocalStorage.value = false
         toast.info('Logged out successfully')
         localStorage.removeItem('auth_state')
 
@@ -389,13 +377,13 @@ export const useAuth = () => {
       console.warn('Backend logout failed:', error)
     } finally {
       isAuthenticated.value = false
-      user.value = null
+      user.value = {}
+      hasSessionInLocalStorage.value = false
       localStorage.removeItem('auth_state')
     }
   }
 
-  // Check authentication status
-  const checkAuth = async (retries = 1) => {
+  const checkAuth = async (retries = 1): Promise<{ isExpired: boolean; needsSign: boolean }> => {
     loading.value = true
     try {
       const response = await fetch('/api/me', {
@@ -407,37 +395,87 @@ export const useAuth = () => {
 
       if (response.ok) {
         const data = await response.json()
+
         if (walletAddress.value && data.user && !isAddressEqual(data.user.address, walletAddress.value as `0x${string}`)) {
           await logout()
-          return
+          return { isExpired: false, needsSign: false }
         }
+
         user.value = data.user
         isAuthenticated.value = true
-      } else if (response.status === 401) {
-        const refreshed = await refreshToken()
-        if (refreshed) {
-          await checkAuth(retries - 1)
-        } else if (retries > 0) {
-          await new Promise(resolve => setTimeout(resolve, 500))
-          await checkAuth(retries - 1)
-        } else {
-          isAuthenticated.value = false
-          toast.warning('Session expired. Please sign in again.')
-        }
-      } else {
-        isAuthenticated.value = false
+        hasSessionInLocalStorage.value = true
+        return { isExpired: false, needsSign: false }
       }
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error('Auth check failed:', error.message)
+
+      if (response.status === 401) {
+        const result = await handleUnauthorized(retries)
+        return result
       }
+
       isAuthenticated.value = false
+      return { isExpired: false, needsSign: false }
+    } catch (error: unknown) {
+      console.error('Auth check failed:', error instanceof Error ? error.message : 'Unknown error')
+      isAuthenticated.value = false
+      return { isExpired: false, needsSign: false }
     } finally {
       loading.value = false
     }
   }
 
-  // Refresh token
+  const handleUnauthorized = async (retries: number): Promise<{ isExpired: boolean; needsSign: boolean }> => {
+    // check last session in local storage
+    const hasPreviousSession = localStorage.getItem('auth_state') !== null
+    const currentAccount = getCurrentAccount()
+
+    // Wallet already connected, but not have last session in local storage
+    // Wallet need to sign
+    if (currentAccount.isConnected && !hasPreviousSession) {
+      isAuthenticated.value = false
+      return { isExpired: false, needsSign: true }
+    }
+
+    // if has have last session, refresh
+    const refreshed = await refreshToken()
+
+    if (refreshed) {
+      // if refresh success, check auth again
+      await new Promise(resolve => setTimeout(resolve, 500))
+      return await checkAuth(retries - 1)
+    }
+
+    if (retries > 0) {
+      // if a have refresh, try again
+      await new Promise(resolve => setTimeout(resolve, 500))
+      return await checkAuth(retries - 1)
+    }
+
+    // refresh failed and have last session, session expired.
+    if (hasPreviousSession) {
+      isAuthenticated.value = false
+      hasSessionInLocalStorage.value = false
+      showSessionExpiredToast()
+      return { isExpired: true, needsSign: false }
+    }
+
+    // if not have last session, and not connected
+    isAuthenticated.value = false
+          const now = Date.now()
+      if (now - lastToastTimeSign.value > 3000) {
+        toast.info('Please sign in ...')
+        lastToastTimeSign.value = now
+      }
+    return { isExpired: false, needsSign: false }
+  }
+
+  const showSessionExpiredToast = () => {
+    const now = Date.now()
+    if (now - lastToastTimeAuth.value > 3000) {
+      toast.warning('Session expired. Please sign in again.')
+      lastToastTimeAuth.value = now
+    }
+  }
+
   const refreshToken = async (): Promise<boolean> => {
     try {
       const response = await fetch('/api/auth/refresh', {
@@ -453,33 +491,36 @@ export const useAuth = () => {
     }
   }
 
-  // Restore from localStorage
-  const restoreFromLocalStorage = () => {
+  const restoreFromLocalStorage = (): boolean => {
     const savedAuth = localStorage.getItem('auth_state')
     if (savedAuth) {
-      const authState = JSON.parse(savedAuth)
-      const age = Date.now() - authState.timestamp
+      try {
+        const authState = JSON.parse(savedAuth)
+        const age = Date.now() - authState.timestamp
 
-      // Valid selama 1 jam dan address sama
-      if (age < 60 * 60 * 1000) {
-        if (walletAddress.value && authState.walletAddress) {
-          if (isAddressEqual(authState.walletAddress as `0x${string}`, walletAddress.value as `0x${string}`)) {
-            isAuthenticated.value = authState.authenticated
-            user.value = authState.user
-            console.log('Auth restored from localStorage')
-            return true
+        if (age < 60 * 60 * 1000) {
+          if (walletAddress.value && authState.walletAddress) {
+            if (isAddressEqual(authState.walletAddress as `0x${string}`, walletAddress.value as `0x${string}`)) {
+              isAuthenticated.value = authState.authenticated
+              user.value = authState.user
+              hasSessionInLocalStorage.value = true
+              console.log('Auth restored from localStorage')
+              return true
+            }
           }
         }
-      }
 
-      // Clean up expired/invalid state
-      localStorage.removeItem('auth_state')
-      console.warn('Invalid or expired localStorage auth_state')
+        localStorage.removeItem('auth_state')
+        console.warn('Invalid or expired localStorage auth_state')
+      } catch (error) {
+        console.error('Error parsing localStorage auth_state:', error)
+        localStorage.removeItem('auth_state')
+      }
     }
+    hasSessionInLocalStorage.value = false
     return false
   }
 
-  // Watch for chain changes
   watch(chainId, () => {
     recentChainChange.value = true
     setTimeout(() => {
@@ -487,19 +528,21 @@ export const useAuth = () => {
     }, 2000)
   })
 
-  // Watch for connection status
   watch(isConnected, async (connected) => {
     if (connected) {
       const restored = restoreFromLocalStorage()
       if (!restored) {
-        await checkAuth()
+        const result = await checkAuth()
+        // Jika wallet baru perlu sign, jangan tampilkan toast session expired
+        if (result.needsSign) {
+          console.log('New wallet connected, ready for sign-in')
+        }
       }
     } else if (isAuthenticated.value && !recentChainChange.value) {
       await logout()
     }
   }, { immediate: true })
 
-  // Watch for address changes
   watch(walletAddress, async (newAddress, oldAddress) => {
     if (newAddress === undefined && oldAddress && recentChainChange.value) {
       console.log('Ignoring spurious disconnect after recent chain change')
@@ -513,15 +556,22 @@ export const useAuth = () => {
     }
   })
 
-  // Initialize pada mounted
   onMounted(async () => {
     const savedAuth = localStorage.getItem('auth_state')
+    hasSessionInLocalStorage.value = savedAuth !== null
 
-    // Jika ada saved auth, coba checkAuth terlebih dahulu
     if (savedAuth) {
-      const authState = JSON.parse(savedAuth)
-      if (authState.authenticated) {
-        await checkAuth()
+      try {
+        const authState = JSON.parse(savedAuth)
+        if (authState.authenticated) {
+          const result = await checkAuth()
+          // Jika session expired, toast sudah ditampilkan di handleUnauthorized
+          if (result.isExpired) {
+            console.log('Previous session expired')
+          }
+        }
+      } catch (error) {
+        console.error('Error checking auth on mount:', error)
       }
     }
   })
