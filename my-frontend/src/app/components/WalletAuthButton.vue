@@ -54,8 +54,9 @@ import { shortenAddress } from '@/utils/helpers'
 import { toast } from 'vue-sonner'
 import ProfileIcon from './ProfileIcon.vue'
 import type { EIP1193Provider } from 'viem'
-import { useAppKit, useAppKitAccount, type UseAppKitAccountReturn } from '@reown/appkit/vue'
+import { useAppKitAccount, type UseAppKitAccountReturn } from '@reown/appkit/vue'
 import { Spinner } from '@/components/ui/spinner'
+import { appkit } from '@/app/components/config/appkit'
 
 defineProps<{
   isMobile: boolean
@@ -157,13 +158,15 @@ onMounted(async () => {
   }
 });
 
-const { open } = useAppKit()
+// const { open } = useAppKit()
 const accountData = useAppKitAccount() as unknown as UseAppKitAccountReturn
 // Methods
 const connectWallet = async () => {
   try {
     if (!accountData.isConnected) {
-      open()
+      // open()
+      await appkit.open()
+      await new Promise(resolve => setTimeout(resolve, 1000))
     }
   } catch (error: unknown) {
     if (error instanceof Error) {

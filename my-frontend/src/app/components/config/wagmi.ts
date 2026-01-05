@@ -1,4 +1,4 @@
-// ===== file: wagmi.ts =====
+// ===== file: wagmi.ts (updated) =====
 import { createConfig, injected, type Transport } from '@wagmi/core'
 import { http, type EIP1193RequestFn } from 'viem'
 import {
@@ -15,13 +15,18 @@ import {
   arbitrumSepolia
 } from '@reown/appkit/networks'
 
-export const supportedNetworks = typeof import.meta.env.VITE_NODE_ENV === 'string' && import.meta.env.VITE_NODE_ENV !== 'production' ?
-                          [sepolia, polygonAmoy, avalancheFuji , bscTestnet, arbitrumSepolia] as const :
-                          [mainnet, polygon, arbitrum, avalanche, bsc] as const;
+const itsProd: boolean = (import.meta as unknown as { env: { VITE_NODE_ENV: string } }).env.VITE_NODE_ENV !== 'production';
+console.log(`itsProd: ${itsProd}`,'process.env.VITE_NODE_ENV:', (import.meta as unknown as { env: { VITE_NODE_ENV: string } }).env.VITE_NODE_ENV)
+
+export const supportedNetworks = itsProd ?
+  [sepolia, polygonAmoy, avalancheFuji, bscTestnet, arbitrumSepolia] as const :
+  [mainnet, polygon, arbitrum, avalanche, bsc] as const;
 
 export const networks: [AppKitNetwork, ...AppKitNetwork[]] = [...supportedNetworks]
 export const chains = supportedNetworks.map(n => ({ id: n.id, name: n.name }))
 
+// Project ID untuk WalletConnect
+// const projectId = process.env.VITE_PROJECT_ID || 'YOUR_PROJECT_ID'
 
 export const config = createConfig({
   chains: [...supportedNetworks],
@@ -29,7 +34,7 @@ export const config = createConfig({
   ssr: true,
   connectors: [
     injected({
-      shimDisconnect: true, // Important for persistence
+      shimDisconnect: true,
     }),
   ],
 })
