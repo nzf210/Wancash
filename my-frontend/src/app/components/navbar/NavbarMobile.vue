@@ -4,19 +4,19 @@ import { RouterLink } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import ThemeToggle from '../ThemeToggle.vue'
-// import WalletAuthButton from './WalletAuthButton.vue'
-import ProfileIcon from './ProfileIcon.vue'
+
 import MobileMenuSheet from './MobileMenuSheet.vue'
-import { useConnection } from '@wagmi/vue'
+import { useConnection, useDisconnect } from '@wagmi/vue'
 import { useAuth } from '@/app/composables/useAuth'
 import { useChain } from '@/app/composables/useChain'
-import { shortenAddress } from '@/utils/helpers'
-import type { NavbarProps, NavbarEmits, ProductMenuItem, NavigationItem, ProfileAuthStores } from './types'
+import type { NavbarProps, NavbarEmits, ProfileAuthStores } from './types'
+import { navigationItems, productMenuItems } from './menuItem'
 
 // Composables
-const { isConnected, address: walletAddress, chainId } = useConnection()
-const { isAuthenticated, user } = useAuth()
+const { address: walletAddress, chainId } = useConnection()
+const { isAuthenticated, user, logout } = useAuth()
 const { getChainInfo } = useChain()
+const { mutateAsync: walletDisconnect } = useDisconnect()
 
 // Props & Emits
 const props = defineProps<NavbarProps>()
@@ -26,37 +26,20 @@ const emit = defineEmits<NavbarEmits>()
 const isMobileMenuOpen = ref(false)
 const currentChain = computed(() => getChainInfo(chainId.value || 0))
 
-// Constants
-const productMenuItems: ProductMenuItem[] = [
-  {
-    title: 'Redem',
-    description: 'Redem your token for gold',
-    href: '/redem',
-    icon: '💰'
-  },
-  {
-    title: 'Bridge',
-    description: 'Send your token to other chains',
-    href: '/bridgeToken',
-    icon: '📋'
-  },
-  {
-    title: 'Send',
-    description: 'Send your token to other wallet',
-    href: '/sendToken',
-    icon: '💸'
-  }
-]
-
-const navigationItems: NavigationItem[] = [
-  {
-    title: 'Support',
-    href: '/support',
-  }
-]
-
 // Computed
 const hasNotifications = computed(() => props.notificationCount || 1 > 0)
+
+const disconnectWallet = async () => {
+  try {
+    if (isAuthenticated && isAuthenticated.value) {
+      await logout()
+      console.info('Signed out')
+    }
+    await walletDisconnect()
+  } catch (error: unknown) {
+    console.error(error instanceof Error ? error.message : 'Disconnect failed')
+  }
+}
 
 const profileAuthStores = computed(() => ({
   walletAddress: walletAddress.value || null,
@@ -67,13 +50,9 @@ const profileAuthStores = computed(() => ({
   userEmail: user.value?.email || null,
   network: currentChain.value?.name || '',
   balance: '0.00',
-  handleDisconnect: () => emit('logout')
-}))
+  handleDisconnect: () => disconnectWallet()
+})) as unknown as ProfileAuthStores
 
-const mobileProfileInfo = computed(() => ({
-  ...profileAuthStores.value,
-  shortAddress: walletAddress.value ? shortenAddress(walletAddress.value) : ''
-})) as ProfileAuthStores
 
 // Methods
 const handleNotificationClick = () => {
@@ -84,19 +63,6 @@ const closeMobileMenu = () => {
   isMobileMenuOpen.value = false
 }
 
-const handleProfileClick = () => {
-  emit('profileClick')
-  closeMobileMenu()
-}
-
-const handleLogin = () => {
-  emit('login')
-}
-
-const handleLogout = async () => {
-  emit('logout')
-  closeMobileMenu()
-}
 </script>
 
 <template>
@@ -117,8 +83,7 @@ const handleLogout = async () => {
         <ThemeToggle v-if="props.showThemeToggle" />
 
         <!-- Mobile Notifications (Authenticated) -->
-        <Button v-if="isAuthenticated" variant="ghost" size="icon" class="relative h-9 w-9"
-          @click="handleNotificationClick">
+        <Button v-if="false" variant="ghost" size="icon" class="relative h-9 w-9" @click="handleNotificationClick">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
@@ -130,10 +95,6 @@ const handleLogout = async () => {
           </Badge>
         </Button>
 
-        <!-- Mobile Profile Icon -->
-        <ProfileIcon v-if="isConnected && isAuthenticated" :auth-stores="profileAuthStores" :is-mobile="true"
-          @profile-click="handleProfileClick" />
-
         <!-- Mobile Menu Button -->
         <Button variant="ghost" size="icon" class="h-9 w-9" @click="isMobileMenuOpen = true">
           <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -144,10 +105,8 @@ const handleLogout = async () => {
       </div>
 
       <!-- Mobile Menu Sheet -->
-      <MobileMenuSheet :open="isMobileMenuOpen" :is-connected="isConnected" :is-authenticated="isAuthenticated"
-        :profile-info="mobileProfileInfo" :product-menu-items="productMenuItems" :navigation-items="navigationItems"
-        @update:open="isMobileMenuOpen = $event" @close="closeMobileMenu" @login="handleLogin" @logout="handleLogout"
-        @profile-click="handleProfileClick" />
+      <MobileMenuSheet :open="isMobileMenuOpen" :profile-info="profileAuthStores" :product-menu-items="productMenuItems"
+        :navigation-items="navigationItems" @update:open="isMobileMenuOpen = $event" @close="closeMobileMenu" />
     </div>
   </header>
 </template>

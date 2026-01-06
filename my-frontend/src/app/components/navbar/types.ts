@@ -1,13 +1,13 @@
 export interface ProfileAuthStores {
-  walletAddress?: string | null
+  walletAddress?: string
   isConnected?: boolean
-  userAvatar?: string | null
+  userAvatar?: string
   userDisplayName?: string
   userInitials?: string
-  userEmail?: string | null
+  userEmail?: string
   network?: string
   balance?: string
-  handleDisconnect?:  () => Promise<void>
+  handleDisconnect:  () => Promise<void>
 }
 
 export interface ProductMenuItem {

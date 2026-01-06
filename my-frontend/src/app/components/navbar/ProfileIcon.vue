@@ -12,25 +12,20 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Copy, User, BriefcaseBusiness, Settings, LogOut } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import ReadContract from '../ReadContract.vue'
+import type { ProfileAuthStores } from './types'
 
 const { goToPortfolio, goToProfile, goToSettings } = useNavigate()
 
 // Props
 const props = defineProps<{
-  authStores: {
-    walletAddress: string | null
-    isConnected: boolean
-    userAvatar: string | null
-    userDisplayName: string
-    userInitials: string
-    userEmail: string | null
-    network?: string
-    balance?: number | string
-    handleDisconnect: () => void
-  }
+  authStores: ProfileAuthStores
 }>()
+
+// State untuk mengontrol tooltip
+const tooltipOpen = ref(false)
+const dropdownOpen = ref(false)
 
 // Computed properties
 const avatarFallback = computed(() => {
@@ -84,16 +79,45 @@ const handleAvatarError = (e: Event) => {
 const handleDisconnect = () => {
   props.authStores.handleDisconnect()
 }
+
+// Handler untuk tooltip
+const handleTooltipOpenChange = (open: boolean) => {
+  // Jangan tampilkan tooltip jika dropdown sedang terbuka
+  if (dropdownOpen.value) {
+    tooltipOpen.value = false
+    return
+  }
+  tooltipOpen.value = open
+}
+
+// Handler untuk dropdown
+const handleDropdownOpenChange = (open: boolean) => {
+  dropdownOpen.value = open
+  // Tutup tooltip ketika dropdown terbuka
+  if (open) {
+    tooltipOpen.value = false
+  }
+}
+
+// Reset tooltip state ketika mouse meninggalkan area
+const handleMouseLeave = () => {
+  setTimeout(() => {
+    if (!dropdownOpen.value) {
+      tooltipOpen.value = false
+    }
+  }, 100)
+}
 </script>
 
 <template>
-  <TooltipProvider>
-    <Tooltip>
+  <TooltipProvider :delay-duration="300">
+    <Tooltip :open="tooltipOpen" @update:open="handleTooltipOpenChange" :disable-hoverable-content="true">
       <TooltipTrigger as-child>
-        <div class="relative inline-block">
-          <DropdownMenu>
+        <div class="relative inline-block" @mouseleave="handleMouseLeave">
+          <DropdownMenu :open="dropdownOpen" @update:open="handleDropdownOpenChange">
             <DropdownMenuTrigger as-child>
-              <Button variant="ghost" class="relative h-10 w-10 rounded-full hover:bg-accent p-0">
+              <Button variant="ghost" class="relative h-10 w-10 rounded-full hover:bg-accent p-0"
+                @mouseenter="() => !dropdownOpen && (tooltipOpen = true)">
                 <Avatar class="h-10 w-10">
                   <AvatarImage :src="avatarSrc || 'avatar-placeholder.png'" :alt="authStores.userDisplayName"
                     @error="handleAvatarError" />
@@ -102,12 +126,12 @@ const handleDisconnect = () => {
                   </AvatarFallback>
                 </Avatar>
 
-                <div v-if="authStores.isConnected"
+                <div v-if="authStores.walletAddress || authStores.isConnected"
                   class="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-background" />
               </Button>
             </DropdownMenuTrigger>
 
-            <DropdownMenuContent class="w-56 z-[1000]" align="end" :side-offset="8">
+            <DropdownMenuContent class="w-56 z-[1000]" align="end" :side-offset="8" @close-auto-focus.prevent>
               <DropdownMenuLabel class="font-normal">
                 <div class="flex flex-col space-y-1">
                   <p class="text-sm font-medium leading-none">{{ authStores.userDisplayName }}</p>
@@ -150,7 +174,8 @@ const handleDisconnect = () => {
 
       <TooltipContent side="bottom" align="end"
         class="z-[1001] p-0 border-2 transition-all duration-300 border-purple-300 dark:border-gray-600"
-        :side-offset="5">
+        :side-offset="5" :hidden="dropdownOpen" @pointer-enter="tooltipOpen = true"
+        @pointer-leave="tooltipOpen = false">
         <div class="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-gray-800 dark:to-gray-900 p-4 rounded-md">
           <!-- Wallet Address Section -->
           <div class="mb-4">
@@ -160,7 +185,7 @@ const handleDisconnect = () => {
             <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border dark:border-gray-700">
               <div class="flex items-center justify-between">
                 <p class="font-mono text-sm text-gray-900 dark:text-white font-medium truncate mr-2">
-                  {{ formatWalletAddress(authStores.walletAddress) }}
+                  {{ formatWalletAddress(authStores.walletAddress ?? '') }}
                 </p>
                 <Button v-if="authStores.walletAddress" variant="ghost" size="icon"
                   class="h-7 w-7 flex-shrink-0 hover:bg-purple-50 dark:hover:bg-gray-700" @click="copyToClipboard"

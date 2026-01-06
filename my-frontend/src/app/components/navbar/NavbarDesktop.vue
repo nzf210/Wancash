@@ -14,16 +14,15 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import ThemeToggle from '../ThemeToggle.vue'
 import WalletAuthButton from './WalletAuthButton.vue'
-import ProfileIcon from './ProfileIcon.vue'
 import { useConnection } from '@wagmi/vue'
 import { useAuth } from '@/app/composables/useAuth'
-import { useChain } from '@/app/composables/useChain'
-import type { NavbarProps, NavbarEmits, ProductMenuItem, NavigationItem } from './types'
+import type { NavbarProps, NavbarEmits } from './types'
+import { navigationItems, productMenuItems } from './menuItem'
 
 // Composables
-const { isConnected, address: walletAddress, chainId } = useConnection()
-const { isAuthenticated, user, checkAuth } = useAuth()
-const { getChainInfo } = useChain()
+const { isConnected, address: walletAddress } = useConnection()
+const { checkAuth } = useAuth()
+
 
 // Props & Emits
 const props = defineProps<NavbarProps>()
@@ -32,51 +31,12 @@ const emit = defineEmits<NavbarEmits>()
 // State
 const route = useRoute()
 const isScrolled = ref(false)
-const currentChain = computed(() => getChainInfo(chainId.value || 0))
 
-// Constants
-const productMenuItems: ProductMenuItem[] = [
-  {
-    title: 'Redem',
-    description: 'Redem your token for gold',
-    href: '/redem',
-    icon: '💰'
-  },
-  {
-    title: 'Bridge',
-    description: 'Send your token to other chains',
-    href: '/bridgeToken',
-    icon: '📋'
-  },
-  {
-    title: 'Send',
-    description: 'Send your token to other wallet',
-    href: '/sendToken',
-    icon: '💸'
-  }
-]
 
-const navigationItems: NavigationItem[] = [
-  {
-    title: 'Support',
-    href: '/support',
-  }
-]
 
 // Computed
 const hasNotifications = computed(() => props.notificationCount || 1 > 0)
 
-const profileAuthStores = computed(() => ({
-  walletAddress: walletAddress.value || null,
-  isConnected: isAuthenticated.value,
-  userAvatar: user.value?.avatar || null,
-  userDisplayName: user.value?.name || 'User',
-  userInitials: (user.value?.name?.charAt(0) || 'U').toUpperCase(),
-  userEmail: user.value?.email || null,
-  network: currentChain.value?.name || '',
-  balance: '0.00',
-  handleDisconnect: () => emit('logout')
-}))
 
 // Methods
 const handleScroll = () => {
@@ -162,27 +122,23 @@ onUnmounted(() => {
         <ThemeToggle v-if="props.showThemeToggle" />
 
         <!-- Show WalletConnect when not authenticated -->
-        <WalletAuthButton v-if="!isAuthenticated" :isMobile="false" />
+        <WalletAuthButton :isMobile="false" />
 
         <!-- Show ProfileIcon and Notifications when authenticated -->
-        <div v-if="isConnected && isAuthenticated">
+        <div v-if="(props.notificationCount || 0) >= 1" class="flex flex-row">
           <!-- Notifications -->
-          <Button v-if="props.notificationCount || 0 >= 0" variant="ghost" size="icon" class="relative"
-            @click="handleNotificationClick">
+          <Button variant="ghost" size="icon" class="relative mr-4 mt-1" @click="handleNotificationClick">
             <span class="sr-only">Notifikasi</span>
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5">
               <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
               <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
             </svg>
-            <Badge v-if="hasNotifications" variant="destructive"
+            <Badge v-if="hasNotifications && props.notificationCount || 0 > 99" variant="destructive"
               class="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
               {{ props.notificationCount || 0 > 99 ? '99+' : props.notificationCount }}
             </Badge>
           </Button>
-
-          <!-- Profile Icon -->
-          <ProfileIcon :auth-stores="profileAuthStores" />
         </div>
       </div>
     </div>

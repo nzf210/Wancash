@@ -17,7 +17,7 @@
       class="connect-button">
       <span v-if="authLoading" class="spinner"></span>
       <span v-else class="wallet-info">
-        <span class="wallet-address text-sm">
+        <span class="wallet-address text-[10px]">
           {{ shortenAddress(walletAddress) }}
         </span>
         <span class="auth-status">(Sign In)</span>
@@ -26,20 +26,7 @@
 
     <!-- State 3: Connected and Authenticated -->
     <div v-else-if="isConnected && isAuthenticated" class="authenticated-state">
-      <!-- Tampilkan ProfileIcon untuk desktop -->
       <ProfileIcon v-if="!isMobile" :auth-stores="profileAuthStores" />
-
-      <!-- Untuk mobile, tampilkan versi minimalis -->
-      <div v-else class="mobile-wallet-info">
-        <div class="flex items-center gap-2">
-          <div class="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs">
-            {{ profileAuthStores.userInitials }}
-          </div>
-          <span class="text-xs truncate max-w-[80px]">
-            {{ shortenAddress(walletAddress) }}
-          </span>
-        </div>
-      </div>
     </div>
   </div>
 </template>
@@ -56,6 +43,7 @@ import type { EIP1193Provider } from 'viem'
 import { useAppKitAccount } from '@reown/appkit/vue'
 import { Spinner } from '@/components/ui/spinner'
 import { appkit } from '@/app/components/config/appkit'
+import type { ProfileAuthStores } from './types'
 
 defineProps<{
   isMobile: boolean
@@ -85,7 +73,7 @@ const profileAuthStores = computed(() => ({
   network: currentChain.value?.name || '',
   balance: '0.00',
   handleDisconnect: disconnectWallet
-}))
+})) as unknown as ProfileAuthStores
 
 // Watchers
 watch(chainId, () => {
@@ -229,7 +217,7 @@ const disconnectWallet = async () => {
 
 .wallet-info {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
 }
 

@@ -1,13 +1,6 @@
 <template>
   <footer class=" dark:text-white text-gray-900">
     <div class="container mx-auto px-4 py-12">
-      <!-- Logo & Tagline -->
-      <!-- <div class="mb-10">
-        <h2 class="text-2xl font-bold mb-2">
-          Looking the world a better place through constructing elegant hierarchies.
-        </h2>
-      </div> -->
-
       <!-- Main Footer Grid -->
       <div class="grid grid-cols-2 md:grid-cols-5 gap-8 mb-10">
         <!-- Solutions Column -->

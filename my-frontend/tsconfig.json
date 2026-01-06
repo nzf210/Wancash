@@ -12,7 +12,7 @@
     }
   ],
   "compilerOptions": {
-    "module": "NodeNext",
+    "module": "es2022",
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]

@@ -44,7 +44,7 @@ interface MyProvider {
 }
 
 export const useAuth = () => {
-  const walletAddress = ref<string | undefined>('')
+  const walletAddress = ref<string>('')
   const chainId = ref<number | undefined>(0)
   const isConnected = ref(false)
   const recentChainChange = ref(false)

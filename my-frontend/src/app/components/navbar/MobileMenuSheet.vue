@@ -4,14 +4,24 @@ import SheetContent from '@/components/ui/sheet/SheetContent.vue'
 import SheetHeader from '@/components/ui/sheet/SheetHeader.vue'
 import SheetTitle from '@/components/ui/sheet/SheetTitle.vue'
 import { RouterLink } from 'vue-router'
-import WalletAuthButton from './WalletAuthButton.vue'
+// import WalletAuthButton from './WalletAuthButton.vue'
 import type { ProductMenuItem, NavigationItem, ProfileAuthStores } from './types'
+import ProfileIcon from './ProfileIcon.vue'
+import { useAppKitAccount } from '@reown/appkit/vue'
+import { appkit } from '@/app/components/config/appkit'
+import { ref } from 'vue'
+import { toast } from 'vue-sonner'
+import { useAuth } from '@/app/composables/useAuth'
+import { useConnection } from '@wagmi/vue'
+import { shortenAddress } from '@/utils/helpers'
+import { useChain } from '@/app/composables/useChain'
+import Spinner from '@/components/ui/spinner/Spinner.vue'
 
 interface Props {
   open: boolean
-  isConnected: boolean
-  isAuthenticated: boolean
-  profileInfo?: ProfileAuthStores & { shortAddress?: string }
+  // isConnected: boolean
+  // isAuthenticated: boolean
+  profileInfo: ProfileAuthStores
   productMenuItems: ProductMenuItem[]
   navigationItems: NavigationItem[]
 }
@@ -20,23 +30,57 @@ defineProps<Props>()
 
 const emit = defineEmits<{
   'update:open': [value: boolean]
-  close: []
-  login: []
-  logout: []
-  'profile-click': []
 }>()
 
 const handleClose = () => {
   emit('update:open', false)
-  emit('close')
+}
+
+const accountData = useAppKitAccount()
+
+// State
+const connecting = ref(false)
+
+const connectWallet = async () => {
+  try {
+    connecting.value = true
+    if (!accountData.value.isConnected) {
+      await appkit.open()
+      await new Promise(resolve => setTimeout(resolve, 1000))
+    }
+  } catch (error: unknown) {
+    toast.error(error instanceof Error ? error.message : 'Failed to connect')
+  } finally {
+    connecting.value = false
+  }
+}
+
+const { isConnected, address: walletAddress, chainId } = useConnection()
+const { isSupportedChain } = useChain()
+const { isAuthenticated, login, loading: authLoading } = useAuth()
+
+const handleAuth = async () => {
+  try {
+    if (!isSupportedChain.value) {
+      toast.error('Please switch to a supported network')
+      return
+    }
+
+    await login(walletAddress.value!, chainId.value!)
+  } catch (error: unknown) {
+    toast.error(error instanceof Error ? error.message : 'Authentication failed')
+  }
 }
 </script>
 
 <template>
   <Sheet :open="open" @update:open="emit('update:open', $event)">
     <SheetContent side="right" class="w-[300px] sm:w-[400px]">
-      <SheetHeader>
+      <SheetHeader class="flex flex-row gap-32">
         <SheetTitle class="text-left">Menu</SheetTitle>
+        <div v-if="isConnected && isAuthenticated">
+          <ProfileIcon :auth-stores="{ isConnected: isConnected, ...profileInfo }" />
+        </div>
       </SheetHeader>
 
       <div class="mt-6 flex flex-col space-y-4">
@@ -59,52 +103,31 @@ const handleClose = () => {
         </div>
 
         <!-- Mobile Auth Info -->
-        <div class="space-y-2 pt-4 border-t">
+        <div class="space-y-2 border-t mx-auto">
           <!-- Not Connected -->
-          <div v-if="!isConnected" class="p-3 bg-accent/50 rounded-lg">
-            <WalletAuthButton :is-mobile="true" @login="emit('login')" />
-          </div>
+          <div class="wallet-auth-container">
+            <!-- State 1: Not Connected -->
+            <button v-if="!isConnected" @click="connectWallet" :disabled="connecting" class="connect-button">
+              <span v-if="connecting" class="spinner"></span>
+              {{ connecting ? 'Connecting...' : 'Connect Wallet' }}
+            </button>
 
-          <!-- Connected but Not Authenticated -->
-          <div v-else-if="isConnected && !isAuthenticated" class="p-3 bg-accent/50 rounded-lg">
-            <WalletAuthButton :is-mobile="true" @login="emit('login')" />
-          </div>
-
-          <!-- Connected and Authenticated -->
-          <div v-else class="space-y-4">
-            <!-- User Info -->
-            <div class="flex items-center gap-3 p-3 rounded-lg bg-accent">
-              <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                {{ profileInfo?.userInitials }}
-              </div>
-              <div class="flex-1 min-w-0">
-                <div class="font-medium truncate">{{ profileInfo?.userDisplayName }}</div>
-                <div class="text-sm text-muted-foreground truncate">
-                  {{ profileInfo?.shortAddress || '' }}
-                </div>
-                <div class="text-xs text-muted-foreground mt-1">
-                  {{ profileInfo?.network }}
-                </div>
-              </div>
+            <!-- Loading State -->
+            <div v-if="authLoading" class="flex items-center">
+              <Spinner class="mr-2" />
+              <span class="auth-loading">Loading...</span>
             </div>
 
-            <!-- User Menu -->
-            <RouterLink to="/profile" @click="emit('profile-click'); handleClose()"
-              class="flex items-center gap-3 p-3 rounded-md hover:bg-accent transition-colors">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              <span>My Profile</span>
-            </RouterLink>
-
-            <button @click="emit('logout'); handleClose()"
-              class="flex items-center gap-3 p-3 rounded-md hover:bg-accent transition-colors text-red-500 w-full text-left">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-              <span>Disconnect Wallet</span>
+            <!-- State 2: Connected but Not Authenticated -->
+            <button v-else-if="isConnected && !isAuthenticated" @click="handleAuth" :disabled="authLoading"
+              class="connect-button">
+              <span v-if="authLoading" class="spinner"></span>
+              <span v-else class="wallet-info">
+                <span class="wallet-address text-[10px]">
+                  {{ shortenAddress(walletAddress) }}
+                </span>
+                <span class="auth-status">(Sign In)</span>
+              </span>
             </button>
           </div>
         </div>
@@ -112,3 +135,74 @@ const handleClose = () => {
     </SheetContent>
   </Sheet>
 </template>
+
+
+<style scoped>
+.wallet-auth-container {
+  display: flex;
+  align-items: center;
+}
+
+.connect-button {
+  padding: 0.2rem 0.2rem;
+  background: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+}
+
+.connect-button:hover {
+  background: #4338ca;
+}
+
+.connect-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.wallet-info {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.wallet-address {
+  font-family: monospace;
+}
+
+.auth-status {
+  font-size: 0.8em;
+  opacity: 0.8;
+}
+
+.spinner {
+  border: 2px solid #ffffff;
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  animation: spin 1s linear infinite;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.auth-loading {
+  margin-left: 8px;
+}
+</style>
