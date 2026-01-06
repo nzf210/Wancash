@@ -23,9 +23,10 @@ const props = defineProps<{
   authStores: ProfileAuthStores
 }>()
 
-// State untuk mengontrol tooltip
+// State untuk mengontrol tooltip dan dropdown
 const tooltipOpen = ref(false)
 const dropdownOpen = ref(false)
+const isHoveringTooltipContent = ref(false)
 
 // Computed properties
 const avatarFallback = computed(() => {
@@ -87,6 +88,12 @@ const handleTooltipOpenChange = (open: boolean) => {
     tooltipOpen.value = false
     return
   }
+
+  // Delay kecil untuk memberikan waktu mouse berpindah
+  if (!open && isHoveringTooltipContent.value) {
+    return
+  }
+
   tooltipOpen.value = open
 }
 
@@ -99,19 +106,34 @@ const handleDropdownOpenChange = (open: boolean) => {
   }
 }
 
-// Reset tooltip state ketika mouse meninggalkan area
-const handleMouseLeave = () => {
+// Handler untuk tooltip content
+const handleTooltipContentEnter = () => {
+  isHoveringTooltipContent.value = true
+}
+
+const handleTooltipContentLeave = () => {
+  isHoveringTooltipContent.value = false
   setTimeout(() => {
-    if (!dropdownOpen.value) {
+    if (!isHoveringTooltipContent.value) {
       tooltipOpen.value = false
     }
-  }, 100)
+  }, 150)
+}
+
+// Reset tooltip state ketika mouse meninggalkan area
+const handleMouseLeave = () => {
+  // Berikan waktu untuk mouse berpindah ke tooltip content
+  setTimeout(() => {
+    if (!isHoveringTooltipContent.value && !dropdownOpen.value) {
+      tooltipOpen.value = false
+    }
+  }, 200)
 }
 </script>
 
 <template>
   <TooltipProvider :delay-duration="300">
-    <Tooltip :open="tooltipOpen" @update:open="handleTooltipOpenChange" :disable-hoverable-content="true">
+    <Tooltip :open="tooltipOpen" @update:open="handleTooltipOpenChange">
       <TooltipTrigger as-child>
         <div class="relative inline-block" @mouseleave="handleMouseLeave">
           <DropdownMenu :open="dropdownOpen" @update:open="handleDropdownOpenChange">
@@ -132,6 +154,7 @@ const handleMouseLeave = () => {
             </DropdownMenuTrigger>
 
             <DropdownMenuContent class="w-56 z-[1000]" align="end" :side-offset="8" @close-auto-focus.prevent>
+              <!-- Dropdown content tetap sama -->
               <DropdownMenuLabel class="font-normal">
                 <div class="flex flex-col space-y-1">
                   <p class="text-sm font-medium leading-none">{{ authStores.userDisplayName }}</p>
@@ -174,8 +197,7 @@ const handleMouseLeave = () => {
 
       <TooltipContent side="bottom" align="end"
         class="z-[1001] p-0 border-2 transition-all duration-300 border-purple-300 dark:border-gray-600"
-        :side-offset="5" :hidden="dropdownOpen" @pointer-enter="tooltipOpen = true"
-        @pointer-leave="tooltipOpen = false">
+        :side-offset="5" @mouseenter="handleTooltipContentEnter" @mouseleave="handleTooltipContentLeave">
         <div class="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-gray-800 dark:to-gray-900 p-4 rounded-md">
           <!-- Wallet Address Section -->
           <div class="mb-4">
