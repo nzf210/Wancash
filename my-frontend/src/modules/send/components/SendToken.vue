@@ -109,9 +109,7 @@ const totalAmount = computed(() => (Number.parseFloat(form.value.amount) || 0) +
 // Methods
 const updateForm = (updatedForm: FormData) => { form.value = { ...form.value, ...updatedForm } }
 const formatNumber = (num: number) => new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 4 }).format(num)
-// const formatCurrency = (num: number) => new Intl.NumberFormat('id-ID').format(Math.round(num))
 const shortenAddress = (address: string) => address ? `${address.slice(0, 6)}...${address.slice(-4)}` : ''
-// const shortenTransactionHash = (hash: string) => hash ? `${hash.slice(0, 8)}...${hash.slice(-6)}` : ''
 
 const validateAddress = () => {
   const address = form.value.recipientAddress.trim()

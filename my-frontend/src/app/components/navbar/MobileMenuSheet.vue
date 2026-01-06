@@ -77,7 +77,7 @@ const handleAuth = async () => {
   <Sheet :open="open" @update:open="emit('update:open', $event)">
     <SheetContent side="right" class="w-[300px] sm:w-[400px]">
       <SheetHeader class="flex flex-row gap-32">
-        <SheetTitle class="text-left">Menu</SheetTitle>
+        <SheetTitle class="text-left border pt-2 rounded-2xl px-2">Menu</SheetTitle>
         <div v-if="isConnected && isAuthenticated">
           <ProfileIcon :auth-stores="{ isConnected: isConnected, ...profileInfo }" />
         </div>
@@ -86,7 +86,7 @@ const handleAuth = async () => {
       <div class="mt-6 flex flex-col space-y-4">
         <!-- Mobile Navigation Items -->
         <div class="space-y-2">
-          <div class="text-sm font-medium text-muted-foreground mb-2">Produk</div>
+          <div class="text-sm font-medium text-muted-foreground ml-1">Produk</div>
           <RouterLink v-for="item in productMenuItems" :key="item.href" :to="item.href" @click="handleClose"
             class="flex items-center gap-3 p-3 rounded-md hover:bg-accent transition-colors">
             <span>{{ item.icon }}</span>
