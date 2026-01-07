@@ -14,7 +14,6 @@ import AddContactDialog from './AddContactDialog.vue'
 import PreviewTransferDialog from './PreviewTransferDialog.vue'
 import LoadingDialog from './LoadingDialog.vue'
 import SuccessDialog from './SuccessDialog.vue'
-import type { ProfileAuthStores } from '@/app/components/navbar'
 import { useConfig, useConnection } from '@wagmi/vue'
 import { wancashAbi, wancashContractAddress } from '@/app/services/contracts'
 import { watchDebounced } from '@vueuse/core'
@@ -447,9 +446,6 @@ onMounted(() => {
   loadTransactionHistory()
 })
 
-defineProps<{
-  authStores: ProfileAuthStores
-}>()
 </script>
 
 <template>
