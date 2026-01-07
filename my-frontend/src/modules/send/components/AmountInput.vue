@@ -16,7 +16,7 @@ const formatCurrency = (num: number) => new Intl.NumberFormat('id-ID').format(Ma
     <div class="flex items-center justify-between">
       <Label for="amount" class="text-sm font-medium text-gray-900 dark:text-white">Token Amount *</Label>
       <Button type="button" @click="$emit('set-max-amount')">
-        Use Max: {{ formatNumber(maxTransferable) }} GLD
+        Use Max: {{ formatNumber(maxTransferable) }} WCH
       </Button>
     </div>
     <div class="relative">
@@ -28,7 +28,7 @@ const formatCurrency = (num: number) => new Intl.NumberFormat('id-ID').format(Ma
         class="pl-12 text-lg bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 rounded-xl"
         :class="{ 'border-red-300 dark:border-red-500': amountError }"
         @input="$emit('update:amount', $event.target.value); $emit('validate-amount')" />
-      <span class="absolute right-4 top-2 pr-4 text-gray-500 dark:text-gray-400 font-medium">GLD</span>
+      <span class="absolute right-4 top-2 pr-4 text-gray-500 dark:text-gray-400 font-medium">WCH</span>
     </div>
     <div v-if="amountError" class="text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
       <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -40,7 +40,7 @@ const formatCurrency = (num: number) => new Intl.NumberFormat('id-ID').format(Ma
     </div>
     <div class="text-sm text-gray-600 dark:text-gray-400">
       Equivalent to: <span class="font-semibold text-blue-600 dark:text-blue-400">USD {{ formatCurrency(equivalentValue)
-        }}</span>
+      }}</span>
     </div>
   </div>
 </template>

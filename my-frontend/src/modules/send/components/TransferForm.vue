@@ -1,3 +1,46 @@
+<script lang="ts" setup>
+import { computed } from 'vue'
+import { Button } from '@/components/ui/button'
+import RecipientInput from './RecipientInput.vue'
+import AmountInput from './AmountInput.vue'
+import NetworkFeeDisplay from './NetworkFeeDisplay.vue'
+import MemoInput from './MemoInput.vue'
+import TermsCheckbox from './TermsCheckbox.vue'
+
+const props = defineProps<{
+  form: { recipientAddress: string; amount: string; memo: string };
+  minimumTransfer: number;
+  maxTransferable: number;
+  networkFee: number;
+  estimatedTime: string;
+  agreeTerms: boolean;
+  addressError: string;
+  amountError: string;
+  recipientName: string;
+  equivalentValue: number;
+  totalAmount: number;
+}>()
+
+const emit = defineEmits<{
+  'update:form': [{ recipientAddress: string; amount: string; memo: string }];
+  'update:agree-terms': [boolean];
+  'validate-address': [];
+  'validate-amount': [];
+  'set-max-amount': [];
+  'show-address-book': [];
+  'preview-transfer': [];
+  'reset-form': [];
+}>()
+
+const updateRecipientAddress = (value: string) => emit('update:form', { ...props.form, recipientAddress: value })
+const updateAmount = (value: string) => emit('update:form', { ...props.form, amount: value })
+const updateMemo = (value: string) => emit('update:form', { ...props.form, memo: value })
+
+// This computed is passed from parent, but if needed, can be local
+const isFormValid = computed(() => true) // Placeholder; actual in parent
+</script>
+
+
 <template>
   <div
     class="relative bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-xl overflow-hidden">
@@ -53,45 +96,3 @@
     </Button>
   </div>
 </template>
-
-<script lang="ts" setup>
-import { computed } from 'vue'
-import { Button } from '@/components/ui/button'
-import RecipientInput from './RecipientInput.vue'
-import AmountInput from './AmountInput.vue'
-import NetworkFeeDisplay from './NetworkFeeDisplay.vue'
-import MemoInput from './MemoInput.vue'
-import TermsCheckbox from './TermsCheckbox.vue'
-
-const props = defineProps<{
-  form: { recipientAddress: string; amount: string; memo: string };
-  minimumTransfer: number;
-  maxTransferable: number;
-  networkFee: number;
-  estimatedTime: string;
-  agreeTerms: boolean;
-  addressError: string;
-  amountError: string;
-  recipientName: string;
-  equivalentValue: number;
-  totalAmount: number;
-}>()
-
-const emit = defineEmits<{
-  'update:form': [{ recipientAddress: string; amount: string; memo: string }];
-  'update:agree-terms': [boolean];
-  'validate-address': [];
-  'validate-amount': [];
-  'set-max-amount': [];
-  'show-address-book': [];
-  'preview-transfer': [];
-  'reset-form': [];
-}>()
-
-const updateRecipientAddress = (value: string) => emit('update:form', { ...props.form, recipientAddress: value })
-const updateAmount = (value: string) => emit('update:form', { ...props.form, amount: value })
-const updateMemo = (value: string) => emit('update:form', { ...props.form, memo: value })
-
-// This computed is passed from parent, but if needed, can be local
-const isFormValid = computed(() => true) // Placeholder; actual in parent
-</script>

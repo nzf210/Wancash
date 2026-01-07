@@ -17,8 +17,7 @@ export const useNavigationStore = defineStore('navigation', () => {
   const goToProfile = () => router.push(routes.profile)
   const goToDashboard = () => router.push(routes.dashboard)
 
-  // Bisa juga pakai fungsi generik
-  const goTo = (path: keyof typeof routes | string) => {
+  const goTo = (path: typeof routes | string) => {
     const routePath = routes[path as keyof typeof routes] ?? path
     router.push(routePath)
   }

@@ -15,9 +15,12 @@ import { toast } from 'vue-sonner'
 import { computed, ref } from 'vue'
 import ReadContract from '../ReadContract.vue'
 import type { ProfileAuthStores } from './types'
+import { useRouter } from 'vue-router'
 
 const { goToPortfolio, goToProfile, goToSettings } = useNavigate()
 
+
+const router = useRouter()
 // Props
 const props = defineProps<{
   authStores: ProfileAuthStores
@@ -78,6 +81,7 @@ const handleAvatarError = (e: Event) => {
 }
 
 const handleDisconnect = () => {
+  router.push({ name: 'dashboard' })
   props.authStores.handleDisconnect()
 }
 

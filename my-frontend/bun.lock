@@ -13,8 +13,8 @@
         "@tailwindcss/vite": "^4.1.11",
         "@tanstack/vue-query": "^5.92.1",
         "@vueuse/core": "^14.1.0",
-        "@wagmi/core": "^2.19.0",
-        "@wagmi/vue": "^0.4.3",
+        "@wagmi/core": "^2.22.1",
+        "@wagmi/vue": "^0.4.8",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "dotenv": "^17.2.1",
@@ -847,9 +847,9 @@
 
     "@wagmi/connectors": ["@wagmi/connectors@7.0.2", "", { "peerDependencies": { "@base-org/account": "~2.4.0", "@coinbase/wallet-sdk": "~4.3.6", "@gemini-wallet/core": "~0.3.1", "@metamask/sdk": "~0.33.1", "@safe-global/safe-apps-provider": "~0.18.6", "@safe-global/safe-apps-sdk": "~9.1.0", "@wagmi/core": "3.0.0", "@walletconnect/ethereum-provider": "~2.21.1", "porto": "~0.2.35", "typescript": ">=5.7.3", "viem": "2.x" }, "optionalPeers": ["@base-org/account", "@coinbase/wallet-sdk", "@gemini-wallet/core", "@metamask/sdk", "@safe-global/safe-apps-provider", "@safe-global/safe-apps-sdk", "@walletconnect/ethereum-provider", "porto", "typescript"] }, "sha512-JQmFNZR/EmeAkIWgEfAsS8lrnqMjVHFEpnPgVl6wIDU58LhrWe0D1/lHxzdCyFiX3gu/rkIERrHu0BXRxkuB1A=="],
 
-    "@wagmi/core": ["@wagmi/core@2.19.0", "", { "dependencies": { "eventemitter3": "5.0.1", "mipd": "0.0.7", "zustand": "5.0.0" }, "peerDependencies": { "@tanstack/query-core": ">=5.0.0", "typescript": ">=5.0.4", "viem": "2.x" }, "optionalPeers": ["@tanstack/query-core", "typescript"] }, "sha512-lI57q6refAtNU6xnk/oyOpbEtEiwQ6g4rR+C9FEx8Gn2hZlfoyyksndrl6hIKlMBK+UkkKso3VwR5DI65j/5XQ=="],
+    "@wagmi/core": ["@wagmi/core@2.22.1", "", { "dependencies": { "eventemitter3": "5.0.1", "mipd": "0.0.7", "zustand": "5.0.0" }, "peerDependencies": { "@tanstack/query-core": ">=5.0.0", "typescript": ">=5.0.4", "viem": "2.x" }, "optionalPeers": ["@tanstack/query-core", "typescript"] }, "sha512-cG/xwQWsBEcKgRTkQVhH29cbpbs/TdcUJVFXCyri3ZknxhMyGv0YEjTcrNpRgt2SaswL1KrvslSNYKKo+5YEAg=="],
 
-    "@wagmi/vue": ["@wagmi/vue@0.4.3", "", { "dependencies": { "@wagmi/connectors": "7.0.2", "@wagmi/core": "3.0.0" }, "peerDependencies": { "@tanstack/vue-query": ">=5.0.0", "nuxt": ">=3.0.0 || >=4.0.0", "typescript": ">=5.7.3", "viem": "2.x", "vue": ">=3" }, "optionalPeers": ["nuxt", "typescript"] }, "sha512-yLDTCFiXrbtGxFyY+Dcz9hTKQ0GbDouQMgS7hv1p2vFb1PfqNBtiDEs6e0C0H+kPNqmBV+T6gNcgbBVx5AVE3A=="],
+    "@wagmi/vue": ["@wagmi/vue@0.4.8", "", { "dependencies": { "@wagmi/connectors": "7.0.7", "@wagmi/core": "3.1.0" }, "peerDependencies": { "@tanstack/vue-query": ">=5.0.0", "nuxt": ">=3.0.0 || >=4.0.0", "typescript": ">=5.7.3", "viem": "2.x", "vue": ">=3" }, "optionalPeers": ["nuxt", "typescript"] }, "sha512-uN6TFs13WxEE8/xp4258+J1Vx+rdkJXEg9DGPSIIoMz/wDA73pO6D3m4KdFkknzvNC5bm1wlFLieh4oIiSaQFw=="],
 
     "@wallet-standard/base": ["@wallet-standard/base@1.1.0", "", {}, "sha512-DJDQhjKmSNVLKWItoKThJS+CsJQjR9AOBOirBVT1F9YpRyC9oYHE+ZnSf8y8bxUphtKqdQMPVQ2mHohYdRvDVQ=="],
 
@@ -2521,7 +2521,9 @@
 
     "@vue/devtools-core/nanoid": ["nanoid@5.1.5", "", { "bin": { "nanoid": "bin/nanoid.js" } }, "sha512-Ir/+ZpE9fDsNH0hQ3C68uyThDXzYcim2EqcZ8zn8Chtt1iylPT9xXJB0kPCnqzgcEGikO9RxSrh63MsmVCU7Fw=="],
 
-    "@wagmi/vue/@wagmi/core": ["@wagmi/core@3.0.0", "", { "dependencies": { "eventemitter3": "5.0.1", "mipd": "0.0.7", "zustand": "5.0.0" }, "peerDependencies": { "@tanstack/query-core": ">=5.0.0", "typescript": ">=5.7.3", "viem": "2.x" }, "optionalPeers": ["@tanstack/query-core", "typescript"] }, "sha512-wOn8jwB9GNYTdrc4CP/huf1aAhDoQ5GKl5OhxGBZx9X4qE+wReW05dTcurEc+XBl9B/ZVis2JdXVU3ZiYqyS8Q=="],
+    "@wagmi/vue/@wagmi/connectors": ["@wagmi/connectors@7.0.7", "", { "peerDependencies": { "@base-org/account": "^2.5.1", "@coinbase/wallet-sdk": "^4.3.6", "@gemini-wallet/core": "~0.3.1", "@metamask/sdk": "~0.33.1", "@safe-global/safe-apps-provider": "~0.18.6", "@safe-global/safe-apps-sdk": "^9.1.0", "@wagmi/core": "3.1.0", "@walletconnect/ethereum-provider": "^2.21.1", "porto": "~0.2.35", "typescript": ">=5.7.3", "viem": "2.x" }, "optionalPeers": ["@base-org/account", "@coinbase/wallet-sdk", "@gemini-wallet/core", "@metamask/sdk", "@safe-global/safe-apps-provider", "@safe-global/safe-apps-sdk", "@walletconnect/ethereum-provider", "porto", "typescript"] }, "sha512-aJ+Ktjm31htgeIUXWjsomn0KyZUNF3MUT1WSaNKE6h0GZA3zwhiFwk3IbhuYi4qaBnaqEuHkWw6TgRtVqSfCfw=="],
+
+    "@wagmi/vue/@wagmi/core": ["@wagmi/core@3.1.0", "", { "dependencies": { "eventemitter3": "5.0.1", "mipd": "0.0.7", "zustand": "5.0.0" }, "peerDependencies": { "@tanstack/query-core": ">=5.0.0", "ox": ">=0.11.1", "typescript": ">=5.7.3", "viem": "2.x" }, "optionalPeers": ["@tanstack/query-core", "ox", "typescript"] }, "sha512-+lp2NO3pTP7Rk2y7ZsVZTOAo03ohtdg7epmAtlSMw+MGi83Ylss+6sNMfVetKTyhAh7QofcHxlHP1VgKCev8MA=="],
 
     "@walletconnect/core/@walletconnect/logger": ["@walletconnect/logger@2.1.2", "", { "dependencies": { "@walletconnect/safe-json": "^1.0.2", "pino": "7.11.0" } }, "sha512-aAb28I3S6pYXZHQm5ESB+V6rDqIYfsnHaQyzFbwUUBFY4H0OXx/YtTl8lvhUNhMMfb9UxbwEBS253TlXUYJWSw=="],
 
@@ -2782,6 +2784,8 @@
     "vite-plugin-vue-devtools/execa": ["execa@9.6.0", "", { "dependencies": { "@sindresorhus/merge-streams": "^4.0.0", "cross-spawn": "^7.0.6", "figures": "^6.1.0", "get-stream": "^9.0.0", "human-signals": "^8.0.1", "is-plain-obj": "^4.1.0", "is-stream": "^4.0.1", "npm-run-path": "^6.0.0", "pretty-ms": "^9.2.0", "signal-exit": "^4.1.0", "strip-final-newline": "^4.0.0", "yoctocolors": "^2.1.1" } }, "sha512-jpWzZ1ZhwUmeWRhS7Qv3mhpOhLfwI+uAX4e5fOcXqwMR7EcJ0pj2kV1CVzHVMX/LphnKWD3LObjZCoJ71lKpHw=="],
 
     "wagmi/@wagmi/connectors": ["@wagmi/connectors@5.9.2", "", { "dependencies": { "@base-org/account": "1.1.1", "@coinbase/wallet-sdk": "4.3.6", "@metamask/sdk": "0.32.0", "@safe-global/safe-apps-provider": "0.18.6", "@safe-global/safe-apps-sdk": "9.1.0", "@walletconnect/ethereum-provider": "2.21.1", "cbw-sdk": "npm:@coinbase/wallet-sdk@3.9.3" }, "peerDependencies": { "@wagmi/core": "2.19.0", "typescript": ">=5.0.4", "viem": "2.x" }, "optionalPeers": ["typescript"] }, "sha512-7q3sBhEQCxE/jWqIlkz5YIm1NOUW1vVTSxgtqvHXOTY+tjRHGTlhmWNocTYB/S0Es+5Qh9SlU7/uIsyGdbOFlg=="],
+
+    "wagmi/@wagmi/core": ["@wagmi/core@2.19.0", "", { "dependencies": { "eventemitter3": "5.0.1", "mipd": "0.0.7", "zustand": "5.0.0" }, "peerDependencies": { "@tanstack/query-core": ">=5.0.0", "typescript": ">=5.0.4", "viem": "2.x" }, "optionalPeers": ["@tanstack/query-core", "typescript"] }, "sha512-lI57q6refAtNU6xnk/oyOpbEtEiwQ6g4rR+C9FEx8Gn2hZlfoyyksndrl6hIKlMBK+UkkKso3VwR5DI65j/5XQ=="],
 
     "web3-eth-abi/abitype": ["abitype@0.7.1", "", { "peerDependencies": { "typescript": ">=4.9.4", "zod": "^3 >=3.19.1" }, "optionalPeers": ["zod"] }, "sha512-VBkRHTDZf9Myaek/dO3yMmOzB/y2s3Zo6nVU7yaw1G+TvCHAjwaJzNGN9yo4K5D8bU/VZXKP1EJpRhFr862PlQ=="],
 

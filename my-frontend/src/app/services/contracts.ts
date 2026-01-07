@@ -1,6 +1,17 @@
-export const wagmiContractConfig = {
-  // address: '0xFBA3912Ca04dd458c843e2EE08967fC04f3579c2',
-  abi: [
+export const wancashContractAddress: Record<number, string> = {
+  1: '0x03A71968491d55603FFe1b11A9e23eF013f75bCF', // Ethereum Mainnet
+  56: '0x03A71968491d55603FFe1b11A9e23eF013f75bCF', // BSC Mainnet
+  8453: '0x03A71968491d55603FFe1b11A9e23eF013f75bCF', // Base
+  43114: '0x03A71968491d55603FFe1b11A9e23eF013f75bCF', // Avalanche
+  42161: '0x03A71968491d55603FFe1b11A9e23eF013f75bCF', // Arbitrum
+  137: '0x03A71968491d55603FFe1b11A9e23eF013f75bCF', // Polygon
+  80002: '0x03A71968491d55603FFe1b11A9e23eF013f75bCF', // Amoy
+  11155111: '0xcE9F3d7b1d4e5dAe4Ba9F9564d2008667ed59344', // Sepolia
+  97: '0x30ca352E6931C5e1e87B7259BA3521BEb6E0013B', // BSC Testnet
+  43113: '0x5241625774FB5b9F8e7b8F1fe8b861Af3F6D786b', // Fuji
+}
+
+export const wancashAbi = {  abi: [
     {
       "inputs": [
         {

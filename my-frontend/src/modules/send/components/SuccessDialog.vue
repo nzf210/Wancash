@@ -26,7 +26,7 @@ const shortenTransactionHash = (hash: string) => hash ? `${hash.slice(0, 8)}...$
           </svg>
         </div>
         <p class="text-center font-semibold text-gray-900 dark:text-white mb-2">{{ formatNumber(Number(form.amount)) }}
-          GLD successfully sent!</p>
+          WCH successfully sent!</p>
         <p class="text-center text-gray-600 dark:text-gray-400 mb-1">To: {{ recipientName ||
           shortenAddress(form.recipientAddress) }}</p>
         <p class="text-center text-sm text-gray-500 dark:text-gray-400">Transaction Hash:</p>

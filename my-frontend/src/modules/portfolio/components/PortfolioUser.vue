@@ -105,9 +105,9 @@
                     </div>
                     <span class="text-sm font-medium text-blue-600 dark:text-blue-400">Total</span>
                   </div>
-                  <p class="text-2xl font-bold text-gray-900 dark:text-white mb-1">{{ formatNumber(totalBalance) }} GLD
+                  <p class="text-2xl font-bold text-gray-900 dark:text-white mb-1">{{ formatNumber(totalBalance) }} WCH
                   </p>
-                  <p class="text-lg font-semibold text-blue-600 dark:text-blue-400">Rp {{ formatCurrency(totalValue) }}
+                  <p class="text-lg font-semibold text-blue-600 dark:text-blue-400">USD {{ formatCurrency(totalValue) }}
                   </p>
                 </div>
 
@@ -125,7 +125,7 @@
                     <span class="text-sm font-medium text-green-600 dark:text-green-400">Available</span>
                   </div>
                   <p class="text-2xl font-bold text-gray-900 dark:text-white mb-1">{{ formatNumber(availableBalance) }}
-                    GLD</p>
+                    WCH</p>
                   <p class="text-lg font-semibold text-green-600 dark:text-green-400">Rp {{
                     formatCurrency(availableValue) }}</p>
                 </div>
@@ -143,10 +143,10 @@
                     </div>
                     <span class="text-sm font-medium text-amber-600 dark:text-amber-400">Locked</span>
                   </div>
-                  <p class="text-2xl font-bold text-gray-900 dark:text-white mb-1">{{ formatNumber(lockedBalance) }} GLD
+                  <p class="text-2xl font-bold text-gray-900 dark:text-white mb-1">{{ formatNumber(lockedBalance) }} WCH
                   </p>
                   <p class="text-lg font-semibold text-amber-600 dark:text-amber-400">Rp {{ formatCurrency(lockedValue)
-                  }}</p>
+                    }}</p>
                 </div>
 
                 <!-- Token Price -->
@@ -294,12 +294,12 @@
                       </td>
                       <td class="px-6 py-4 whitespace-nowrap">
                         <div class="text-sm font-semibold text-red-600 dark:text-red-400">-{{
-                          formatNumber(transaction.amount) }} GLD</div>
+                          formatNumber(transaction.amount) }} WCH</div>
                         <div class="text-xs text-gray-500 dark:text-gray-400">Rp {{ formatCurrency(transaction.amount *
                           tokenPrice) }}</div>
                       </td>
                       <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm text-gray-900 dark:text-white">{{ formatNumber(transaction.fee) }} GLD</div>
+                        <div class="text-sm text-gray-900 dark:text-white">{{ formatNumber(transaction.fee) }} WCH</div>
                       </td>
                       <td class="px-6 py-4 whitespace-nowrap">
                         <span :class="[
@@ -432,11 +432,11 @@
                     <div class="flex justify-between items-center">
                       <span class="text-sm text-gray-600 dark:text-gray-400">Amount:</span>
                       <span class="font-semibold text-gray-900 dark:text-white">{{ formatNumber(bridge.amount) }}
-                        GLD</span>
+                        WCH</span>
                     </div>
                     <div class="flex justify-between items-center">
                       <span class="text-sm text-gray-600 dark:text-gray-400">Bridge Fee:</span>
-                      <span class="text-gray-900 dark:text-white">{{ formatNumber(bridge.fee) }} GLD</span>
+                      <span class="text-gray-900 dark:text-white">{{ formatNumber(bridge.fee) }} WCH</span>
                     </div>
                     <div class="flex justify-between items-center">
                       <span class="text-sm text-gray-600 dark:text-gray-400">Estimated Time:</span>
@@ -503,7 +503,7 @@
                 </div>
                 <div class="text-center">
                   <div class="text-2xl font-bold text-green-600 dark:text-green-400 mb-1">{{ successfulSendTransactions
-                  }}</div>
+                    }}</div>
                   <p class="text-sm text-gray-600 dark:text-gray-400">Successful Transfers</p>
                 </div>
                 <div class="text-center">
@@ -546,21 +546,21 @@
             <div class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
               <span class="text-gray-600 dark:text-gray-400">Date:</span>
               <span class="font-medium text-gray-900 dark:text-white">{{ formatDateTime(selectedTransaction.date)
-              }}</span>
+                }}</span>
             </div>
             <div class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
               <span class="text-gray-600 dark:text-gray-400">Amount:</span>
               <span class="font-bold text-red-600 dark:text-red-400">-{{ formatNumber(selectedTransaction.amount) }}
-                GLD</span>
+                WCH</span>
             </div>
             <div class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
               <span class="text-gray-600 dark:text-gray-400">Fee:</span>
-              <span class="text-gray-900 dark:text-white">{{ formatNumber(selectedTransaction.fee) }} GLD</span>
+              <span class="text-gray-900 dark:text-white">{{ formatNumber(selectedTransaction.fee) }} WCH</span>
             </div>
             <div class="flex justify-between items-center py-2">
               <span class="text-gray-600 dark:text-gray-400">Total:</span>
               <span class="text-lg font-bold text-blue-600 dark:text-blue-400">{{
-                formatNumber(selectedTransaction.amount + selectedTransaction.fee) }} GLD</span>
+                formatNumber(selectedTransaction.amount + selectedTransaction.fee) }} WCH</span>
             </div>
           </div>
 
@@ -571,7 +571,7 @@
               <p class="font-medium text-gray-900 dark:text-white">{{ selectedTransaction.recipientName || 'Unknown' }}
               </p>
               <p class="text-sm text-gray-500 dark:text-gray-400 font-mono break-all">{{ selectedTransaction.recipient
-              }}</p>
+                }}</p>
             </div>
           </div>
 

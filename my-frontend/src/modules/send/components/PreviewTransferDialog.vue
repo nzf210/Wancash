@@ -31,15 +31,15 @@ const shortenAddress = (address: string) => address ? `${address.slice(0, 6)}...
           <div class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
             <span class="text-gray-600 dark:text-gray-400">Amount:</span>
             <span class="text-lg font-bold text-blue-600 dark:text-blue-400">{{ formatNumber(Number(form.amount)) }}
-              GLD</span>
+              WCH</span>
           </div>
           <div class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
             <span class="text-gray-600 dark:text-gray-400">Network Fee:</span>
-            <span class="font-medium text-gray-900 dark:text-white">{{ formatNumber(networkFee) }} GLD</span>
+            <span class="font-medium text-gray-900 dark:text-white">{{ formatNumber(networkFee) }} WCH</span>
           </div>
           <div class="flex justify-between items-center py-2">
             <span class="text-gray-600 dark:text-gray-400">Total:</span>
-            <span class="text-xl font-bold text-blue-600 dark:text-blue-400">{{ formatNumber(totalAmount) }} GLD</span>
+            <span class="text-xl font-bold text-blue-600 dark:text-blue-400">{{ formatNumber(totalAmount) }} WCH</span>
           </div>
           <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
             <p class="text-gray-600 dark:text-gray-400 mb-2">Note:</p>

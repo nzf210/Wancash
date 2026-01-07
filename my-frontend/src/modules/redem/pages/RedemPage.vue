@@ -614,7 +614,7 @@ const resetForm = () => {
 const goToDashboard = () => {
   resetForm()
   showSuccess.value = false
-  router.push('/dashboard')
+  router.push({ name: 'dashboard' })
 
   toast('Returning to Dashboard', {
     description: 'You will be redirected to the main dashboard.',

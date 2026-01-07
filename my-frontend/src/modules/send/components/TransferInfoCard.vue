@@ -16,15 +16,15 @@
       <div class="space-y-4">
         <div class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
           <span class="text-sm text-gray-600 dark:text-gray-400">Minimum Transfer</span>
-          <span class="font-semibold text-gray-900 dark:text-white">{{ formatNumber(minimumTransfer) }} GLD</span>
+          <span class="font-semibold text-gray-900 dark:text-white">{{ formatNumber(minimumTransfer) }} WCH</span>
         </div>
         <div class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
           <span class="text-sm text-gray-600 dark:text-gray-400">Maximum per Transaction</span>
-          <span class="font-semibold text-gray-900 dark:text-white">{{ formatNumber(maxTransferPerTx) }} GLD</span>
+          <span class="font-semibold text-gray-900 dark:text-white">{{ formatNumber(maxTransferPerTx) }} WCH</span>
         </div>
         <div class="flex justify-between items-center py-2">
           <span class="text-sm text-gray-600 dark:text-gray-400">Daily Limit</span>
-          <span class="font-semibold text-gray-900 dark:text-white">{{ formatNumber(dailyLimit) }} GLD</span>
+          <span class="font-semibold text-gray-900 dark:text-white">{{ formatNumber(dailyLimit) }} WCH</span>
         </div>
         <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
           <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Network</p>

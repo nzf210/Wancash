@@ -31,7 +31,7 @@ defineEmits<{ 'go-to-history': [] }>()
             <p class="text-xs text-gray-500 dark:text-gray-400">{{ transfer.time }}</p>
           </div>
           <div class="text-right">
-            <p class="font-semibold text-red-600 dark:text-red-400">-{{ transfer.amount }} GLD</p>
+            <p class="font-semibold text-red-600 dark:text-red-400">-{{ transfer.amount }} WCH</p>
             <p class="text-xs text-gray-500 dark:text-gray-400">{{ transfer.status }}</p>
           </div>
         </div>

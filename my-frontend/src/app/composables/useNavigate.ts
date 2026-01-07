@@ -9,7 +9,7 @@ export const useNavigate = () => {
   const goToSettings = () => router.push({ name: 'settings' })
   const goToTransfer = () => router.push({ name: 'transfer' })
   const goToBridge = () => router.push({ name: 'bridge' })
-  const goToHome = () => router.push({ name: '/' })
+  const goToHome = () => router.push({ name: 'dashboard' })
 
   return {
     goToPortfolio,

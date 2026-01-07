@@ -106,7 +106,6 @@ watch([isConnected, walletAddress], async ([connected, address]) => {
   if (!connected || !address) {
     console.log('Wallet disconnected')
   } else {
-    console.log('Wallet connected:', address)
     await checkAuth()
   }
 })

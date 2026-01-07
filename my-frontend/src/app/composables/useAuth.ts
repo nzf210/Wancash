@@ -4,7 +4,6 @@ import { watchAccount, getAccount, signTypedData } from '@wagmi/core'
 import { z } from 'zod'
 import { toast } from 'vue-sonner'
 import { isAddressEqual, type TypedDataDefinition } from 'viem'
-import { useRouter } from 'vue-router'
 import { wagmiAdapter } from '@/app/components/config/appkit'
 
 const nonceSchema = z.object({
@@ -49,7 +48,6 @@ export const useAuth = () => {
   const isConnected = ref(false)
   const recentChainChange = ref(false)
   const activeConnector = ref<unknown>(null)
-  const router = useRouter()
 
   const isAuthenticated = ref(false)
   const user = ref<{
@@ -348,6 +346,7 @@ export const useAuth = () => {
   }
 
   const logout = async (): Promise<void> => {
+
     try {
       const response = await fetch('/api/auth/logout', {
         method: 'POST',
@@ -365,11 +364,6 @@ export const useAuth = () => {
         toast.info('Logged out successfully')
         localStorage.removeItem('auth_state')
 
-        try {
-          await router.push('/')
-        } catch (error) {
-          console.error('Navigation failed:', error)
-        }
       } else {
         toast.error('Logout failed: ' + response.statusText)
       }
@@ -396,6 +390,7 @@ export const useAuth = () => {
       if (response.ok) {
         const data = await response.json()
 
+        console.log('Auth check response:', data.user.address ,'==', walletAddress.value)
         if (walletAddress.value && data.user && !isAddressEqual(data.user.address, walletAddress.value as `0x${string}`)) {
           await logout()
           return { isExpired: false, needsSign: false }
@@ -404,6 +399,15 @@ export const useAuth = () => {
         user.value = data.user
         isAuthenticated.value = true
         hasSessionInLocalStorage.value = true
+
+        localStorage.setItem('auth_state', JSON.stringify({
+        authenticated: true,
+        user: data.user,
+        walletAddress: walletAddress.value || data.user.address,
+        chainId: chainId.value,
+        timestamp: Date.now()
+      }))
+
         return { isExpired: false, needsSign: false }
       }
 
@@ -431,8 +435,24 @@ export const useAuth = () => {
     // Wallet already connected, but not have last session in local storage
     // Wallet need to sign
     if (currentAccount.isConnected && !hasPreviousSession) {
-      isAuthenticated.value = false
-      return { isExpired: false, needsSign: true }
+          isAuthenticated.value = false
+          return { isExpired: false, needsSign: true }
+        } else if (currentAccount.isConnected) {
+          const refreshed = await refreshToken()
+          if (refreshed) {
+          // Jika refresh berhasil, coba checkAuth lagi
+          await new Promise(resolve => setTimeout(resolve, 500))
+          return await checkAuth(retries - 1)
+        } else {
+          // Jika refresh gagal DAN wallet connected, perlu sign ulang
+          isAuthenticated.value = false
+          const now = Date.now()
+          if (now - lastToastTimeSign.value > 3000) {
+            toast.info('Session expired. Please sign in again.')
+            lastToastTimeSign.value = now
+          }
+          return { isExpired: true, needsSign: true }
+        }
     }
 
     // if has have last session, refresh
@@ -455,12 +475,13 @@ export const useAuth = () => {
       isAuthenticated.value = false
       hasSessionInLocalStorage.value = false
       showSessionExpiredToast()
+      localStorage.removeItem('auth_state')
       return { isExpired: true, needsSign: false }
     }
 
     // if not have last session, and not connected
     isAuthenticated.value = false
-          const now = Date.now()
+    const now = Date.now()
       if (now - lastToastTimeSign.value > 3000) {
         toast.info('Please sign in ...')
         lastToastTimeSign.value = now
