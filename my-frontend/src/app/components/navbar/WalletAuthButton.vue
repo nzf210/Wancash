@@ -1,36 +1,3 @@
-<template>
-  <div class="wallet-auth-container">
-    <!-- State 1: Not Connected -->
-    <button v-if="!isConnected" @click="connectWallet" :disabled="connecting" class="connect-button">
-      <span v-if="connecting" class="spinner"></span>
-      {{ connecting ? 'Connecting...' : 'Connect Wallet' }}
-    </button>
-
-    <!-- Loading State -->
-    <div v-if="authLoading" class="flex items-center">
-      <Spinner class="mr-2" />
-      <span class="auth-loading">Loading...</span>
-    </div>
-
-    <!-- State 2: Connected but Not Authenticated -->
-    <button v-else-if="isConnected && !isAuthenticated" @click="handleAuth" :disabled="authLoading"
-      class="connect-button">
-      <span v-if="authLoading" class="spinner"></span>
-      <span v-else class="wallet-info">
-        <span class="wallet-address text-[10px]">
-          {{ shortenAddress(walletAddress) }}
-        </span>
-        <span class="auth-status">(Sign In)</span>
-      </span>
-    </button>
-
-    <!-- State 3: Connected and Authenticated -->
-    <div v-else-if="isConnected && isAuthenticated" class="authenticated-state">
-      <ProfileIcon v-if="!isMobile" :auth-stores="profileAuthStores" />
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { ref, onMounted, watch, computed, onUnmounted } from 'vue'
 import { useConnection, useDisconnect } from '@wagmi/vue'
@@ -44,6 +11,8 @@ import { useAppKitAccount } from '@reown/appkit/vue'
 import { Spinner } from '@/components/ui/spinner'
 import { appkit } from '@/app/components/config/appkit'
 import type { ProfileAuthStores } from './types'
+import { useRouter } from "vue-router"
+
 
 defineProps<{
   isMobile: boolean
@@ -52,7 +21,7 @@ defineProps<{
 // Composables
 const { isConnected, address: walletAddress, chainId } = useConnection()
 const { mutateAsync: walletDisconnect } = useDisconnect()
-const { isAuthenticated, login, logout, checkAuth, loading: authLoading, user } = useAuth()
+const { isAuthenticated, login, logout, checkAuth, loading: authLoading, user, authStabilizing } = useAuth()
 const { isSupportedChain, getChainInfo } = useChain()
 const accountData = useAppKitAccount()
 
@@ -62,6 +31,8 @@ const recentChainChange = ref(false)
 
 // Computed
 const currentChain = computed(() => getChainInfo(chainId.value || 0))
+
+const router = useRouter()
 
 const profileAuthStores = computed(() => ({
   walletAddress: walletAddress.value || null,
@@ -103,6 +74,7 @@ watch(walletAddress, async (newAddress, oldAddress) => {
 })
 
 watch([isConnected, walletAddress], async ([connected, address]) => {
+  if (authStabilizing.value) return
   if (!connected || !address) {
     console.log('Wallet disconnected')
   } else {
@@ -139,7 +111,15 @@ onMounted(async () => {
   }
 
   if (isConnected.value && walletAddress.value) {
-    await checkAuth()
+    const { isExpired, needsSign } = await checkAuth()
+    if (!isExpired && !needsSign) {
+      const route = sessionStorage.getItem('intended_route')
+
+      if (route) {
+        sessionStorage.removeItem('intended_route')
+        router.replace(route)
+      }
+    }
   }
 })
 
@@ -164,7 +144,6 @@ const handleAuth = async () => {
       toast.error('Please switch to a supported network')
       return
     }
-
     await login(walletAddress.value!, chainId.value!)
   } catch (error: unknown) {
     toast.error(error instanceof Error ? error.message : 'Authentication failed')
@@ -183,6 +162,39 @@ const disconnectWallet = async () => {
   }
 }
 </script>
+
+<template>
+  <div class="wallet-auth-container">
+    <!-- State 1: Not Connected -->
+    <button v-if="!isConnected" @click="connectWallet" :disabled="connecting" class="connect-button">
+      <span v-if="connecting" class="spinner"></span>
+      {{ connecting ? 'Connecting...' : 'Connect Wallet' }}
+    </button>
+
+    <!-- Loading State -->
+    <div v-if="authLoading" class="flex items-center">
+      <Spinner class="mr-2" />
+      <span class="auth-loading">Loading...</span>
+    </div>
+
+    <!-- State 2: Connected but Not Authenticated -->
+    <button v-else-if="isConnected && !isAuthenticated && authStabilizing" @click="handleAuth" :disabled="authLoading"
+      class="connect-button">
+      <span v-if="authLoading" class="spinner"></span>
+      <span v-else class="wallet-info">
+        <span class="wallet-address text-[10px]">
+          {{ shortenAddress(walletAddress) }}
+        </span>
+        <span class="auth-status">(Sign In)</span>
+      </span>
+    </button>
+
+    <!-- State 3: Connected and Authenticated -->
+    <div v-else-if="isConnected && isAuthenticated || !authStabilizing" class="authenticated-state">
+      <ProfileIcon v-if="!isMobile" :auth-stores="profileAuthStores" />
+    </div>
+  </div>
+</template>
 
 <style scoped>
 .wallet-auth-container {

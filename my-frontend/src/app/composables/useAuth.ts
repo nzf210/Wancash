@@ -1,16 +1,26 @@
 // frontend/src/composables/useAuth.ts
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, onUnmounted } from 'vue'
 import { watchAccount, getAccount, signTypedData } from '@wagmi/core'
 import { z } from 'zod'
 import { toast } from 'vue-sonner'
 import { isAddressEqual, type TypedDataDefinition } from 'viem'
 import { wagmiAdapter } from '@/app/components/config/appkit'
+import { debounce } from '@/utils/debounce'
+
+let lastCheckTime = 0
+let pendingCheckAuth: Promise<{ isExpired: boolean; needsSign: boolean }> | null = null;
+
 
 const nonceSchema = z.object({
   address: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
   chainId: z.coerce.number().int().positive()
 })
 
+type RefreshResult =
+  | { ok: true }
+  | { ok: false; reason: 'NO_SESSION' | 'EXPIRED' | 'INVALID' | 'ERROR' }
+
+let pendingRefresh: Promise<RefreshResult> | null = null;
 interface BackendMessage {
   domain: {
     name: string;
@@ -48,6 +58,7 @@ export const useAuth = () => {
   const isConnected = ref(false)
   const recentChainChange = ref(false)
   const activeConnector = ref<unknown>(null)
+  const authStabilizing = ref(false)
 
   const isAuthenticated = ref(false)
   const user = ref<{
@@ -65,8 +76,7 @@ export const useAuth = () => {
 
   const loading = ref(false)
 
-  const lastToastTimeAuth = ref(0)
-  const lastToastTimeSign = ref(0)
+  // const lastToastTimeSign = ref(0)
   const hasSessionInLocalStorage = ref(false)
 
   watchAccount(wagmiAdapter.wagmiConfig, {
@@ -331,22 +341,31 @@ export const useAuth = () => {
     }
   }
 
-  const autoLoginOnConnect = async () => {
-    const account = getCurrentAccount()
+const autoLoginOnConnect = debounce(async () => {
+  const account = getCurrentAccount();
 
-    if (account.isConnected && account.address && account.chainId) {
-      try {
-        if (!isAuthenticated.value) {
-          await login(account.address, account.chainId)
-        }
-      } catch (error) {
-        console.warn('Auto-login failed:', error)
-      }
+  if (account.isConnected && account.address && account.chainId) {
+    // Jangan auto login jika sudah authenticated
+    if (isAuthenticated.value) {
+      return;
+    }
+
+    // Jangan auto login jika baru saja logout
+    const lastLogout = localStorage.getItem('last_logout');
+    if (lastLogout && Date.now() - Number.parseInt(lastLogout) < 5000) {
+      return;
+    }
+
+    try {
+      console.log('🤖 Auto-login attempt');
+      await login(account.address, account.chainId);
+    } catch (error) {
+      console.warn('Auto-login failed:', error);
     }
   }
+}, 1500);
 
   const logout = async (): Promise<void> => {
-
     try {
       const response = await fetch('/api/auth/logout', {
         method: 'POST',
@@ -357,162 +376,160 @@ export const useAuth = () => {
       })
 
       if (response.ok) {
-        isAuthenticated.value = false
-        user.value = {}
         activeConnector.value = null
-        hasSessionInLocalStorage.value = false
-        toast.info('Logged out successfully')
-        localStorage.removeItem('auth_state')
-
       } else {
         toast.error('Logout failed: ' + response.statusText)
       }
     } catch (error) {
-      console.warn('Backend logout failed:', error)
+        console.warn('Backend logout failed:', error)
     } finally {
       isAuthenticated.value = false
       user.value = {}
       hasSessionInLocalStorage.value = false
       localStorage.removeItem('auth_state')
+      toast.info('Logged out successfully')
     }
   }
 
-  const checkAuth = async (retries = 1): Promise<{ isExpired: boolean; needsSign: boolean }> => {
-    loading.value = true
-    try {
-      const response = await fetch('/api/me', {
-        credentials: 'include',
-        headers: {
-          'Cache-Control': 'no-cache'
-        }
-      })
+const checkAuth = async (retries = 1) => {
+  const now = Date.now();
 
-      if (response.ok) {
-        const data = await response.json()
+  if (pendingCheckAuth && now - lastCheckTime < 1000) {
+    console.log('⏭️ [checkAuth] cooldown hit');
+    return pendingCheckAuth;
+  }
+  authStabilizing.value = true
+  lastCheckTime = now;
+  pendingCheckAuth = performCheckAuth(retries);
 
-        console.log('Auth check response:', data.user.address ,'==', walletAddress.value)
-        if (walletAddress.value && data.user && !isAddressEqual(data.user.address, walletAddress.value as `0x${string}`)) {
-          await logout()
-          return { isExpired: false, needsSign: false }
-        }
+  pendingCheckAuth.finally(() => {
+    setTimeout(() => (pendingCheckAuth = null), 1000);
+  });
 
-        user.value = data.user
-        isAuthenticated.value = true
-        hasSessionInLocalStorage.value = true
+  return pendingCheckAuth;
+};
 
-        localStorage.setItem('auth_state', JSON.stringify({
+const performCheckAuth = async (retries: number) => {
+  loading.value = true;
+
+  try {
+    const res = await fetch('/api/me', {
+      credentials: 'include',
+      headers: { 'Cache-Control': 'no-cache' },
+      signal: AbortSignal.timeout(5000)
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      isAuthenticated.value = true;
+      user.value = data.user;
+
+      localStorage.setItem('auth_state', JSON.stringify({
         authenticated: true,
         user: data.user,
-        walletAddress: walletAddress.value || data.user.address,
-        chainId: chainId.value,
         timestamp: Date.now()
-      }))
+      }));
 
-        return { isExpired: false, needsSign: false }
-      }
+      return { isExpired: false, needsSign: false };
+    }
 
-      if (response.status === 401) {
-        const result = await handleUnauthorized(retries)
-        return result
-      }
+    if (res.status === 401) {
+      return await handleUnauthorized(retries);
+    }
 
-      isAuthenticated.value = false
+    return { isExpired: false, needsSign: false };
+  } catch (err) {
+    console.error('❌ [performCheckAuth]', err);
+    return { isExpired: false, needsSign: false };
+  } finally {
+    loading.value = false;
+    authStabilizing.value = false;
+  }
+};
+
+const handleUnauthorized = async (
+  retries: number
+): Promise<{ isExpired: boolean; needsSign: boolean }> => {
+
+  console.log('🔐 [handleUnauthorized]', retries)
+
+  if (retries <= 0) {
+    return { isExpired: true, needsSign: true }
+  }
+
+  // 🚨 SELALU coba refresh dulu
+  const refresh = await refreshToken()
+
+  if (refresh.ok) {
+    const me = await fetch('/api/me', {
+      credentials: 'include',
+      signal: AbortSignal.timeout(3000)
+    })
+
+    if (me.ok) {
       return { isExpired: false, needsSign: false }
-    } catch (error: unknown) {
-      console.error('Auth check failed:', error instanceof Error ? error.message : 'Unknown error')
-      isAuthenticated.value = false
+    }
+  }
+
+  // ❌ Refresh gagal → baru sign
+  if (!refresh.ok) {
+    if (refresh.reason === 'NO_SESSION') {
       return { isExpired: false, needsSign: false }
-    } finally {
-      loading.value = false
     }
+
+    return { isExpired: true, needsSign: true }
   }
 
-  const handleUnauthorized = async (retries: number): Promise<{ isExpired: boolean; needsSign: boolean }> => {
-    // check last session in local storage
-    const hasPreviousSession = localStorage.getItem('auth_state') !== null
-    const currentAccount = getCurrentAccount()
+  return { isExpired: true, needsSign: true }
+}
 
-    // Wallet already connected, but not have last session in local storage
-    // Wallet need to sign
-    if (currentAccount.isConnected && !hasPreviousSession) {
-          isAuthenticated.value = false
-          return { isExpired: false, needsSign: true }
-        } else if (currentAccount.isConnected) {
-          const refreshed = await refreshToken()
-          if (refreshed) {
-          // Jika refresh berhasil, coba checkAuth lagi
-          await new Promise(resolve => setTimeout(resolve, 500))
-          return await checkAuth(retries - 1)
-        } else {
-          // Jika refresh gagal DAN wallet connected, perlu sign ulang
-          isAuthenticated.value = false
-          const now = Date.now()
-          if (now - lastToastTimeSign.value > 3000) {
-            toast.info('Session expired. Please sign in again.')
-            lastToastTimeSign.value = now
-          }
-          return { isExpired: true, needsSign: true }
-        }
-    }
 
-    // if has have last session, refresh
-    const refreshed = await refreshToken()
+const refreshToken = async (): Promise<RefreshResult> => {
+  if (pendingRefresh) return pendingRefresh;
 
-    if (refreshed) {
-      // if refresh success, check auth again
-      await new Promise(resolve => setTimeout(resolve, 500))
-      return await checkAuth(retries - 1)
-    }
-
-    if (retries > 0) {
-      // if a have refresh, try again
-      await new Promise(resolve => setTimeout(resolve, 500))
-      return await checkAuth(retries - 1)
-    }
-
-    // refresh failed and have last session, session expired.
-    if (hasPreviousSession) {
-      isAuthenticated.value = false
-      hasSessionInLocalStorage.value = false
-      showSessionExpiredToast()
-      localStorage.removeItem('auth_state')
-      return { isExpired: true, needsSign: false }
-    }
-
-    // if not have last session, and not connected
-    isAuthenticated.value = false
-    const now = Date.now()
-      if (now - lastToastTimeSign.value > 3000) {
-        toast.info('Please sign in ...')
-        lastToastTimeSign.value = now
-      }
-    return { isExpired: false, needsSign: false }
-  }
-
-  const showSessionExpiredToast = () => {
-    const now = Date.now()
-    if (now - lastToastTimeAuth.value > 3000) {
-      toast.warning('Session expired. Please sign in again.')
-      lastToastTimeAuth.value = now
-    }
-  }
-
-  const refreshToken = async (): Promise<boolean> => {
+  pendingRefresh = (async () => {
     try {
-      const response = await fetch('/api/auth/refresh', {
+      console.log('🔄 [refreshToken] start');
+
+      const res = await fetch('/api/auth/refresh', {
         credentials: 'include',
         headers: {
-          'Cache-Control': 'no-cache'
-        }
-      })
-      return response.ok
-    } catch (error) {
-      console.error('Token refresh failed:', error)
-      return false
-    }
-  }
+          'Cache-Control': 'no-cache',
+          'X-No-Retry': 'true'
+        },
+        signal: AbortSignal.timeout(5000)
+      });
 
-  const restoreFromLocalStorage = (): boolean => {
+      if (res.ok) {
+        console.log('✅ [refreshToken] success');
+        return { ok: true };
+      }
+
+      const body = await res.json().catch(() => ({}));
+      console.warn('❌ [refreshToken] failed:', body?.code);
+
+      if (body?.code === 'NO_REFRESH_TOKEN') {
+        return { ok: false, reason: 'NO_SESSION' };
+      }
+
+      if (body?.code === 'REFRESH_EXPIRED' || body?.code === 'SESSION_NOT_FOUND') {
+        localStorage.removeItem('auth_state');
+        return { ok: false, reason: 'EXPIRED' };
+      }
+
+      return { ok: false, reason: 'INVALID' };
+    } catch (err) {
+      console.error('❌ [refreshToken] error:', err);
+      return { ok: false, reason: 'ERROR' };
+    } finally {
+      pendingRefresh = null;
+    }
+  })();
+
+  return pendingRefresh;
+};
+
+const restoreFromLocalStorage = (): boolean => {
     const savedAuth = localStorage.getItem('auth_state')
     if (savedAuth) {
       try {
@@ -553,11 +570,7 @@ export const useAuth = () => {
     if (connected) {
       const restored = restoreFromLocalStorage()
       if (!restored) {
-        const result = await checkAuth()
-        // Jika wallet baru perlu sign, jangan tampilkan toast session expired
-        if (result.needsSign) {
-          console.log('New wallet connected, ready for sign-in')
-        }
+        await checkAuthWithDebounce()
       }
     } else if (isAuthenticated.value && !recentChainChange.value) {
       await logout()
@@ -577,38 +590,140 @@ export const useAuth = () => {
     }
   })
 
-  onMounted(async () => {
-    const savedAuth = localStorage.getItem('auth_state')
-    hasSessionInLocalStorage.value = savedAuth !== null
+  const handleVisibilityChange = () => {
+  if (document.visibilityState === 'visible' && isAuthenticated.value) {
+    // Check auth ketika user kembali ke tab
+    checkAuthWithDebounce(1) // Delay 1 detik
+  }
+}
+
+// Event listener untuk online/offline
+const handleOnline = () => {
+  if (isAuthenticated.value) {
+    console.log('🌐 Back online, checking auth...')
+    checkAuthWithDebounce()
+  }
+}
+
+onMounted(async () => {
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  globalThis.window.addEventListener('online', handleOnline);
+
+  // Tunggu 2 detik sebelum check auth pertama
+  setTimeout(async () => {
+    const savedAuth = localStorage.getItem('auth_state');
 
     if (savedAuth) {
       try {
-        const authState = JSON.parse(savedAuth)
-        if (authState.authenticated) {
-          const result = await checkAuth()
-          // Jika session expired, toast sudah ditampilkan di handleUnauthorized
-          if (result.isExpired) {
-            console.log('Previous session expired')
-          }
+        const authState = JSON.parse(savedAuth);
+        const age = Date.now() - authState.timestamp;
+
+        // Jika session kurang dari 1 jam, coba check auth
+        if (age < 60 * 60 * 1000 && isConnected.value) {
+          console.log('🔍 Restoring session from localStorage');
+          await checkAuth();
+        } else {
+          // Session expired, hapus
+          localStorage.removeItem('auth_state');
         }
       } catch (error) {
-        console.error('Error checking auth on mount:', error)
+        console.error('Error parsing auth_state:', error);
+        localStorage.removeItem('auth_state');
       }
     }
-  })
+  }, 2000);
+});
+
+// Jangan lupa cleanup
+onUnmounted(() => {
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
+  globalThis.window.removeEventListener('online', handleOnline);
+});
+
+
+// Function untuk force check (bypass semua cache)
+const forceCheckAuth = async (retries = 1): Promise<{ isExpired: boolean; needsSign: boolean }> => {
+  console.log('🚀 Force checking auth...')
+  return checkAuth(retries)
+}
+
+// Function untuk check auth dengan retry logic
+const checkAuthWithRetry = async (
+  maxRetries = 3,
+  initialDelay = 1000
+): Promise<{ isExpired: boolean; needsSign: boolean }> => {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const result = await checkAuth(1)
+
+      if (!result.isExpired && !result.needsSign) {
+        return result
+      }
+
+      // Jika masih ada masalah, tunggu sebelum retry
+      if (attempt < maxRetries) {
+        const delay = initialDelay * Math.pow(2, attempt - 1) // Exponential backoff
+        console.log(`⏳ Auth check attempt ${attempt} failed, retrying in ${delay}ms...`)
+        await new Promise(resolve => setTimeout(resolve, delay))
+      }
+    } catch (error) {
+      console.error(`Auth check attempt ${attempt} failed:`, error)
+      if (attempt === maxRetries) {
+        return { isExpired: true, needsSign: false }
+      }
+    }
+  }
+
+  return { isExpired: true, needsSign: false }
+}
+
+const debugTokenStatus = async () => {
+  try {
+    const response = await fetch('/api/auth/debug/token-status', {
+      credentials: 'include'
+    })
+
+    if (response.ok) {
+      const data = await response.json()
+      console.log('🔍 Token Debug Info:', data)
+      return data
+    }
+  } catch (error) {
+    console.error('Debug failed:', error)
+  }
+  return null
+}
+
+
+const checkAuthWithDebounce = debounce(
+    async (retries: number = 1): Promise<{ isExpired: boolean; needsSign: boolean }> => {
+      try {
+        return await checkAuth(retries);
+      } catch (error) {
+        console.error('Debounced checkAuth failed:', error);
+        return { isExpired: false, needsSign: false };
+      }
+    },
+    1000 // Delay in milliseconds
+  );
 
   return {
-    isAuthenticated,
-    user,
-    loading,
-    walletAddress,
-    chainId,
-    isConnected,
-    login,
-    logout,
-    checkAuth,
-    refreshToken,
-    autoLoginOnConnect,
-    getCurrentAccount
+  isAuthenticated,
+  user,
+  loading,
+  walletAddress,
+  chainId,
+  isConnected,
+  login,
+  logout,
+  checkAuth,
+  checkAuthWithDebounce,  // Export debounced version
+  forceCheckAuth,          // Export force check
+  checkAuthWithRetry,      // Export retry version
+  refreshToken,
+  autoLoginOnConnect,
+  getCurrentAccount,
+  debugTokenStatus,
+  authStabilizing
   }
 }

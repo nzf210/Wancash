@@ -9,7 +9,7 @@ import { LitElement } from 'lit'
 import router from '@/app/router/index'
 import type { Router } from 'vue-router'
 
-import './assets/style.css'
+import '../src/assets/style.css'
 
 LitElement.enableWarning = function () {};
 
@@ -47,7 +47,6 @@ async function initializeApp() {
       }
       app.mount('#app')
     }
-
     mount()
 
   } catch (error : unknown) {

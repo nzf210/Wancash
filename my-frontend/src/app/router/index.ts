@@ -7,10 +7,10 @@ import {
   type RouteRecordRaw,
   type NavigationGuardNext,
 } from 'vue-router'
+import { useAuth } from "@/app/composables/useAuth"
 
 // Workaround for TypeScript import.meta.glob issue
 const modules = import.meta.glob('@/modules/**/index.ts', { eager: true });
-
 const routes: RouteRecordRaw[] = [];
 
 // Process module imports
@@ -33,8 +33,15 @@ const authGuard = async (
   next: NavigationGuardNext
 ): Promise<void> => {
   const requiresAuth = to.matched.some((record) => record.meta?.requiresAuth as boolean | undefined);
+  const { checkAuth } = useAuth()
 
-  if (!requiresAuth) {
+    if (to.meta.requiresAuth) {
+    sessionStorage.setItem('intended_route', to.fullPath)
+  }
+
+  const result = await checkAuth()
+
+  if (!requiresAuth || !result.needsSign) {
     next();
     return;
   }
@@ -45,7 +52,7 @@ const authGuard = async (
 
     await checkAuth();
 
-    if (user.value && isAuthenticated.value) {
+    if (user.value && isAuthenticated.value && result.needsSign) {
       next();
     } else {
       next('/');

@@ -32,11 +32,8 @@ const emit = defineEmits<NavbarEmits>()
 const route = useRoute()
 const isScrolled = ref(false)
 
-
-
 // Computed
 const hasNotifications = computed(() => props.notificationCount || 1 > 0)
-
 
 // Methods
 const handleScroll = () => {
@@ -50,7 +47,6 @@ const handleNotificationClick = () => {
 // Lifecycle
 onMounted(() => {
   window.addEventListener('scroll', handleScroll)
-
   if (isConnected.value && walletAddress.value) {
     checkAuth()
   }

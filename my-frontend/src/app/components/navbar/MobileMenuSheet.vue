@@ -19,8 +19,6 @@ import Spinner from '@/components/ui/spinner/Spinner.vue'
 
 interface Props {
   open: boolean
-  // isConnected: boolean
-  // isAuthenticated: boolean
   profileInfo: ProfileAuthStores
   productMenuItems: ProductMenuItem[]
   navigationItems: NavigationItem[]
@@ -57,7 +55,7 @@ const connectWallet = async () => {
 
 const { isConnected, address: walletAddress, chainId } = useConnection()
 const { isSupportedChain } = useChain()
-const { isAuthenticated, login, loading: authLoading } = useAuth()
+const { isAuthenticated, login, loading: authLoading, authStabilizing } = useAuth()
 
 const handleAuth = async () => {
   try {
@@ -78,7 +76,7 @@ const handleAuth = async () => {
     <SheetContent side="right" class="w-[300px] sm:w-[400px]">
       <SheetHeader class="flex flex-row gap-32">
         <SheetTitle class="text-left border pt-2 rounded-2xl px-2">Menu</SheetTitle>
-        <div v-if="isConnected && isAuthenticated">
+        <div v-if="isConnected && isAuthenticated || !authStabilizing">
           <ProfileIcon :auth-stores="{ isConnected: isConnected, ...profileInfo }" />
         </div>
       </SheetHeader>
@@ -119,10 +117,10 @@ const handleAuth = async () => {
             </div>
 
             <!-- State 2: Connected but Not Authenticated -->
-            <button v-else-if="isConnected && !isAuthenticated" @click="handleAuth" :disabled="authLoading"
-              class="connect-button">
+            <button v-else-if="isConnected && !isAuthenticated && authStabilizing" @click="handleAuth"
+              :disabled="authLoading" class="connect-button">
               <span v-if="authLoading" class="spinner"></span>
-              <span v-else class="wallet-info">
+              <span v-else class="wallet-info p-1">
                 <span class="wallet-address text-[10px]">
                   {{ shortenAddress(walletAddress) }}
                 </span>

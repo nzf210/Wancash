@@ -3,11 +3,12 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* ---break--- */
-
+/* stylelint-enable at-rule-no-unknown */
 @custom-variant dark (&:is(.dark *));
-
+/* ---break---
+*/
 /* ---break--- */
+
 
 @theme inline {
   --color-background: var(--background);
@@ -52,6 +53,7 @@
 
 :root {
   /* Light Mode - Tetap sama */
+  --ring-color: hsl(var(--ring));
   --background: oklch(1.2 0.02 0.87);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -193,7 +195,6 @@ html {
 .dark textarea:focus,
 .dark select:focus {
   border-color: hsl(var(--ring));
-  ring-color: hsl(var(--ring));
   outline: 2px solid transparent;
   outline-offset: 2px;
 }
