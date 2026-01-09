@@ -24,7 +24,8 @@ const formatCurrency = (num: number) => new Intl.NumberFormat('id-ID').format(Ma
         <path fill-rule="evenodd" d="M10 2a8 8 0 100 16 8 8 0 000-16zM4 10a6 6 0 1112 0 6 6 0 01-12 0z"
           clip-rule="evenodd" />
       </svg>
-      <Input id="amount" :value="amount" type="number" :min="minimumTransfer" :max="maxTransferable" placeholder="0.00"
+      <Input id="amount" :model-value="amount" type="number" :min="minimumTransfer" :max="maxTransferable"
+        placeholder="0.00"
         class="pl-12 text-lg bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 rounded-xl"
         :class="{ 'border-red-300 dark:border-red-500': amountError }"
         @input="$emit('update:amount', $event.target.value); $emit('validate-amount')" />
@@ -40,7 +41,7 @@ const formatCurrency = (num: number) => new Intl.NumberFormat('id-ID').format(Ma
     </div>
     <div class="text-sm text-gray-600 dark:text-gray-400">
       Equivalent to: <span class="font-semibold text-blue-600 dark:text-blue-400">USD {{ formatCurrency(equivalentValue)
-      }}</span>
+        }}</span>
     </div>
   </div>
 </template>

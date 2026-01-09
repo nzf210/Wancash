@@ -10,5 +10,14 @@ export default [
       title: 'Sending Token',
       requiresAuth: true
     }
+  },
+  {
+    path: '/historySending',
+    name: 'Transaction History',
+    component: () => import('./pages/HistoryPage.vue'),
+    meta: {
+      title: 'Transaction History',
+      requiresAuth: true
+    }
   }
 ]

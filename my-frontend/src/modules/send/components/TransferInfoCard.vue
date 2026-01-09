@@ -35,7 +35,7 @@
                   clip-rule="evenodd" />
               </svg>
             </div>
-            <span class="font-semibold text-gray-900 dark:text-white">Ethereum Mainnet</span>
+            <span class="font-semibold text-gray-900 dark:text-white">{{ network }}</span>
           </div>
         </div>
       </div>
@@ -44,7 +44,7 @@
 </template>
 
 <script lang="ts" setup>
-defineProps<{ minimumTransfer: number; maxTransferPerTx: number; dailyLimit: number }>()
+defineProps<{ minimumTransfer: number; maxTransferPerTx: number; dailyLimit: number; network: string }>()
 
 const formatNumber = (num: number) => new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 4 }).format(num)
 </script>

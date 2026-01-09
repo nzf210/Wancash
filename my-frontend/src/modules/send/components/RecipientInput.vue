@@ -3,8 +3,20 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 
+import { useDebounceFn } from '@vueuse/core'
+
 defineProps<{ recipientAddress: string; addressError: string; recipientName: string }>()
-defineEmits<{ 'update:recipient-address': [string]; 'validate-address': []; 'show-address-book': [] }>()
+const emit = defineEmits<{ 'update:recipient-address': [string]; 'validate-address': []; 'show-address-book': [] }>()
+
+const debouncedValidate = useDebounceFn(() => {
+  emit('validate-address')
+}, 300)
+
+const handleInput = (e: Event) => {
+  const target = e.target as HTMLInputElement
+  emit('update:recipient-address', target.value)
+  debouncedValidate()
+}
 </script>
 
 <template>
@@ -25,10 +37,9 @@ defineEmits<{ 'update:recipient-address': [string]; 'validate-address': []; 'sho
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
           d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
       </svg>
-      <Input id="recipient" :value="recipientAddress" placeholder="0x..."
+      <Input id="recipient" :model-value="recipientAddress" placeholder="0x..."
         class="pl-12 font-mono text-sm bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 rounded-xl"
-        :class="{ 'border-red-300 dark:border-red-500': addressError }"
-        @input="$emit('update:recipient-address', $event.target.value); $emit('validate-address')" />
+        :class="{ 'border-red-300 dark:border-red-500': addressError }" @input="handleInput" />
     </div>
     <div v-if="addressError" class="text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
       <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">

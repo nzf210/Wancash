@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import { computed } from 'vue'
 import { Button } from '@/components/ui/button'
 import RecipientInput from './RecipientInput.vue'
 import AmountInput from './AmountInput.vue'
@@ -19,6 +18,7 @@ const props = defineProps<{
   recipientName: string;
   equivalentValue: number;
   totalAmount: number;
+  isFormValid: boolean;
 }>()
 
 const emit = defineEmits<{
@@ -36,8 +36,7 @@ const updateRecipientAddress = (value: string) => emit('update:form', { ...props
 const updateAmount = (value: string) => emit('update:form', { ...props.form, amount: value })
 const updateMemo = (value: string) => emit('update:form', { ...props.form, memo: value })
 
-// This computed is passed from parent, but if needed, can be local
-const isFormValid = computed(() => true) // Placeholder; actual in parent
+
 </script>
 
 

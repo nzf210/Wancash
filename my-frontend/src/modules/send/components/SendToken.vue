@@ -15,12 +15,15 @@ import PreviewTransferDialog from './PreviewTransferDialog.vue'
 import LoadingDialog from './LoadingDialog.vue'
 import SuccessDialog from './SuccessDialog.vue'
 import { useConfig, useConnection } from '@wagmi/vue'
+import { useChain } from '@/app/composables/useChain'
 import { wancashAbi, wancashContractAddress } from '@/app/services/contracts'
 import { watchDebounced } from '@vueuse/core'
 import { readContract, writeContract, waitForTransactionReceipt } from '@wagmi/core'
 import { parseEther, type Hash } from 'viem'
+import { addressBookService, type Contact } from '../services/addressBook'
 
 const { isConnected, address: walletAddress, chainId } = useConnection()
+const { getChainInfo } = useChain()
 const config = useConfig()
 const contractAddress = computed(() => {
   if (!chainId.value) return null
@@ -94,9 +97,9 @@ onMounted(() => {
 })
 
 // Interfaces (kept for type safety)
-interface Contact { name: string; address: string }
 interface Transfer { id: number; recipientShort: string; amount: number; time: string; status: string; hash?: string }
 interface FormData { recipientAddress: string; amount: string; memo: string }
+interface LastTransaction { amount: string; recipientName: string; transactionHash: string; recipientAddress: string; memo: string }
 
 // State
 const router = useRouter()
@@ -123,22 +126,17 @@ const dailyLimit = ref<number>(21000000)
 const networkFee = ref<number>(0.01)
 const estimatedTime = ref<string>('~15 seconds')
 const addressBookSearch = ref<string>('')
-const addressBook = ref<Contact[]>([
-  { name: 'Budi Santoso', address: '0x742d35Cc6634C0532925a3b844Bc9e0E3F2e0a1b' },
-  { name: 'Sari Wijaya', address: '0x98dC8d7b0E3B5F5c5F5C5F5C5F5C5F5C5F5C5F5C' },
-  { name: 'PT Gold Invest', address: '0x3f5CE5FBFe3E9af3971dD833D26bA9b5C936f0bE' },
-])
+const addressBook = ref<Contact[]>([])
 const transactionHash = ref<string>('')
-const recentTransfers = ref<Transfer[]>([
-  { id: 1, recipientShort: '0x742d...0a1b', amount: 100, time: '2 hours ago', status: 'Successful' },
-  { id: 2, recipientShort: '0x98dC...5C5C', amount: 50.5, time: '1 day ago', status: 'Successful' },
-  { id: 3, recipientShort: '0x3f5C...f0bE', amount: 1000, time: '3 days ago', status: 'Successful' },
-])
+const recentTransfers = ref<Transfer[]>([])
+
+const lastTransaction = ref<LastTransaction>({ amount: '', recipientName: '', transactionHash: '', recipientAddress: '', memo: '' })
 
 // Computed
 const maxTransferable = computed(() => Math.min(walletBalance.value - networkFee.value, maxTransferPerTx.value))
 const equivalentValue = computed(() => (Number.parseFloat(form.value.amount) || 0) * tokenPrice.value)
 const totalAmount = computed(() => (Number.parseFloat(form.value.amount) || 0) + networkFee.value)
+const currentNetworkName = computed(() => getChainInfo(chainId.value || 0)?.name || 'Unknown Network')
 
 // Fungsi untuk mengirim token
 const sendToken = async (): Promise<Hash | null> => {
@@ -264,10 +262,25 @@ const saveContact = (newContactData: Contact) => {
       toast.error('Invalid wallet address format');
       return
     }
-    addressBook.value.push(newContactData)
-    localStorage.setItem('addressBook', JSON.stringify(addressBook.value))
-    toast.success('Contact added successfully')
-    showAddContact.value = false
+
+    if (!walletAddress.value) {
+      toast.error('Please connect wallet first')
+      return;
+    }
+
+    // Call backend
+    addressBookService.addContact(walletAddress.value, {
+      label: newContactData.name,
+      wallet: newContactData.address,
+      chain_id: chainId.value || 0
+    }).then((newContact) => {
+      addressBook.value.push(newContact)
+      toast.success('Contact added successfully')
+      showAddContact.value = false
+    }).catch(err => {
+      console.error(err)
+      toast.error('Failed to save contact')
+    })
   }
 }
 
@@ -289,6 +302,13 @@ const confirmTransfer = async () => {
       // Update UI dengan transaksi yang sebenarnya
       showSuccess.value = true
       transactionHash.value = hash
+      lastTransaction.value = {
+        amount: form.value.amount,
+        recipientName: recipientName.value,
+        transactionHash: hash,
+        recipientAddress: form.value.recipientAddress,
+        memo: form.value.memo
+      }
 
       const amount = Number.parseFloat(form.value.amount) || 0
 
@@ -392,8 +412,8 @@ const copyTransactionHash = async () => {
   }
 }
 
-const goToPortfolio = () => router.push('/portfolio')
-const goToHistory = () => router.push('/history')
+const goToPortfolio = () => router.push({ name: 'Portfolio' })
+const goToHistory = () => router.push({ name: 'Transaction History' })
 
 const isFormValid = computed(() => {
   console.log('Checking form validity...', form.value.recipientAddress, form.value.amount)
@@ -418,30 +438,28 @@ const loadTransactionHistory = async () => {
   if (!walletAddress.value || !contractAddress.value) return
 
   try {
-    // Di sini Anda bisa menambahkan logika untuk mengambil riwayat transaksi
-    // dari blockchain menggunakan event atau API explorer
-    console.log('Loading transaction history...')
+    const history = JSON.parse(localStorage.getItem('wancash_transactions') || '[]')
+
+    // `shortenAddress` and `Transfer` interface are available in scope
+    recentTransfers.value = history.map((tx: any) => ({
+      id: tx.id || Date.now(),
+      recipientShort: shortenAddress(tx.to),
+      amount: tx.amount,
+      time: new Intl.DateTimeFormat('id-ID', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(tx.timestamp)),
+      status: tx.status.charAt(0).toUpperCase() + tx.status.slice(1),
+      hash: tx.hash
+    }))
   } catch (error) {
     console.error('Failed to load transaction history:', error)
   }
 }
 
 onMounted(() => {
-  // Load address book dari localStorage
-  const savedAddressBook = localStorage.getItem('addressBook')
-  if (savedAddressBook) {
-    try {
-      const parsed = JSON.parse(savedAddressBook)
-      if (Array.isArray(parsed) && parsed.every(item =>
-        typeof item === 'object' && 'name' in item && 'address' in item
-      )) {
-        addressBook.value = parsed
-      }
-    } catch (error) {
-      console.error('Error parsing address book:', error)
-    }
+  if (walletAddress.value) {
+    addressBookService.getContacts(walletAddress.value, chainId.value).then(contacts => {
+      addressBook.value = contacts
+    }).catch(console.error)
   }
-
   // Load transaction history
   loadTransactionHistory()
 })
@@ -463,15 +481,15 @@ onMounted(() => {
             <TransferForm :form="form" :minimum-transfer="minimumTransfer" :max-transferable="maxTransferable"
               :network-fee="networkFee" :estimated-time="estimatedTime" :agree-terms="agreeTerms"
               :address-error="addressError" :amount-error="amountError" :recipient-name="recipientName"
-              :equivalent-value="equivalentValue" :total-amount="totalAmount" @update:form="updateForm"
-              @update:agree-terms="agreeTerms = $event" @validate-address="validateAddress"
+              :equivalent-value="equivalentValue" :total-amount="totalAmount" :is-form-valid="isFormValid"
+              @update:form="updateForm" @update:agree-terms="agreeTerms = $event" @validate-address="validateAddress"
               @validate-amount="validateAmount" @set-max-amount="setMaxAmount"
               @show-address-book="showAddressBook = true" @preview-transfer="previewTransfer" @reset-form="resetForm" />
           </div>
 
           <div class="space-y-6">
             <TransferInfoCard :minimum-transfer="minimumTransfer" :max-transfer-per-tx="maxTransferPerTx"
-              :daily-limit="dailyLimit" />
+              :daily-limit="dailyLimit" :network="currentNetworkName" />
             <RecentTransfers :recent-transfers="recentTransfers" @go-to-history="goToHistory" />
             <QuickActions @scan-qr="scanQR" @show-address-book="showAddressBook = true"
               @copy-own-address="copyOwnAddress" />
@@ -491,7 +509,8 @@ onMounted(() => {
 
     <LoadingDialog :open="isLoading" />
 
-    <SuccessDialog :open="showSuccess" :form="form" :recipient-name="recipientName" :transaction-hash="transactionHash"
-      @update:open="showSuccess = $event" @copy-transaction-hash="copyTransactionHash" @go-to-history="goToHistory" />
+    <SuccessDialog :open="showSuccess" :form="lastTransaction" :recipient-name="lastTransaction.recipientName"
+      :transaction-hash="lastTransaction.transactionHash" @update:open="showSuccess = $event"
+      @copy-transaction-hash="copyTransactionHash" @go-to-history="goToHistory" />
   </div>
 </template>
