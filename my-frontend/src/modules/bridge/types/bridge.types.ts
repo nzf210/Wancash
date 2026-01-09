@@ -6,6 +6,8 @@ export interface Chain {
   fee: number;
   network: string;
   icon?: string; // Optional karena mungkin tidak selalu ada
+  eid: number; // LayerZero Endpoint ID
+  isTestnet?: boolean;
 }
 
 export interface Token {
