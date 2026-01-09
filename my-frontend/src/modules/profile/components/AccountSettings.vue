@@ -1,9 +1,12 @@
 <template>
-  <div class="space-y-6"> <!-- Language -->
+  <div class="space-y-6">
+    <!-- Language & Region -->
     <div class="space-y-4">
       <h3 class="text-lg font-semibold text-foreground">Language & Region Preferences</h3>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div> <Label for="language" class="text-foreground">Language</Label> <Select v-model="localSettings.language">
+        <div>
+          <Label for="language" class="text-foreground">Language</Label>
+          <Select v-model="localSettings.language">
             <SelectTrigger class="mt-1 bg-background border-input text-foreground">
               <SelectValue placeholder="Select language" />
             </SelectTrigger>
@@ -11,7 +14,8 @@
               <SelectItem value="id">Bahasa Indonesia</SelectItem>
               <SelectItem value="en">English</SelectItem>
             </SelectContent>
-          </Select> </div>
+          </Select>
+        </div>
         <div>
           <Label for="timezone" class="text-foreground">Timezone</Label>
           <Select v-model="localSettings.timezone">
@@ -19,9 +23,10 @@
               <SelectValue placeholder="Select timezone" />
             </SelectTrigger>
             <SelectContent class="bg-popover border-border">
+              <SelectItem value="UTC">UTC</SelectItem>
               <SelectItem value="Asia/Jakarta">Jakarta (GMT+7)</SelectItem>
-              <SelectItem value="Asia/Makassar">Makassar (GMT+8)</SelectItem>
-              <SelectItem value="Asia/Jayapura">Jayapura (GMT+9)</SelectItem>
+              <SelectItem value="Asia/Singapore">Singapore (GMT+8)</SelectItem>
+              <SelectItem value="America/New_York">New York (EST)</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -41,7 +46,6 @@
               : 'border-border hover:border-primary/50'
           ]">
             <div class="flex h-full">
-              <!-- Theme preview -->
               <div class="w-1/3 border-r" :class="themeOption.sidebar"></div>
               <div class="w-2/3 p-1">
                 <div class="h-2 w-full mb-1 rounded" :class="themeOption.content"></div>
@@ -64,8 +68,8 @@
             <SelectValue placeholder="Select currency" />
           </SelectTrigger>
           <SelectContent class="bg-popover border-border">
-            <SelectItem value="IDR">Rupiah (IDR)</SelectItem>
             <SelectItem value="USD">US Dollar (USD)</SelectItem>
+            <SelectItem value="IDR">Rupiah (IDR)</SelectItem>
             <SelectItem value="EUR">Euro (EUR)</SelectItem>
           </SelectContent>
         </Select>
@@ -74,11 +78,12 @@
 
     <!-- Action Buttons -->
     <div class="flex justify-end space-x-3 pt-4 border-t border-border">
-      <Button variant="outline" @click="resetSettings"
+      <Button variant="outline" @click="resetSettings" :disabled="loading"
         class="border-input hover:bg-accent hover:text-accent-foreground">
         Reset
       </Button>
-      <Button @click="saveSettings" class="bg-primary text-primary-foreground hover:bg-primary/90">
+      <Button @click="saveSettings" :disabled="loading" class="bg-primary text-primary-foreground hover:bg-primary/90">
+        <span v-if="loading" class="mr-2 animate-spin">⏳</span>
         Save Settings
       </Button>
     </div>
@@ -96,53 +101,57 @@ import {
 } from '@/components/ui/select/'
 import Label from '@/components/ui/label/Label.vue'
 import { Button } from '@/components/ui/button'
+import type { UserSettings } from '../services/profileApi'
 
-const props = defineProps({
-  settings: {
-    type: Object,
-    required: true
-  }
+const props = defineProps<{
+  settings: UserSettings | null
+  loading?: boolean
+}>()
+
+const emit = defineEmits<{
+  save: [data: Partial<UserSettings>]
+}>()
+
+// Local state
+const localSettings = ref({
+  language: 'en' as 'en' | 'id',
+  theme: 'system' as 'light' | 'dark' | 'system',
+  timezone: 'UTC',
+  currency: 'USD' as 'USD' | 'IDR' | 'EUR'
 })
 
-const emit = defineEmits(['update:settings'])
-
-// Data lokal
-const localSettings = ref({ ...props.settings })
-
-// Opsi tema
+// Theme options
 const themes = [
-  {
-    value: 'light',
-    label: 'Terang',
-    sidebar: 'bg-gray-100',
-    content: 'bg-gray-200'
-  },
-  {
-    value: 'dark',
-    label: 'Gelap',
-    sidebar: 'bg-gray-800',
-    content: 'bg-gray-700'
-  },
-  {
-    value: 'system',
-    label: 'Sistem',
-    sidebar: 'bg-gradient-to-r from-gray-100 to-gray-800',
-    content: 'bg-gradient-to-r from-gray-200 to-gray-700'
-  }
+  { value: 'light' as const, label: 'Light', sidebar: 'bg-gray-100', content: 'bg-gray-200' },
+  { value: 'dark' as const, label: 'Dark', sidebar: 'bg-gray-800', content: 'bg-gray-700' },
+  { value: 'system' as const, label: 'System', sidebar: 'bg-gradient-to-r from-gray-100 to-gray-800', content: 'bg-gradient-to-r from-gray-200 to-gray-700' }
 ]
 
 // Watch for prop changes
 watch(() => props.settings, (newVal) => {
-  localSettings.value = { ...newVal }
-}, { deep: true })
+  if (newVal) {
+    localSettings.value = {
+      language: newVal.language || 'en',
+      theme: newVal.theme || 'system',
+      timezone: newVal.timezone || 'UTC',
+      currency: newVal.currency || 'USD'
+    }
+  }
+}, { immediate: true, deep: true })
 
 // Methods
 const saveSettings = () => {
-  emit('update:settings', localSettings.value)
-  alert('Pengaturan akun berhasil disimpan!')
+  emit('save', localSettings.value)
 }
 
 const resetSettings = () => {
-  localSettings.value = { ...props.settings }
+  if (props.settings) {
+    localSettings.value = {
+      language: props.settings.language || 'en',
+      theme: props.settings.theme || 'system',
+      timezone: props.settings.timezone || 'UTC',
+      currency: props.settings.currency || 'USD'
+    }
+  }
 }
 </script>

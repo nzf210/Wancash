@@ -1,11 +1,25 @@
 <template>
   <div class="min-h-screen bg-gradient-to-b from-background to-card/50 p-4 md:p-6 transition-colors">
-    <div class="max-w-6xl mx-auto"> <!-- Header -->
+    <div class="max-w-6xl mx-auto">
+      <!-- Header -->
       <div class="mb-8">
         <h1 class="text-3xl font-bold text-foreground">Profile & Settings</h1>
         <p class="text-muted-foreground mt-2">Manage your profile information and account preferences</p>
       </div>
-      <div class="flex flex-col lg:flex-row gap-6">
+
+      <!-- Loading State -->
+      <div v-if="loading" class="flex items-center justify-center py-20">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+
+      <!-- Error State -->
+      <div v-else-if="error" class="text-center py-20">
+        <p class="text-destructive mb-4">{{ error }}</p>
+        <Button @click="loadProfile">Try Again</Button>
+      </div>
+
+      <!-- Content -->
+      <div v-else class="flex flex-col lg:flex-row gap-6">
         <!-- Navigation Sidebar -->
         <div class="lg:w-1/4">
           <Card class="sticky top-6 border-border bg-card shadow-soft">
@@ -39,7 +53,7 @@
               </CardDescription>
             </CardHeader>
             <CardContent class="pt-2">
-              <ProfileForm :user="user" @update:user="handleUserUpdate" />
+              <ProfileForm :profile="profileStore.profile" :loading="profileStore.loading" @save="handleProfileSave" />
             </CardContent>
           </Card>
 
@@ -55,7 +69,8 @@
               </CardDescription>
             </CardHeader>
             <CardContent class="pt-6">
-              <AccountSettings :settings="user.settings" @update:settings="handleSettingsUpdate" />
+              <AccountSettingsComponent :settings="profileStore.settings" :loading="profileStore.loading"
+                @save="handleSettingsSave" />
             </CardContent>
           </Card>
 
@@ -71,8 +86,8 @@
               </CardDescription>
             </CardHeader>
             <CardContent class="pt-6">
-              <NotificationSettings :notifications="user.notifications"
-                @update:notifications="handleNotificationsUpdate" />
+              <NotificationSettingsComponent :notifications="profileStore.notifications" :loading="profileStore.loading"
+                @save="handleNotificationsSave" />
             </CardContent>
           </Card>
 
@@ -88,7 +103,8 @@
               </CardDescription>
             </CardHeader>
             <CardContent class="pt-6">
-              <PrivacySettings :privacy="user.privacy" @update:privacy="handlePrivacyUpdate" />
+              <PrivacySettingsComponent :privacy="profileStore.privacy" :loading="profileStore.loading"
+                @save="handlePrivacySave" @delete-account="handleDeleteAccount" />
             </CardContent>
           </Card>
         </div>
@@ -98,7 +114,8 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   Card,
   CardContent,
@@ -113,85 +130,88 @@ import {
   Bell,
   Shield,
 } from 'lucide-vue-next'
+import { useAuth } from '@/app/composables/useAuth'
+import { useProfileStore } from '../store/profileStore'
+import type { Profile, UserSettings, NotificationSettings as NotificationSettingsType, PrivacySettings as PrivacySettingsType } from '../services/profileApi'
 
-// Komponen anak
+// Components
 import ProfileForm from '../components/ProfileForm.vue'
-import AccountSettings from '../components/AccountSettings.vue'
-import NotificationSettings from '../components/NotificationSettings.vue'
-import PrivacySettings from '../components/PrivacySettings.vue'
+import AccountSettingsComponent from '../components/AccountSettings.vue'
+import NotificationSettingsComponent from '../components/NotificationSettings.vue'
+import PrivacySettingsComponent from '../components/PrivacySettings.vue'
+
+// Composables & Store
+const router = useRouter()
+const { walletAddress, isAuthenticated, logout } = useAuth()
+const profileStore = useProfileStore()
 
 // State
 const activeTab = ref('profile')
 
-// Data pengguna
-const user = reactive({
-  name: 'Ahmad Fauzi',
-  email: 'ahmad.fauzi@example.com',
-  username: 'ahmadfauzi',
-  bio: 'Frontend Developer dengan spesialisasi Vue.js dan Tailwind CSS',
-  avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ahmad',
-  role: 'Premium User',
-  joinDate: '15 Maret 2023',
+// Computed
+const loading = computed(() => profileStore.loading)
+const error = computed(() => profileStore.error)
 
-  // Pengaturan akun
-  settings: {
-    language: 'id',
-    theme: 'light',
-    timezone: 'Asia/Jakarta',
-    currency: 'IDR'
-  },
-
-  // Pengaturan notifikasi
-  notifications: {
-    email: {
-      promotions: true,
-      security: true,
-      newsletter: false
-    },
-    push: {
-      mentions: true,
-      comments: true,
-      updates: false
-    }
-  },
-
-  // Pengaturan privasi
-  privacy: {
-    profileVisibility: 'public',
-    showOnlineStatus: true,
-    allowTagging: true,
-    searchEngineIndex: false
-  }
-})
-
-// Tab navigasi
+// Tab navigation
 const tabs = [
-  { id: 'profile', label: 'Profil', icon: User },
-  { id: 'account', label: 'Akun', icon: Settings },
-  { id: 'notifications', label: 'Notifikasi', icon: Bell },
-  { id: 'privacy', label: 'Privasi', icon: Shield }
+  { id: 'profile', label: 'Profile', icon: User },
+  { id: 'account', label: 'Account', icon: Settings },
+  { id: 'notifications', label: 'Notifications', icon: Bell },
+  { id: 'privacy', label: 'Privacy', icon: Shield }
 ]
 
+// Load profile on mount
+onMounted(async () => {
+  await loadProfile()
+})
+
+async function loadProfile() {
+  if (walletAddress.value) {
+    await profileStore.fetchProfile(walletAddress.value)
+  }
+}
+
 // Event handlers
-const handleUserUpdate = (updatedUser: Partial<unknown>) => {
-  Object.assign(user, updatedUser)
+async function handleProfileSave(data: Partial<Profile>) {
+  if (walletAddress.value) {
+    await profileStore.updateProfile(walletAddress.value, data)
+  }
 }
 
-const handleSettingsUpdate = (settings: Partial<unknown>) => {
-  user.settings = { ...user.settings, ...settings }
+async function handleSettingsSave(data: Partial<UserSettings>) {
+  if (walletAddress.value) {
+    await profileStore.updateSettings(walletAddress.value, data)
+  }
 }
 
-const handleNotificationsUpdate = (notifications: Partial<unknown>) => {
-  user.notifications = { ...user.notifications, ...notifications }
+async function handleNotificationsSave(data: Partial<NotificationSettingsType>) {
+  if (walletAddress.value) {
+    await profileStore.updateNotifications(walletAddress.value, data)
+  }
 }
 
-const handlePrivacyUpdate = (privacy: Partial<unknown>) => {
-  user.privacy = { ...user.privacy, ...privacy }
+async function handlePrivacySave(data: Partial<PrivacySettingsType>) {
+  if (walletAddress.value) {
+    await profileStore.updatePrivacy(walletAddress.value, data)
+  }
+}
+
+async function handleDeleteAccount() {
+  if (!walletAddress.value) return
+
+  const confirmed = confirm('Are you sure you want to delete your account? This action cannot be undone.')
+  if (!confirmed) return
+
+  const success = await profileStore.deleteAccount(walletAddress.value)
+  if (success) {
+    await logout()
+    router.push('/')
+  }
 }
 </script>
 
 <style scoped>
-/* Menggunakan custom properties dari theme system */
+/* Using custom properties from theme system */
 :root {
   --shadow-soft: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
