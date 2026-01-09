@@ -11,6 +11,31 @@
                     </div>
                 </div>
 
+                <!-- Source Address -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Source
+                        Address</label>
+                    <div class="p-3 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <div
+                                    class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
+                                    <PersonIcon class="w-4 h-4 text-white" />
+                                </div>
+                                <div>
+                                    <div class="text-sm font-medium text-gray-900 dark:text-white">Your Wallet</div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-400 font-mono">{{
+                                        shortenAddress(walletAddress) }}</div>
+                                </div>
+                            </div>
+                            <button @click="copyAddress(walletAddress)"
+                                class="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                <CopyIcon class="w-4 h-4 text-gray-500" />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Chain Selection -->
                 <div ref="fromChainDropdownRef" class="relative group">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Network</label>
@@ -124,6 +149,28 @@
                     </div>
                 </div>
 
+                <!-- Destination Address -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Destination
+                        Address</label>
+                    <div
+                        class="p-3 bg-gray-50 dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 focus-within:border-green-500">
+                        <div class="flex items-center space-x-2">
+                            <input v-model="destinationAddress" type="text"
+                                placeholder="0x... or select from address book"
+                                class="flex-1 bg-transparent border-none focus:ring-0 text-sm font-mono text-gray-900 dark:text-white placeholder-gray-400 outline-none" />
+                            <button @click="showAddressBook = true"
+                                class="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                                title="Address Book">
+                                <IdCardIcon class="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                            </button>
+                        </div>
+                        <div v-if="destinationName" class="mt-2 text-xs text-green-600 dark:text-green-400">
+                            ✓ {{ destinationName }}
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Chain Selection -->
                 <div ref="toChainDropdownRef" class="relative group">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Destination
@@ -141,7 +188,7 @@
                                         'SelectChain' }}
                                     </div>
                                     <div class="text-sm text-gray-500 dark:text-gray-400">{{ toChain?.type || 'Network'
-                                    }}</div>
+                                        }}</div>
                                 </div>
                             </div>
                             <ChevronDownIcon class="w-5 h-5 text-gray-400 transition-transform duration-300"
@@ -216,7 +263,7 @@
                         </div>
                         <span class="font-medium text-gray-900 dark:text-white">{{ bridgeFee }} {{ fromToken?.symbol ||
                             ''
-                            }}</span>
+                        }}</span>
                     </div>
                     <div class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
                         <div class="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
@@ -232,7 +279,7 @@
                         </div>
                         <span class="font-medium text-gray-900 dark:text-white">{{ formatNumber(21000) }} {{
                             fromToken?.symbol || ''
-                            }}</span>
+                        }}</span>
                     </div>
                 </div>
             </div>
@@ -260,20 +307,28 @@
                     You will receive approximately
                     <span class="font-semibold text-gray-900 dark:text-white">{{ formatNumber(estimatedAmount) }} {{
                         toToken?.symbol
-                        }}</span>
+                    }}</span>
                     on {{ toChain?.name }}
                 </p>
             </div>
         </div>
     </div>
+
+    <!-- Address Book Dialog -->
+    <AddressBookDialog :open="showAddressBook" :address-book="addressBook" :address-book-search="addressBookSearch"
+        @update:open="showAddressBook = $event" @update:address-book-search="addressBookSearch = $event"
+        @select-contact="selectContact" />
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { onClickOutside } from '@vueuse/core'
 import { storeToRefs } from 'pinia'
+import { useConnection } from '@wagmi/vue'
+import { toast } from 'vue-sonner'
 import { useBridgeStore } from '@/modules/bridge/store/bridgeStore'
 import { useBridgeBalance } from '@/modules/bridge/composables/useBridgeBalance'
+import { addressBookService, type Contact } from '@/modules/send/services/addressBook'
 import type { Chain } from '@/modules/bridge/types/bridge.types'
 
 import {
@@ -282,10 +337,17 @@ import {
     TimerIcon,
     MinusCircledIcon,
     LoopIcon,
-    ArrowRightIcon
+    ArrowRightIcon,
+    PersonIcon,
+    CopyIcon,
+    IdCardIcon
 } from '@radix-icons/vue'
 import ChainIcon from './ChainIcon.vue'
 import TokenIcon from './TokenIcon.vue'
+import AddressBookDialog from '@/modules/send/components/AddressBookDialog.vue'
+
+// Wallet connection
+const { address: walletAddress, chainId } = useConnection()
 
 // Store
 const bridgeStore = useBridgeStore()
@@ -322,6 +384,63 @@ const showFromChains = ref(false)
 const showToChains = ref(false)
 const fromChainDropdownRef = ref<HTMLElement | null>(null)
 const toChainDropdownRef = ref<HTMLElement | null>(null)
+
+// Address book state
+const showAddressBook = ref(false)
+const addressBook = ref<Contact[]>([])
+const addressBookSearch = ref('')
+const destinationAddress = ref('')
+const destinationName = ref('')
+
+// Helper functions
+const shortenAddress = (address: string | undefined) => {
+    if (!address) return ''
+    return `${address.slice(0, 6)}...${address.slice(-4)}`
+}
+
+const copyAddress = async (address: string | undefined) => {
+    if (!address) return
+    try {
+        await navigator.clipboard.writeText(address)
+        toast.success('Address copied to clipboard')
+    } catch (error) {
+        console.error('Copy failed:', error)
+        toast.error('Failed to copy address')
+    }
+}
+
+const selectContact = (contact: Contact) => {
+    destinationAddress.value = contact.address
+    destinationName.value = contact.name
+    showAddressBook.value = false
+}
+
+// Watch destination address for matching contacts
+watch(destinationAddress, (newAddr) => {
+    if (!newAddr) {
+        destinationName.value = ''
+        return
+    }
+    const contact = addressBook.value.find(c => c.address.toLowerCase() === newAddr.toLowerCase())
+    destinationName.value = contact?.name || ''
+})
+
+// Load address book on mount and set default destination to own address
+onMounted(async () => {
+    // Default destination to own wallet address
+    if (walletAddress.value && !destinationAddress.value) {
+        destinationAddress.value = walletAddress.value
+    }
+
+    if (walletAddress.value) {
+        try {
+            const contacts = await addressBookService.getContacts(walletAddress.value, chainId.value)
+            addressBook.value = contacts
+        } catch (error) {
+            console.error('Failed to load address book:', error)
+        }
+    }
+})
 
 // Two-way binding helper for amount
 const amountModel = computed({
