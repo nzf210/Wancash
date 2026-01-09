@@ -28,6 +28,7 @@
     "c:env": "bun run cloude-flare-wancash/scripts/generate-env-only.ts"
   },
   "dependencies": {
+    "@layerzerolabs/lz-v2-utilities": "^3.0.152",
     "@pancakeswap/sdk": "^5.8.15",
     "@pancakeswap/swap-sdk-core": "^1.4.0",
     "@radix-icons/vue": "^1.0.0",

@@ -2,6 +2,7 @@ export interface Chain {
   id: number;
   name: string;
   symbol: string;
+  currency: string;
   type: string;
   fee: number;
   network: string;

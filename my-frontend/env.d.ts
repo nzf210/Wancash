@@ -1,4 +1,11 @@
+interface ImportMetaEnv {
+  readonly VITE_NODE_ENV: string;
+  readonly VITE_API_URL?: string;
+  // Add more env variables as needed
+}
+
 interface ImportMeta {
+  readonly env: ImportMetaEnv;
   readonly glob: <T = Record<string, unknown>>(
     globPattern: string,
     options?: {

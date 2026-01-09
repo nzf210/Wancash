@@ -118,8 +118,9 @@
                 <div class="flex items-center justify-between">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">To</h3>
                     <div class="text-sm text-gray-500 dark:text-gray-400">
-                        Estimated: <span class="font-semibold text-gray-900 dark:text-white">{{ estimatedAmount }} {{
-                            toToken?.symbol }}</span>
+                        Estimated: <span class="font-semibold text-gray-900 dark:text-white">{{
+                            formatNumber(estimatedAmount) }} {{
+                                toToken?.symbol }}</span>
                     </div>
                 </div>
 
@@ -199,7 +200,7 @@
                         </div>
                         <div class="text-center">
                             <div class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                                {{ estimatedAmount || '0.00' }}
+                                {{ formatNumber(estimatedAmount) || '0.00' }}
                             </div>
                             <div class="text-gray-500 dark:text-gray-400">{{ toToken?.symbol || '' }}</div>
                         </div>
@@ -229,7 +230,8 @@
                             <MinusCircledIcon class="w-4 h-4" />
                             <span>Minimum Amount</span>
                         </div>
-                        <span class="font-medium text-gray-900 dark:text-white">10 {{ fromToken?.symbol || '' }}</span>
+                        <span class="font-medium text-gray-900 dark:text-white">21000 {{ fromToken?.symbol || ''
+                            }}</span>
                     </div>
                 </div>
             </div>
@@ -255,7 +257,8 @@
             <div v-if="canBridge" class="mt-4 text-center">
                 <p class="text-sm text-gray-500 dark:text-gray-400">
                     You will receive approximately
-                    <span class="font-semibold text-gray-900 dark:text-white">{{ estimatedAmount }} {{ toToken?.symbol
+                    <span class="font-semibold text-gray-900 dark:text-white">{{ formatNumber(estimatedAmount) }} {{
+                        toToken?.symbol
                     }}</span>
                     on {{ toChain?.name }}
                 </p>
@@ -265,11 +268,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { onClickOutside } from '@vueuse/core'
 import { storeToRefs } from 'pinia'
 import { useBridgeStore } from '@/modules/bridge/store/bridgeStore'
-import { useAccount } from '@wagmi/vue'
+import { useBridgeBalance } from '@/modules/bridge/composables/useBridgeBalance'
 import type { Chain } from '@/modules/bridge/types/bridge.types'
 
 import {
@@ -307,18 +310,11 @@ const filteredDestChains = computed(() => bridgeStore.filteredDestChains)
 // Actions (direct destructuring from store)
 const { setFromChain, setToChain, setFromToken, setAmount, initiateBridge: bridgeAction } = bridgeStore
 
-
-// Composables
-const { address } = useAccount()
-
-// Watchers for balance update
-watch([() => fromChain.value, () => fromToken.value, () => address.value], () => {
-    bridgeStore.updateBalance()
-}, { immediate: true })
-
-const formattedBalance = computed(() => {
-    return bridgeStore.userBalance ? Number(bridgeStore.userBalance).toFixed(4) : '0.0000'
-})
+// Balance composable with reactive updates
+const { walletBalance, formattedBalance, balanceLoading, balanceError, refreshBalance } = useBridgeBalance(
+    () => fromChain.value?.id,
+    () => fromToken.value
+)
 
 // Local state for UI
 const showFromChains = ref(false)
@@ -368,8 +364,8 @@ const onFromTokenChange = (e: Event) => {
 }
 
 const setAmountPercentage = (percent: number) => {
-    const bal = parseFloat(bridgeStore.userBalance)
-    if (!isNaN(bal)) {
+    const bal = walletBalance.value
+    if (bal && !Number.isNaN(bal)) {
         amountModel.value = ((bal * percent) / 100).toFixed(4)
     }
 }
@@ -382,5 +378,9 @@ const timeEstimate = computed(() => {
 
 const initiateBridge = async () => {
     await bridgeAction()
+}
+const formatNumber = (num: string | number) => {
+    if (!num) return '0.00'
+    return new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 4 }).format(Number(num))
 }
 </script>

@@ -19,7 +19,7 @@ import { useChain } from '@/app/composables/useChain'
 import { wancashAbi, wancashContractAddress } from '@/app/services/contracts'
 import { watchDebounced } from '@vueuse/core'
 import { readContract, writeContract, waitForTransactionReceipt } from '@wagmi/core'
-import { parseEther, type Hash } from 'viem'
+import { parseEther, formatUnits, type Hash } from 'viem'
 import { addressBookService, type Contact } from '../services/addressBook'
 
 const { isConnected, address: walletAddress, chainId } = useConnection()
