@@ -576,6 +576,19 @@ export const useAuth = () => {
     return false
   }
 
+  // Define checkAuthWithDebounce BEFORE the watch statements that use it
+  const checkAuthWithDebounce = debounce(
+    async (retries: number = 1): Promise<{ isExpired: boolean; needsSign: boolean }> => {
+      try {
+        return await checkAuth(retries);
+      } catch (error) {
+        console.error('Debounced checkAuth failed:', error);
+        return { isExpired: false, needsSign: false };
+      }
+    },
+    1000 // Delay in milliseconds
+  );
+
   watch(chainId, () => {
     recentChainChange.value = true
     setTimeout(() => {
@@ -722,18 +735,6 @@ export const useAuth = () => {
     return null
   }
 
-
-  const checkAuthWithDebounce = debounce(
-    async (retries: number = 1): Promise<{ isExpired: boolean; needsSign: boolean }> => {
-      try {
-        return await checkAuth(retries);
-      } catch (error) {
-        console.error('Debounced checkAuth failed:', error);
-        return { isExpired: false, needsSign: false };
-      }
-    },
-    1000 // Delay in milliseconds
-  );
 
   return {
     isAuthenticated,

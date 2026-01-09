@@ -2,10 +2,11 @@
     <div class="mt-8">
         <div class="flex items-center justify-between mb-4">
             <h3 class="text-xl font-bold text-gray-900 dark:text-white">Recent Bridges</h3>
-            <button class="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center space-x-1">
+            <router-link to="/bridge/history"
+                class="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center space-x-1">
                 <span>View All</span>
                 <ChevronRightIcon class="w-4 h-4" />
-            </button>
+            </router-link>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div v-for="bridge in recentBridges" :key="bridge.id"
