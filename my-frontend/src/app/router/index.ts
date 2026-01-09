@@ -7,9 +7,8 @@ import {
   type RouteRecordRaw,
   type NavigationGuardNext,
 } from 'vue-router'
-import { useAuth } from "@/app/composables/useAuth"
+import { useAuth } from'@/app/composables/useAuth'
 
-// Workaround for TypeScript import.meta.glob issue
 const modules = import.meta.glob('@/modules/**/index.ts', { eager: true });
 const routes: RouteRecordRaw[] = [];
 
@@ -33,26 +32,27 @@ const authGuard = async (
   next: NavigationGuardNext
 ): Promise<void> => {
   const requiresAuth = to.matched.some((record) => record.meta?.requiresAuth as boolean | undefined);
-  const { checkAuth } = useAuth()
 
-    if (to.meta.requiresAuth) {
+  if (to.meta.requiresAuth) {
     sessionStorage.setItem('intended_route', to.fullPath)
   }
 
-  const result = await checkAuth()
-
-  if (!requiresAuth || !result.needsSign) {
-    next();
-    return;
-  }
+  if (!requiresAuth) return next();
 
   try {
-    const { useAuth } = await import('@/app/composables/useAuth');
-    const { checkAuth, isAuthenticated, user } = useAuth();
+    /**
+     * const { useAuth } = await import('@/app/composables/useAuth');
+     *
+     */
+    const { authStabilizing, isAuthenticated } = useAuth();
 
-    await checkAuth();
+    console.log('🔑 [AuthGuard] Authenticated:', isAuthenticated.value, authStabilizing.value);
 
-    if (user.value && isAuthenticated.value && result.needsSign) {
+  if (authStabilizing.value) {
+    return
+  }
+
+    if (isAuthenticated.value && !authStabilizing.value) {
       next();
     } else {
       next('/');

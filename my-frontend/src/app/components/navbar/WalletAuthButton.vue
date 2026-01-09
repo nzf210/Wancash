@@ -83,6 +83,23 @@ watch([isConnected, walletAddress], async ([connected, address]) => {
 })
 
 // Lifecycle hooks
+const handleRedirect = async () => {
+  if (isAuthenticated.value) {
+    const route = sessionStorage.getItem('intended_route')
+    console.log('intended_route', route)
+    if (route) {
+      sessionStorage.removeItem('intended_route')
+      router.replace(route)
+    }
+  }
+}
+
+watch(isAuthenticated, (authenticated) => {
+  if (authenticated) {
+    handleRedirect()
+  }
+})
+
 onMounted(async () => {
   if (globalThis.window?.ethereum) {
     const ethereum = globalThis.window.ethereum as EIP1193Provider
@@ -110,16 +127,10 @@ onMounted(async () => {
     console.log('Ethereum is not available')
   }
 
+  // Initial check
   if (isConnected.value && walletAddress.value) {
-    const { isExpired, needsSign } = await checkAuth()
-    if (!isExpired && !needsSign) {
-      const route = sessionStorage.getItem('intended_route')
-
-      if (route) {
-        sessionStorage.removeItem('intended_route')
-        router.replace(route)
-      }
-    }
+    await checkAuth();
+    await handleRedirect();
   }
 })
 
@@ -178,7 +189,7 @@ const disconnectWallet = async () => {
     </div>
 
     <!-- State 2: Connected but Not Authenticated -->
-    <button v-else-if="isConnected && !isAuthenticated && authStabilizing" @click="handleAuth" :disabled="authLoading"
+    <button v-else-if="isConnected && !isAuthenticated" @click="handleAuth" :disabled="authLoading"
       class="connect-button">
       <span v-if="authLoading" class="spinner"></span>
       <span v-else class="wallet-info">
@@ -190,7 +201,7 @@ const disconnectWallet = async () => {
     </button>
 
     <!-- State 3: Connected and Authenticated -->
-    <div v-else-if="isConnected && isAuthenticated || !authStabilizing" class="authenticated-state">
+    <div v-else-if="isConnected && isAuthenticated" class="authenticated-state">
       <ProfileIcon v-if="!isMobile" :auth-stores="profileAuthStores" />
     </div>
   </div>

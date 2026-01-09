@@ -16,11 +16,14 @@ const nonceSchema = z.object({
   chainId: z.coerce.number().int().positive()
 })
 
-type RefreshResult =
-  | { ok: true }
-  | { ok: false; reason: 'NO_SESSION' | 'EXPIRED' | 'INVALID' | 'ERROR' }
+type RefreshResult = { reason: 'NO_SESSION' | 'EXPIRED' | 'INVALID' | 'ERROR' }
 
-let pendingRefresh: Promise<RefreshResult> | null = null;
+interface refreshResult {
+  ok: boolean,
+  reason: string | RefreshResult
+}
+
+let pendingRefresh: Promise<refreshResult> | null = null;
 interface BackendMessage {
   domain: {
     name: string;
@@ -48,36 +51,36 @@ interface NonceResponse {
   expiresAt: string;
 }
 
+const walletAddress = ref<string>('')
+const chainId = ref<number | undefined>(0)
+const isConnected = ref(false)
+const recentChainChange = ref(false)
+const activeConnector = ref<unknown>(null)
+const authStabilizing = ref(false)
+
+const isAuthenticated = ref(false)
+const user = ref<{
+  id?: string;
+  name?: string;
+  email?: string;
+  picture?: string;
+  avatar?: string;
+}>({
+  id: '',
+  name: '',
+  email: '',
+  picture: ''
+})
+
+const loading = ref(false)
+
+// const lastToastTimeSign = ref(0)
+const hasSessionInLocalStorage = ref(false)
 interface MyProvider {
   request: (params: unknown) => Promise<string>;
 }
 
 export const useAuth = () => {
-  const walletAddress = ref<string>('')
-  const chainId = ref<number | undefined>(0)
-  const isConnected = ref(false)
-  const recentChainChange = ref(false)
-  const activeConnector = ref<unknown>(null)
-  const authStabilizing = ref(false)
-
-  const isAuthenticated = ref(false)
-  const user = ref<{
-    id?: string;
-    name?: string;
-    email?: string;
-    picture?: string;
-    avatar?: string;
-  }>({
-    id: '',
-    name: '',
-    email: '',
-    picture: ''
-  })
-
-  const loading = ref(false)
-
-  // const lastToastTimeSign = ref(0)
-  const hasSessionInLocalStorage = ref(false)
 
   watchAccount(wagmiAdapter.wagmiConfig, {
     onChange: (account) => {
@@ -129,7 +132,8 @@ export const useAuth = () => {
         method: 'GET',
         credentials: 'include',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'X-Wallet-Address': walletAddress.value,
         }
       }
     )
@@ -193,7 +197,7 @@ export const useAuth = () => {
     }
   }
 
-  const signMessageWithProvider = async (
+const signMessageWithProvider = async (
     address: string,
     message: BackendMessage
   ): Promise<string> => {
@@ -240,9 +244,9 @@ export const useAuth = () => {
       console.error('Provider signing error:', error)
       throw new Error(`Provider signing failed.`)
     }
-  }
+}
 
-  const signMessage = async (address: string, message: BackendMessage): Promise<string> => {
+const signMessage = async (address: string, message: BackendMessage): Promise<string> => {
     try {
       return await signMessageWithWagmi(address, message)
     } catch (wagmiError) {
@@ -260,9 +264,9 @@ export const useAuth = () => {
         throw new Error(`Signing failed.`)
       }
     }
-  }
+}
 
-  const login = async (address: string, chain_id: number): Promise<unknown> => {
+const login = async (address: string, chain_id: number): Promise<unknown> => {
     if (!address || !chain_id) {
       throw new Error('Wallet not connected')
     }
@@ -284,7 +288,7 @@ export const useAuth = () => {
 
       const verifyResponse = await fetch('/api/auth/verify', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' , 'X-Wallet-Address': walletAddress.value },
         credentials: 'include',
         body: JSON.stringify({
           address: address,
@@ -301,6 +305,7 @@ export const useAuth = () => {
 
       const data = await verifyResponse.json()
 
+      authStabilizing.value = false
       isAuthenticated.value = true
       user.value = data.user
       hasSessionInLocalStorage.value = true
@@ -339,7 +344,7 @@ export const useAuth = () => {
     } finally {
       loading.value = false
     }
-  }
+}
 
 const autoLoginOnConnect = debounce(async () => {
   const account = getCurrentAccount();
@@ -365,13 +370,14 @@ const autoLoginOnConnect = debounce(async () => {
   }
 }, 1500);
 
-  const logout = async (): Promise<void> => {
+const logout = async (): Promise<void> => {
     try {
       const response = await fetch('/api/auth/logout', {
         method: 'POST',
         credentials: 'include',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'X-Wallet-Address': walletAddress.value
         }
       })
 
@@ -384,6 +390,7 @@ const autoLoginOnConnect = debounce(async () => {
         console.warn('Backend logout failed:', error)
     } finally {
       isAuthenticated.value = false
+      authStabilizing.value = true
       user.value = {}
       hasSessionInLocalStorage.value = false
       localStorage.removeItem('auth_state')
@@ -415,21 +422,12 @@ const performCheckAuth = async (retries: number) => {
   try {
     const res = await fetch('/api/me', {
       credentials: 'include',
-      headers: { 'Cache-Control': 'no-cache' },
+      headers: { 'Cache-Control': 'no-cache' , 'X-Wallet-Address': walletAddress.value },
       signal: AbortSignal.timeout(5000)
     });
 
     if (res.ok) {
-      const data = await res.json();
       isAuthenticated.value = true;
-      user.value = data.user;
-
-      localStorage.setItem('auth_state', JSON.stringify({
-        authenticated: true,
-        user: data.user,
-        timestamp: Date.now()
-      }));
-
       return { isExpired: false, needsSign: false };
     }
 
@@ -437,10 +435,10 @@ const performCheckAuth = async (retries: number) => {
       return await handleUnauthorized(retries);
     }
 
-    return { isExpired: false, needsSign: false };
+    return { isExpired: true, needsSign: true };
   } catch (err) {
     console.error('❌ [performCheckAuth]', err);
-    return { isExpired: false, needsSign: false };
+    return { isExpired: true, needsSign: true };
   } finally {
     loading.value = false;
     authStabilizing.value = false;
@@ -457,34 +455,49 @@ const handleUnauthorized = async (
     return { isExpired: true, needsSign: true }
   }
 
+  console.log('🔄 [handleUnauthorized]', retries)
   // 🚨 SELALU coba refresh dulu
-  const refresh = await refreshToken()
+  const refresh = await refreshToken()  as unknown as refreshResult
+
+
+  console.log('🔑 [handleUnauthorized] Refresh Result:', refresh?.reason);
 
   if (refresh.ok) {
     const me = await fetch('/api/me', {
+      headers: {'X-Wallet-Address': walletAddress.value },
       credentials: 'include',
       signal: AbortSignal.timeout(3000)
     })
 
     if (me.ok) {
-      return { isExpired: false, needsSign: false }
-    }
-  }
-
-  // ❌ Refresh gagal → baru sign
-  if (!refresh.ok) {
-    if (refresh.reason === 'NO_SESSION') {
+      isAuthenticated.value = true
       return { isExpired: false, needsSign: false }
     }
 
-    return { isExpired: true, needsSign: true }
+    if (refresh.reason === 'NO_SESSION' && walletAddress.value ||
+        refresh.reason === 'EXPIRED' && walletAddress.value ||
+        refresh.reason === 'INVALID' && walletAddress.value ||
+        refresh.reason === 'ERROR' && !walletAddress.value) {
+      console.log('🚨 [handleUnauthorized] NO_SESSION  & Connected')
+      return { isExpired: true, needsSign: true }
+    }
+
+    if ( refresh.ok && me.ok && me.status===401 ) {
+      console.log('🚨 [handleUnauthorized] me.ok failed, but refresh ok')
+      return { isExpired: true, needsSign: true }
+    }
+
+    if ( refresh.ok && !me.ok && me.status===401 ) {
+      console.log('🚨 [handleUnauthorized] me.nok failed, but refresh ok')
+      await logout()
+      return { isExpired: true, needsSign: true }
+    }
   }
 
   return { isExpired: true, needsSign: true }
 }
 
-
-const refreshToken = async (): Promise<RefreshResult> => {
+const refreshToken = async (): Promise<refreshResult> => {
   if (pendingRefresh) return pendingRefresh;
 
   pendingRefresh = (async () => {
@@ -495,14 +508,15 @@ const refreshToken = async (): Promise<RefreshResult> => {
         credentials: 'include',
         headers: {
           'Cache-Control': 'no-cache',
-          'X-No-Retry': 'true'
+          'X-No-Retry': 'true',
+          'X-Wallet-Address': walletAddress.value
         },
         signal: AbortSignal.timeout(5000)
       });
 
       if (res.ok) {
         console.log('✅ [refreshToken] success');
-        return { ok: true };
+        return { ok: true , reason: 'OK' };
       }
 
       const body = await res.json().catch(() => ({}));
@@ -527,7 +541,7 @@ const refreshToken = async (): Promise<RefreshResult> => {
   })();
 
   return pendingRefresh;
-};
+}
 
 const restoreFromLocalStorage = (): boolean => {
     const savedAuth = localStorage.getItem('auth_state')
@@ -539,7 +553,6 @@ const restoreFromLocalStorage = (): boolean => {
         if (age < 60 * 60 * 1000) {
           if (walletAddress.value && authState.walletAddress) {
             if (isAddressEqual(authState.walletAddress as `0x${string}`, walletAddress.value as `0x${string}`)) {
-              isAuthenticated.value = authState.authenticated
               user.value = authState.user
               hasSessionInLocalStorage.value = true
               console.log('Auth restored from localStorage')
@@ -680,6 +693,7 @@ const checkAuthWithRetry = async (
 const debugTokenStatus = async () => {
   try {
     const response = await fetch('/api/auth/debug/token-status', {
+      headers: {'X-Wallet-Address': walletAddress.value },
       credentials: 'include'
     })
 
