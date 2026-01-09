@@ -184,7 +184,7 @@ const handleMouseLeave = () => {
 
               <DropdownMenuItem @click="goToSettings" class="cursor-pointer">
                 <Settings class="mr-2 h-4 w-4" />
-                <span>Pengaturan</span>
+                <span>Settings</span>
               </DropdownMenuItem>
 
               <DropdownMenuSeparator />

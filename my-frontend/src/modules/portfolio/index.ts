@@ -8,7 +8,7 @@ import type { RouteRecordRaw } from 'vue-router'
 const routes: RouteRecordRaw[] = [
   {
     path: '/portfolio',
-    name: 'portfolio',
+    name: 'Portfolio',
     component: buyWancash,
     meta: {
       title: 'Portfolio',

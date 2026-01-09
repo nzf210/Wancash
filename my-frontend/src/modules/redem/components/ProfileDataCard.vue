@@ -59,8 +59,8 @@
                 </div>
 
                 <div class="flex items-start space-x-3">
-                    <Checkbox :checked="useProfileData" @update:checked="$emit('update:useProfileData', $event)"
-                        id="use-profile-data"
+                    <Checkbox :model-value="useProfileData"
+                        @update:model-value="$emit('update:useProfileData', $event as boolean)" id="use-profile-data"
                         class="h-5 w-5 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:focus:ring-blue-400" />
                     <div class="grid gap-1.5">
                         <Label for="use-profile-data"
