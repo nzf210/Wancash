@@ -56,7 +56,8 @@ const chainId = ref<number | undefined>(0)
 const isConnected = ref(false)
 const recentChainChange = ref(false)
 const activeConnector = ref<unknown>(null)
-const authStabilizing = ref(false)
+// Initialize authStabilizing to true if we have a session to restore, preventing early redirect
+const authStabilizing = ref(!!localStorage.getItem('auth_state'))
 
 const isAuthenticated = ref(false)
 const user = ref<{
@@ -197,7 +198,7 @@ export const useAuth = () => {
     }
   }
 
-const signMessageWithProvider = async (
+  const signMessageWithProvider = async (
     address: string,
     message: BackendMessage
   ): Promise<string> => {
@@ -244,9 +245,9 @@ const signMessageWithProvider = async (
       console.error('Provider signing error:', error)
       throw new Error(`Provider signing failed.`)
     }
-}
+  }
 
-const signMessage = async (address: string, message: BackendMessage): Promise<string> => {
+  const signMessage = async (address: string, message: BackendMessage): Promise<string> => {
     try {
       return await signMessageWithWagmi(address, message)
     } catch (wagmiError) {
@@ -264,9 +265,9 @@ const signMessage = async (address: string, message: BackendMessage): Promise<st
         throw new Error(`Signing failed.`)
       }
     }
-}
+  }
 
-const login = async (address: string, chain_id: number): Promise<unknown> => {
+  const login = async (address: string, chain_id: number): Promise<unknown> => {
     if (!address || !chain_id) {
       throw new Error('Wallet not connected')
     }
@@ -288,7 +289,7 @@ const login = async (address: string, chain_id: number): Promise<unknown> => {
 
       const verifyResponse = await fetch('/api/auth/verify', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' , 'X-Wallet-Address': walletAddress.value },
+        headers: { 'Content-Type': 'application/json', 'X-Wallet-Address': walletAddress.value },
         credentials: 'include',
         body: JSON.stringify({
           address: address,
@@ -344,33 +345,33 @@ const login = async (address: string, chain_id: number): Promise<unknown> => {
     } finally {
       loading.value = false
     }
-}
-
-const autoLoginOnConnect = debounce(async () => {
-  const account = getCurrentAccount();
-
-  if (account.isConnected && account.address && account.chainId) {
-    // Jangan auto login jika sudah authenticated
-    if (isAuthenticated.value) {
-      return;
-    }
-
-    // Jangan auto login jika baru saja logout
-    const lastLogout = localStorage.getItem('last_logout');
-    if (lastLogout && Date.now() - Number.parseInt(lastLogout) < 5000) {
-      return;
-    }
-
-    try {
-      console.log('🤖 Auto-login attempt');
-      await login(account.address, account.chainId);
-    } catch (error) {
-      console.warn('Auto-login failed:', error);
-    }
   }
-}, 1500);
 
-const logout = async (): Promise<void> => {
+  const autoLoginOnConnect = debounce(async () => {
+    const account = getCurrentAccount();
+
+    if (account.isConnected && account.address && account.chainId) {
+      // Jangan auto login jika sudah authenticated
+      if (isAuthenticated.value) {
+        return;
+      }
+
+      // Jangan auto login jika baru saja logout
+      const lastLogout = localStorage.getItem('last_logout');
+      if (lastLogout && Date.now() - Number.parseInt(lastLogout) < 5000) {
+        return;
+      }
+
+      try {
+        console.log('🤖 Auto-login attempt');
+        await login(account.address, account.chainId);
+      } catch (error) {
+        console.warn('Auto-login failed:', error);
+      }
+    }
+  }, 1500);
+
+  const logout = async (): Promise<void> => {
     try {
       const response = await fetch('/api/auth/logout', {
         method: 'POST',
@@ -387,163 +388,165 @@ const logout = async (): Promise<void> => {
         toast.error('Logout failed: ' + response.statusText)
       }
     } catch (error) {
-        console.warn('Backend logout failed:', error)
+      console.warn('Backend logout failed:', error)
     } finally {
       isAuthenticated.value = false
       authStabilizing.value = true
       user.value = {}
       hasSessionInLocalStorage.value = false
       localStorage.removeItem('auth_state')
+      sessionStorage.removeItem('intended_route')
       toast.info('Logged out successfully')
     }
   }
 
-const checkAuth = async (retries = 1) => {
-  const now = Date.now();
+  const checkAuth = async (retries = 1) => {
+    const now = Date.now();
 
-  if (pendingCheckAuth && now - lastCheckTime < 1000) {
-    console.log('⏭️ [checkAuth] cooldown hit');
-    return pendingCheckAuth;
-  }
-  authStabilizing.value = true
-  lastCheckTime = now;
-  pendingCheckAuth = performCheckAuth(retries);
+    if (pendingCheckAuth && now - lastCheckTime < 1000) {
+      console.log('⏭️ [checkAuth] cooldown hit');
+      return pendingCheckAuth;
+    }
+    authStabilizing.value = true
+    lastCheckTime = now;
+    pendingCheckAuth = performCheckAuth(retries);
 
-  pendingCheckAuth.finally(() => {
-    setTimeout(() => (pendingCheckAuth = null), 1000);
-  });
-
-  return pendingCheckAuth;
-};
-
-const performCheckAuth = async (retries: number) => {
-  loading.value = true;
-
-  try {
-    const res = await fetch('/api/me', {
-      credentials: 'include',
-      headers: { 'Cache-Control': 'no-cache' , 'X-Wallet-Address': walletAddress.value },
-      signal: AbortSignal.timeout(5000)
+    pendingCheckAuth.finally(() => {
+      setTimeout(() => (pendingCheckAuth = null), 1000);
     });
 
-    if (res.ok) {
-      isAuthenticated.value = true;
-      return { isExpired: false, needsSign: false };
-    }
+    return pendingCheckAuth;
+  };
 
-    if (res.status === 401) {
-      return await handleUnauthorized(retries);
-    }
+  const performCheckAuth = async (retries: number) => {
+    loading.value = true;
 
-    return { isExpired: true, needsSign: true };
-  } catch (err) {
-    console.error('❌ [performCheckAuth]', err);
-    return { isExpired: true, needsSign: true };
-  } finally {
-    loading.value = false;
-    authStabilizing.value = false;
-  }
-};
-
-const handleUnauthorized = async (
-  retries: number
-): Promise<{ isExpired: boolean; needsSign: boolean }> => {
-
-  console.log('🔐 [handleUnauthorized]', retries)
-
-  if (retries <= 0) {
-    return { isExpired: true, needsSign: true }
-  }
-
-  console.log('🔄 [handleUnauthorized]', retries)
-  // 🚨 SELALU coba refresh dulu
-  const refresh = await refreshToken()  as unknown as refreshResult
-
-
-  console.log('🔑 [handleUnauthorized] Refresh Result:', refresh?.reason);
-
-  if (refresh.ok) {
-    const me = await fetch('/api/me', {
-      headers: {'X-Wallet-Address': walletAddress.value },
-      credentials: 'include',
-      signal: AbortSignal.timeout(3000)
-    })
-
-    if (me.ok) {
-      isAuthenticated.value = true
-      return { isExpired: false, needsSign: false }
-    }
-
-    if (refresh.reason === 'NO_SESSION' && walletAddress.value ||
-        refresh.reason === 'EXPIRED' && walletAddress.value ||
-        refresh.reason === 'INVALID' && walletAddress.value ||
-        refresh.reason === 'ERROR' && !walletAddress.value) {
-      console.log('🚨 [handleUnauthorized] NO_SESSION  & Connected')
-      return { isExpired: true, needsSign: true }
-    }
-
-    if ( refresh.ok && me.ok && me.status===401 ) {
-      console.log('🚨 [handleUnauthorized] me.ok failed, but refresh ok')
-      return { isExpired: true, needsSign: true }
-    }
-
-    if ( refresh.ok && !me.ok && me.status===401 ) {
-      console.log('🚨 [handleUnauthorized] me.nok failed, but refresh ok')
-      await logout()
-      return { isExpired: true, needsSign: true }
-    }
-  }
-
-  return { isExpired: true, needsSign: true }
-}
-
-const refreshToken = async (): Promise<refreshResult> => {
-  if (pendingRefresh) return pendingRefresh;
-
-  pendingRefresh = (async () => {
     try {
-      console.log('🔄 [refreshToken] start');
-
-      const res = await fetch('/api/auth/refresh', {
+      const res = await fetch('/api/me', {
         credentials: 'include',
-        headers: {
-          'Cache-Control': 'no-cache',
-          'X-No-Retry': 'true',
-          'X-Wallet-Address': walletAddress.value
-        },
+        headers: { 'Cache-Control': 'no-cache', 'X-Wallet-Address': walletAddress.value },
         signal: AbortSignal.timeout(5000)
       });
 
       if (res.ok) {
-        console.log('✅ [refreshToken] success');
-        return { ok: true , reason: 'OK' };
+        isAuthenticated.value = true;
+        return { isExpired: false, needsSign: false };
       }
 
-      const body = await res.json().catch(() => ({}));
-      console.warn('❌ [refreshToken] failed:', body?.code);
-
-      if (body?.code === 'NO_REFRESH_TOKEN') {
-        return { ok: false, reason: 'NO_SESSION' };
+      if (res.status === 401) {
+        return await handleUnauthorized(retries);
       }
 
-      if (body?.code === 'REFRESH_EXPIRED' || body?.code === 'SESSION_NOT_FOUND') {
-        localStorage.removeItem('auth_state');
-        return { ok: false, reason: 'EXPIRED' };
-      }
-
-      return { ok: false, reason: 'INVALID' };
+      return { isExpired: true, needsSign: true };
     } catch (err) {
-      console.error('❌ [refreshToken] error:', err);
-      return { ok: false, reason: 'ERROR' };
+      console.error('❌ [performCheckAuth]', err);
+      return { isExpired: true, needsSign: true };
     } finally {
-      pendingRefresh = null;
+      loading.value = false;
+      authStabilizing.value = false;
     }
-  })();
+  };
 
-  return pendingRefresh;
-}
+  const handleUnauthorized = async (
+    retries: number
+  ): Promise<{ isExpired: boolean; needsSign: boolean }> => {
 
-const restoreFromLocalStorage = (): boolean => {
+    console.log('🔐 [handleUnauthorized]', retries)
+
+    if (retries <= 0) {
+      return { isExpired: true, needsSign: true }
+    }
+
+    console.log('🔄 [handleUnauthorized]', retries)
+    // 🚨 SELALU coba refresh dulu
+    const refresh = await refreshToken() as unknown as refreshResult
+
+
+    console.log('🔑 [handleUnauthorized] Refresh Result:', refresh?.reason);
+
+    if (refresh.ok) {
+      const me = await fetch('/api/me', {
+        headers: { 'X-Wallet-Address': walletAddress.value },
+        credentials: 'include',
+        signal: AbortSignal.timeout(3000)
+      })
+
+      if (me.ok) {
+        isAuthenticated.value = true
+        return { isExpired: false, needsSign: false }
+      }
+
+      if (refresh.reason === 'NO_SESSION' && walletAddress.value ||
+        refresh.reason === 'EXPIRED' && walletAddress.value ||
+        refresh.reason === 'INVALID' && walletAddress.value ||
+        refresh.reason === 'ERROR' && !walletAddress.value) {
+        console.log('🚨 [handleUnauthorized] NO_SESSION  & Connected - logging out')
+        await logout()
+        return { isExpired: true, needsSign: true }
+      }
+
+      if (refresh.ok && me.ok && me.status === 401) {
+        console.log('🚨 [handleUnauthorized] me.ok failed, but refresh ok')
+        return { isExpired: true, needsSign: true }
+      }
+
+      if (refresh.ok && !me.ok && me.status === 401) {
+        console.log('🚨 [handleUnauthorized] me.nok failed, but refresh ok')
+        await logout()
+        return { isExpired: true, needsSign: true }
+      }
+    }
+
+    return { isExpired: true, needsSign: true }
+  }
+
+  const refreshToken = async (): Promise<refreshResult> => {
+    if (pendingRefresh) return pendingRefresh;
+
+    pendingRefresh = (async () => {
+      try {
+        console.log('🔄 [refreshToken] start');
+
+        const res = await fetch('/api/auth/refresh', {
+          credentials: 'include',
+          headers: {
+            'Cache-Control': 'no-cache',
+            'X-No-Retry': 'true',
+            'X-Wallet-Address': walletAddress.value
+          },
+          signal: AbortSignal.timeout(5000)
+        });
+
+        if (res.ok) {
+          console.log('✅ [refreshToken] success');
+          return { ok: true, reason: 'OK' };
+        }
+
+        const body = await res.json().catch(() => ({}));
+        console.warn('❌ [refreshToken] failed:', body?.code);
+
+        if (body?.code === 'NO_REFRESH_TOKEN') {
+          return { ok: false, reason: 'NO_SESSION' };
+        }
+
+        if (body?.code === 'REFRESH_EXPIRED' || body?.code === 'SESSION_NOT_FOUND') {
+          localStorage.removeItem('auth_state');
+          return { ok: false, reason: 'EXPIRED' };
+        }
+
+        return { ok: false, reason: 'INVALID' };
+      } catch (err) {
+        console.error('❌ [refreshToken] error:', err);
+        return { ok: false, reason: 'ERROR' };
+      } finally {
+        pendingRefresh = null;
+      }
+    })();
+
+    return pendingRefresh;
+  }
+
+  const restoreFromLocalStorage = (): boolean => {
     const savedAuth = localStorage.getItem('auth_state')
     if (savedAuth) {
       try {
@@ -554,6 +557,7 @@ const restoreFromLocalStorage = (): boolean => {
           if (walletAddress.value && authState.walletAddress) {
             if (isAddressEqual(authState.walletAddress as `0x${string}`, walletAddress.value as `0x${string}`)) {
               user.value = authState.user
+              isAuthenticated.value = true
               hasSessionInLocalStorage.value = true
               console.log('Auth restored from localStorage')
               return true
@@ -584,9 +588,19 @@ const restoreFromLocalStorage = (): boolean => {
       const restored = restoreFromLocalStorage()
       if (!restored) {
         await checkAuthWithDebounce()
+      } else {
+        // If restored successfully, we are stable
+        authStabilizing.value = false
       }
     } else if (isAuthenticated.value && !recentChainChange.value) {
       await logout()
+    } else if (!connected && authStabilizing.value) {
+      // Check if connection takes too long
+      setTimeout(() => {
+        if (!isConnected.value && authStabilizing.value) {
+          authStabilizing.value = false
+        }
+      }, 4000)
     }
   }, { immediate: true })
 
@@ -597,119 +611,119 @@ const restoreFromLocalStorage = (): boolean => {
     }
 
     if (isAuthenticated.value && newAddress && oldAddress &&
-        !isAddressEqual(newAddress as `0x${string}`, oldAddress as `0x${string}`)) {
+      !isAddressEqual(newAddress as `0x${string}`, oldAddress as `0x${string}`)) {
       await logout()
       toast.warning('Wallet address has changed. Please sign in again.')
     }
   })
 
   const handleVisibilityChange = () => {
-  if (document.visibilityState === 'visible' && isAuthenticated.value) {
-    // Check auth ketika user kembali ke tab
-    checkAuthWithDebounce(1) // Delay 1 detik
+    if (document.visibilityState === 'visible' && isAuthenticated.value) {
+      // Check auth ketika user kembali ke tab
+      checkAuthWithDebounce(1) // Delay 1 detik
+    }
   }
-}
 
-// Event listener untuk online/offline
-const handleOnline = () => {
-  if (isAuthenticated.value) {
-    console.log('🌐 Back online, checking auth...')
-    checkAuthWithDebounce()
+  // Event listener untuk online/offline
+  const handleOnline = () => {
+    if (isAuthenticated.value) {
+      console.log('🌐 Back online, checking auth...')
+      checkAuthWithDebounce()
+    }
   }
-}
 
-onMounted(async () => {
-  document.addEventListener('visibilitychange', handleVisibilityChange);
-  globalThis.window.addEventListener('online', handleOnline);
+  onMounted(async () => {
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    globalThis.window.addEventListener('online', handleOnline);
 
-  // Tunggu 2 detik sebelum check auth pertama
-  setTimeout(async () => {
-    const savedAuth = localStorage.getItem('auth_state');
+    // Tunggu 2 detik sebelum check auth pertama
+    setTimeout(async () => {
+      const savedAuth = localStorage.getItem('auth_state');
 
-    if (savedAuth) {
-      try {
-        const authState = JSON.parse(savedAuth);
-        const age = Date.now() - authState.timestamp;
+      if (savedAuth) {
+        try {
+          const authState = JSON.parse(savedAuth);
+          const age = Date.now() - authState.timestamp;
 
-        // Jika session kurang dari 1 jam, coba check auth
-        if (age < 60 * 60 * 1000 && isConnected.value) {
-          console.log('🔍 Restoring session from localStorage');
-          await checkAuth();
-        } else {
-          // Session expired, hapus
+          // Jika session kurang dari 1 jam, coba check auth
+          if (age < 60 * 60 * 1000 && isConnected.value) {
+            console.log('🔍 Restoring session from localStorage');
+            await checkAuth();
+          } else {
+            // Session expired, hapus
+            localStorage.removeItem('auth_state');
+          }
+        } catch (error) {
+          console.error('Error parsing auth_state:', error);
           localStorage.removeItem('auth_state');
         }
+      }
+    }, 2000);
+  });
+
+  // Jangan lupa cleanup
+  onUnmounted(() => {
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+    globalThis.window.removeEventListener('online', handleOnline);
+  });
+
+
+  // Function untuk force check (bypass semua cache)
+  const forceCheckAuth = async (retries = 1): Promise<{ isExpired: boolean; needsSign: boolean }> => {
+    console.log('🚀 Force checking auth...')
+    return checkAuth(retries)
+  }
+
+  // Function untuk check auth dengan retry logic
+  const checkAuthWithRetry = async (
+    maxRetries = 3,
+    initialDelay = 1000
+  ): Promise<{ isExpired: boolean; needsSign: boolean }> => {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const result = await checkAuth(1)
+
+        if (!result.isExpired && !result.needsSign) {
+          return result
+        }
+
+        // Jika masih ada masalah, tunggu sebelum retry
+        if (attempt < maxRetries) {
+          const delay = initialDelay * Math.pow(2, attempt - 1) // Exponential backoff
+          console.log(`⏳ Auth check attempt ${attempt} failed, retrying in ${delay}ms...`)
+          await new Promise(resolve => setTimeout(resolve, delay))
+        }
       } catch (error) {
-        console.error('Error parsing auth_state:', error);
-        localStorage.removeItem('auth_state');
+        console.error(`Auth check attempt ${attempt} failed:`, error)
+        if (attempt === maxRetries) {
+          return { isExpired: true, needsSign: false }
+        }
       }
     }
-  }, 2000);
-});
 
-// Jangan lupa cleanup
-onUnmounted(() => {
-  document.removeEventListener('visibilitychange', handleVisibilityChange);
-  globalThis.window.removeEventListener('online', handleOnline);
-});
+    return { isExpired: true, needsSign: false }
+  }
 
-
-// Function untuk force check (bypass semua cache)
-const forceCheckAuth = async (retries = 1): Promise<{ isExpired: boolean; needsSign: boolean }> => {
-  console.log('🚀 Force checking auth...')
-  return checkAuth(retries)
-}
-
-// Function untuk check auth dengan retry logic
-const checkAuthWithRetry = async (
-  maxRetries = 3,
-  initialDelay = 1000
-): Promise<{ isExpired: boolean; needsSign: boolean }> => {
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+  const debugTokenStatus = async () => {
     try {
-      const result = await checkAuth(1)
+      const response = await fetch('/api/auth/debug/token-status', {
+        headers: { 'X-Wallet-Address': walletAddress.value },
+        credentials: 'include'
+      })
 
-      if (!result.isExpired && !result.needsSign) {
-        return result
-      }
-
-      // Jika masih ada masalah, tunggu sebelum retry
-      if (attempt < maxRetries) {
-        const delay = initialDelay * Math.pow(2, attempt - 1) // Exponential backoff
-        console.log(`⏳ Auth check attempt ${attempt} failed, retrying in ${delay}ms...`)
-        await new Promise(resolve => setTimeout(resolve, delay))
+      if (response.ok) {
+        const data = await response.json()
+        console.log('🔍 Token Debug Info:', data)
+        return data
       }
     } catch (error) {
-      console.error(`Auth check attempt ${attempt} failed:`, error)
-      if (attempt === maxRetries) {
-        return { isExpired: true, needsSign: false }
-      }
+      console.error('Debug failed:', error)
     }
+    return null
   }
 
-  return { isExpired: true, needsSign: false }
-}
 
-const debugTokenStatus = async () => {
-  try {
-    const response = await fetch('/api/auth/debug/token-status', {
-      headers: {'X-Wallet-Address': walletAddress.value },
-      credentials: 'include'
-    })
-
-    if (response.ok) {
-      const data = await response.json()
-      console.log('🔍 Token Debug Info:', data)
-      return data
-    }
-  } catch (error) {
-    console.error('Debug failed:', error)
-  }
-  return null
-}
-
-
-const checkAuthWithDebounce = debounce(
+  const checkAuthWithDebounce = debounce(
     async (retries: number = 1): Promise<{ isExpired: boolean; needsSign: boolean }> => {
       try {
         return await checkAuth(retries);
@@ -722,22 +736,22 @@ const checkAuthWithDebounce = debounce(
   );
 
   return {
-  isAuthenticated,
-  user,
-  loading,
-  walletAddress,
-  chainId,
-  isConnected,
-  login,
-  logout,
-  checkAuth,
-  checkAuthWithDebounce,  // Export debounced version
-  forceCheckAuth,          // Export force check
-  checkAuthWithRetry,      // Export retry version
-  refreshToken,
-  autoLoginOnConnect,
-  getCurrentAccount,
-  debugTokenStatus,
-  authStabilizing
+    isAuthenticated,
+    user,
+    loading,
+    walletAddress,
+    chainId,
+    isConnected,
+    login,
+    logout,
+    checkAuth,
+    checkAuthWithDebounce,  // Export debounced version
+    forceCheckAuth,          // Export force check
+    checkAuthWithRetry,      // Export retry version
+    refreshToken,
+    autoLoginOnConnect,
+    getCurrentAccount,
+    debugTokenStatus,
+    authStabilizing
   }
 }

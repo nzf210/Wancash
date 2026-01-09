@@ -130,7 +130,7 @@ onMounted(async () => {
   // Initial check
   if (isConnected.value && walletAddress.value) {
     await checkAuth();
-    await handleRedirect();
+
   }
 })
 

@@ -1,5 +1,5 @@
 // src/app/router/index.ts
-import { nextTick } from 'vue';
+import { nextTick, watch } from 'vue';
 import {
   createRouter,
   createWebHistory,
@@ -7,7 +7,7 @@ import {
   type RouteRecordRaw,
   type NavigationGuardNext,
 } from 'vue-router'
-import { useAuth } from'@/app/composables/useAuth'
+import { useAuth } from '@/app/composables/useAuth'
 
 const modules = import.meta.glob('@/modules/**/index.ts', { eager: true });
 const routes: RouteRecordRaw[] = [];
@@ -46,13 +46,29 @@ const authGuard = async (
      */
     const { authStabilizing, isAuthenticated } = useAuth();
 
-    console.log('🔑 [AuthGuard] Authenticated:', isAuthenticated.value, authStabilizing.value);
+    console.log('🔑 [AuthGuard] Authenticated:', isAuthenticated.value, 'Stabilizing:', authStabilizing.value);
 
-  if (authStabilizing.value) {
-    return
-  }
+    // Wait for auth to stabilize if it's currently stabilizing (e.g., waiting for wallet connection)
+    if (authStabilizing.value) {
+      console.log('⏳ [AuthGuard] Waiting for auth stabilization...');
+      await new Promise<void>((resolve) => {
+        const stopWatch = watch(authStabilizing, (val) => {
+          if (!val) {
+            stopWatch();
+            resolve();
+          }
+        });
 
-    if (isAuthenticated.value && !authStabilizing.value) {
+        // Timeout safety
+        setTimeout(() => {
+          stopWatch();
+          resolve();
+        }, 4000);
+      });
+      console.log('✅ [AuthGuard] Auth stabilization finished.');
+    }
+
+    if (isAuthenticated.value) {
       next();
     } else {
       next('/');
