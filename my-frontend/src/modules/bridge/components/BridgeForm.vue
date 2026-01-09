@@ -188,7 +188,7 @@
                                         'SelectChain' }}
                                     </div>
                                     <div class="text-sm text-gray-500 dark:text-gray-400">{{ toChain?.type || 'Network'
-                                        }}</div>
+                                    }}</div>
                                 </div>
                             </div>
                             <ChevronDownIcon class="w-5 h-5 text-gray-400 transition-transform duration-300"
@@ -263,7 +263,7 @@
                         </div>
                         <span class="font-medium text-gray-900 dark:text-white">{{ bridgeFee }} {{ fromToken?.symbol ||
                             ''
-                        }}</span>
+                            }}</span>
                     </div>
                     <div class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
                         <div class="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
@@ -279,7 +279,7 @@
                         </div>
                         <span class="font-medium text-gray-900 dark:text-white">{{ formatNumber(21000) }} {{
                             fromToken?.symbol || ''
-                        }}</span>
+                            }}</span>
                     </div>
                 </div>
             </div>
@@ -307,7 +307,7 @@
                     You will receive approximately
                     <span class="font-semibold text-gray-900 dark:text-white">{{ formatNumber(estimatedAmount) }} {{
                         toToken?.symbol
-                    }}</span>
+                        }}</span>
                     on {{ toChain?.name }}
                 </p>
             </div>
@@ -434,7 +434,8 @@ onMounted(async () => {
 
     if (walletAddress.value) {
         try {
-            const contacts = await addressBookService.getContacts(walletAddress.value, chainId.value)
+            // Get all contacts (no chain filter for cross-chain bridge)
+            const contacts = await addressBookService.getContacts(walletAddress.value)
             addressBook.value = contacts
         } catch (error) {
             console.error('Failed to load address book:', error)

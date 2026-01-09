@@ -3,11 +3,11 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import DynamicNavbar from '@/app/components/NavbarView.vue'
 import FooterView from '@/app/components/FooterView.vue'
-import { useAuthStore } from '@/app/stores/auth'
+import { useAuth } from '@/app/composables/useAuth'
 import { useNotificationStore } from '@/app/stores/notifications'
 
 const router = useRouter()
-const authStore = useAuthStore()
+const { isAuthenticated, logout, user } = useAuth()
 const notificationStore = useNotificationStore()
 
 // Reactive user data
@@ -25,7 +25,7 @@ const handleLogin = () => {
 
 const handleLogout = async () => {
   try {
-    await authStore.logout()
+    await logout()
     router.push('/')
   } catch (error) {
     console.error('Logout failed:', error)
@@ -51,10 +51,9 @@ const handleNotificationClick = () => {
 
   <div id="app" class="min-h-screen flex flex-col">
     <!-- Dynamic Navbar with all props -->
-    <DynamicNavbar :user="authStore.isAuthenticated ? currentUser : undefined"
-      :notification-count="notificationStore.unreadCount" :is-authenticated="authStore.isAuthenticated"
-      :show-wallet-connect="true" :show-theme-toggle="true" @login="handleLogin" @logout="handleLogout"
-      @profile-click="handleProfileClick" @settings-click="handleSettingsClick"
+    <DynamicNavbar :user="isAuthenticated ? currentUser : undefined" :notification-count="notificationStore.unreadCount"
+      :is-authenticated="isAuthenticated" :show-wallet-connect="true" :show-theme-toggle="true" @login="handleLogin"
+      @logout="handleLogout" @profile-click="handleProfileClick" @settings-click="handleSettingsClick"
       @notification-click="handleNotificationClick" />
     <!-- Main content -->
     <main class="container mx-auto p-4">
