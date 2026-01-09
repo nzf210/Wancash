@@ -112,15 +112,33 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Save to Profile Checkbox -->
+                <div class="flex items-start space-x-3 pt-4 border-t border-gray-100 dark:border-gray-800">
+                    <Checkbox :model-value="saveToProfile"
+                        @update:model-value="$emit('update:saveToProfile', $event as boolean)" id="save-to-profile"
+                        class="mt-1 h-5 w-5 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:focus:ring-blue-400" />
+                    <div class="grid gap-1.5">
+                        <Label for="save-to-profile"
+                            class="text-sm font-medium leading-none cursor-pointer text-gray-900 dark:text-white">
+                            Save contact info to profile
+                        </Label>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">
+                            Save this phone number and address for future redemptions
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+
 </template>
 
 <script lang="ts" setup>
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
 
 export interface RecipientFormData {
     phone: string
@@ -132,10 +150,12 @@ export interface RecipientFormData {
 
 const props = defineProps<{
     form: RecipientFormData
+    saveToProfile: boolean
 }>()
 
 const emit = defineEmits<{
     'update:form': [value: RecipientFormData]
+    'update:saveToProfile': [value: boolean]
 }>()
 
 const updateField = (field: keyof RecipientFormData, value: string) => {

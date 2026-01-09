@@ -26,10 +26,11 @@
       <!-- Main Redemption Form -->
       <div v-else>
         <!-- Profile Data Section -->
-        <ProfileDataCard :profile="userProfile" v-model:useProfileData="useProfileData" />
+        <ProfileDataCard :profile="userProfile" v-model:useProfileData="useProfileData" :walletAddress="walletAddress"
+          :chainInfo="chainInfo" />
 
         <!-- Recipient Information -->
-        <RecipientForm v-model:form="form" />
+        <RecipientForm v-model:form="form" v-model:saveToProfile="saveToProfile" />
 
         <!-- Shipping Options -->
         <ShippingOptions v-model:shippingOption="shippingOption" :tokenGold="tokenGold" :shippingCost="shippingCost"
@@ -47,12 +48,23 @@
             </svg>
             Cancel
           </Button>
-          <Button @click="submitRedemption"
-            class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <Button @click="submitRedemption" :disabled="!isFormValid || isLoading" :class="[
+            'flex-1 text-white rounded-xl py-4 text-lg font-semibold shadow-lg transition-all duration-300',
+            !isFormValid || isLoading
+              ? 'bg-gray-400 cursor-not-allowed opacity-70'
+              : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 hover:shadow-xl'
+          ]">
+            <svg v-if="isLoading" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
+              fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+              </path>
+            </svg>
+            <svg v-else class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
-            Confirm Redemption
+            {{ isLoading ? 'Processing...' : 'Confirm Redemption' }}
           </Button>
         </div>
       </div>
@@ -69,6 +81,13 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import { Button } from '@/components/ui/button'
+import { useAccount, useChainId } from '@wagmi/vue'
+import { storeToRefs } from 'pinia'
+
+// Stores & Composables
+import { useProfileStore } from '@/modules/profile/store/profileStore'
+import { useChain } from '@/app/composables/useChain'
+import { redemptionApi, type CreateRedemptionRequest } from '../services/redemptionApi'
 
 // Components
 import WalletConnectPrompt from '../components/WalletConnectPrompt.vue'
@@ -80,14 +99,20 @@ import ProcessingDialog from '../components/ProcessingDialog.vue'
 import SuccessDialog from '../components/SuccessDialog.vue'
 
 const router = useRouter()
+const profileStore = useProfileStore()
+const { profile } = storeToRefs(profileStore)
+const { address, isConnected } = useAccount()
+const chainId = useChainId()
+const { getChainInfo, switchToSupportedChain } = useChain()
 
 // State
-const walletConnected = ref(false)
+const walletConnected = computed(() => isConnected.value)
 const useProfileData = ref(false)
-const shippingOption = ref('included')
+const shippingOption = ref<'included' | 'separate'>('included')
 const agreeTerms = ref(false)
 const isLoading = ref(false)
 const showSuccess = ref(false)
+const saveToProfile = ref(false)
 
 // Form data
 const form = ref({
@@ -98,16 +123,32 @@ const form = ref({
   address: ''
 })
 
-// User profile data
-const userProfile = ref({
-  name: 'Ahmad Santoso',
-  phone: '081234567890',
-  address: 'Jl. Merdeka No. 123, Jakarta Pusat, 10110',
-  telegram: '',
-  whatsapp: ''
+// Mapped Profile Data
+// Map the generic profile store data to the expected format for ProfileDataCard
+const userProfile = computed(() => {
+  if (!profile.value) return null
+  return {
+    name: profile.value.display_name || 'User',
+    phone: profile.value.phone || '',
+    address: profile.value.shipping_address || '',
+    telegram: '', // Not in profile interface yet
+    whatsapp: ''  // Not in profile interface yet
+  }
 })
 
-// Token calculations
+// Wallet & Chain Data
+const walletAddress = computed(() => address.value || '')
+const chainInfo = computed(() => {
+  const info = getChainInfo(chainId.value)
+  if (!info) return undefined
+  return {
+    name: info.name,
+    icon: info.icon
+  }
+})
+
+
+// Token calculations (Mock logic for now as price API not defined)
 const tokenGold = ref(1000)
 const shippingCost = ref(50)
 
@@ -118,128 +159,108 @@ const totalToken = computed(() => {
   return tokenGold.value
 })
 
+
+// Fetch profile when wallet connects
+watch(address, async (newAddress) => {
+  if (newAddress) {
+    await profileStore.fetchProfile(newAddress)
+  }
+}, { immediate: true })
+
+
 // Watch for profile data usage
 watch(useProfileData, (value) => {
-  if (value) {
+  if (value && userProfile.value) {
     form.value = {
       phone: userProfile.value.phone,
-      telegram: userProfile.value.telegram || '',
-      whatsapp: userProfile.value.whatsapp || '',
+      telegram: form.value.telegram, // preserved
+      whatsapp: form.value.whatsapp, // preserved
       name: userProfile.value.name,
       address: userProfile.value.address
     }
     toast.success('Profile data has been auto-filled')
-  } else {
-    form.value = {
-      phone: '',
-      telegram: '',
-      whatsapp: '',
-      name: '',
-      address: ''
-    }
+  } else if (!value) {
+    // Optional: Clear form or keep it? Keeping it is usually better UX, 
+    // but requirements usually imply toggle off = empty? 
+    // Let's keep data to avoid accidental loss.
   }
 })
 
-// Simulate wallet connection
-onMounted(() => {
-  // Check if wallet is already connected (simulated)
-  const storedWalletStatus = localStorage.getItem('walletConnected')
-  walletConnected.value = storedWalletStatus === 'true'
-
-  if (walletConnected.value) {
-    toast.success('Wallet already connected', {
-      description: 'You can continue the redemption process.'
-    })
-  }
-})
-
-const connectWallet = () => {
-  isLoading.value = true
-  // Simulate wallet connection
-  setTimeout(() => {
-    walletConnected.value = true
-    localStorage.setItem('walletConnected', 'true')
-    isLoading.value = false
-
-    toast.success('Wallet Successfully Connected!', {
-      description: 'Your wallet has been connected to the application.',
-      duration: 3000,
-    })
-  }, 1500)
+const connectWallet = async () => {
+  // Real wallet connection is handled by the generic wallet modal usually triggers elsewhere
+  // But if we have a connect function in useChain or similar we can use it. 
+  // Assuming standard wagmi modal trigger or similar instructions.
+  // For now, redirect to global connect or trigger it.
+  // Since we don't have a direct "open modal" hook imported here, we assume the WalletConnectPrompt
+  // emits 'connect' which usually opens the global modal.
+  // NOTE: In this app context, usually there's a global modal. 
+  // We'll show a toast instructing user.
+  toast.info('Please check your wallet extension to connect.')
 }
 
 const cancelRedemption = () => {
-  toast('Cancelling redemption...', {
-    description: 'Are you sure you want to cancel the redemption process?',
-    action: {
-      label: 'Yes, Cancel',
-      onClick: () => {
-        resetForm()
-        walletConnected.value = false
-        localStorage.removeItem('walletConnected')
-        toast.info('Redemption cancelled', {
-          description: 'The redemption process has been cancelled.'
-        })
-      }
-    },
-    cancel: {
-      label: 'No',
-      onClick: () => {
-        toast('Cancelled', {
-          description: 'The redemption process continues.'
-        })
-      }
-    }
-  })
+  if (confirm('Are you sure you want to cancel the redemption process?')) {
+    resetForm()
+    toast.info('Redemption cancelled')
+  }
 }
 
-const submitRedemption = () => {
-  // Validate form
-  if (!form.value.phone || !form.value.name || !form.value.address) {
-    toast.error('Incomplete Data', {
-      description: 'Please complete all required recipient data.',
-      duration: 4000,
+const isFormValid = computed(() => {
+  return !!(
+    form.value.phone &&
+    form.value.name &&
+    form.value.address &&
+    agreeTerms.value &&
+    walletConnected.value
+  )
+})
+
+const submitRedemption = async () => {
+  // Double check validation (though button should be disabled)
+  if (!isFormValid.value) {
+    toast.error('Details Required', {
+      description: 'Please complete the form and agree to the terms.'
     })
     return
   }
-
-  if (!agreeTerms.value) {
-    toast.error('Agreement Required', {
-      description: 'You must agree to the terms and conditions to continue.',
-      duration: 4000,
-    })
-    return
-  }
-
-  // Show loading toast
-  const loadingToast = toast.loading('Processing your redemption...', {
-    duration: Infinity,
-  })
 
   isLoading.value = true
 
-  // Simulate API call
-  setTimeout(() => {
+  try {
+    const requestData: CreateRedemptionRequest = {
+      wallet_address: address.value!, // Asserted by isFormValid
+      chain_id: chainId.value,
+      recipient_name: form.value.name,
+      phone_number: form.value.phone,
+      whatsapp_number: form.value.whatsapp,
+      telegram_username: form.value.telegram,
+      shipping_address: form.value.address,
+      shipping_option: shippingOption.value,
+      gold_amount_grams: 5.00, // Fixed for now based on context
+      token_amount_gold: tokenGold.value,
+      shipping_cost_token: shippingCost.value,
+      total_token_amount: totalToken.value,
+      save_to_profile: saveToProfile.value
+    }
+
+    await redemptionApi.createRedemption(requestData)
+
     isLoading.value = false
     showSuccess.value = true
 
-    // Dismiss loading toast
-    toast.dismiss(loadingToast)
+    // Refresh profile if we saved data
+    if (saveToProfile.value) {
+      // @ts-ignore
+      await profileStore.fetchProfile(address.value)
+    }
 
-    // Show success toast
-    toast.success('Redemption Successfully Processed!', {
-      description: 'Your redemption request has been sent and is being processed.',
-      duration: 5000,
+  } catch (error) {
+    isLoading.value = false
+    console.error(error)
+    toast.error('Redemption Failed', {
+      description: error instanceof Error ? error.message : 'Unknown error occurred'
     })
-
-    // Log redemption data (in real app, send to API)
-    console.log('Redemption submitted:', {
-      ...form.value,
-      shippingOption: shippingOption.value,
-      totalToken: totalToken.value,
-      timestamp: new Date().toISOString()
-    })
-  }, 2000)
+  }
 }
 
 const resetForm = () => {
@@ -253,16 +274,12 @@ const resetForm = () => {
   useProfileData.value = false
   shippingOption.value = 'included'
   agreeTerms.value = false
+  saveToProfile.value = false
 }
 
 const goToDashboard = () => {
   resetForm()
   showSuccess.value = false
   router.push({ name: 'dashboard' })
-
-  toast('Returning to Dashboard', {
-    description: 'You will be redirected to the main dashboard.',
-    duration: 2000,
-  })
 }
 </script>

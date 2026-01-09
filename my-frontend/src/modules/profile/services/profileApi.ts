@@ -9,6 +9,8 @@ export interface Profile {
     email: string | null
     bio: string | null
     avatar_url: string | null
+    phone: string | null
+    shipping_address: string | null
     role: string
     created_at: string
     last_login_at: string | null
@@ -82,7 +84,7 @@ export const profileApi = {
 
     async updateProfile(
         walletAddress: string,
-        data: Partial<Pick<Profile, 'display_name' | 'username' | 'email' | 'bio' | 'avatar_url'>>
+        data: Partial<Pick<Profile, 'display_name' | 'username' | 'email' | 'bio' | 'avatar_url' | 'phone' | 'shipping_address'>>
     ): Promise<Profile> {
         const response = await fetch('/api/profile', {
             method: 'PUT',

@@ -47,6 +47,8 @@ export const useProfileStore = defineStore('profile', () => {
                 email: data.email,
                 bio: data.bio,
                 avatar_url: data.avatar_url,
+                phone: data.phone,
+                shipping_address: data.shipping_address,
                 role: data.role,
                 created_at: data.created_at,
                 last_login_at: data.last_login_at,
@@ -65,7 +67,7 @@ export const useProfileStore = defineStore('profile', () => {
 
     async function updateProfile(
         walletAddress: string,
-        data: Partial<Pick<Profile, 'display_name' | 'username' | 'email' | 'bio' | 'avatar_url'>>
+        data: Partial<Pick<Profile, 'display_name' | 'username' | 'email' | 'bio' | 'avatar_url' | 'phone' | 'shipping_address'>>
     ): Promise<boolean> {
         loading.value = true
         error.value = null

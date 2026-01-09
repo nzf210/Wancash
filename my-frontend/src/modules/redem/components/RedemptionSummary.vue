@@ -46,7 +46,8 @@
                     </div>
 
                     <div class="flex items-start space-x-3 pt-4">
-                        <Checkbox :checked="agreeTerms" @update:checked="$emit('update:agreeTerms', $event)" id="terms"
+                        <Checkbox :model-value="agreeTerms"
+                            @update:model-value="$emit('update:agreeTerms', $event as boolean)" id="terms"
                             class="h-5 w-5 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:focus:ring-blue-400" />
                         <div class="grid gap-1.5">
                             <Label for="terms"

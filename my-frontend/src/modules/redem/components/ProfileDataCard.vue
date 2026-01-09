@@ -14,6 +14,31 @@
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Profile Data Available</h3>
                 </div>
 
+                <!-- Wallet Info Section -->
+                <div v-if="walletAddress"
+                    class="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800">
+                    <Label class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                        Wallet Address for Receiving Token
+                    </Label>
+                    <div class="flex items-center gap-3">
+                        <div v-if="chainInfo" class="flex-shrink-0" :title="chainInfo.name">
+                            <img :src="chainInfo.icon" :alt="chainInfo.name"
+                                class="w-8 h-8 rounded-full border border-gray-200 dark:border-gray-700 bg-white" />
+                        </div>
+                        <div
+                            class="flex-grow font-mono text-sm bg-white dark:bg-gray-800 py-2 px-3 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 select-all">
+                            {{ walletAddress }}
+                        </div>
+                        <div v-if="chainInfo"
+                            class="text-xs font-semibold px-2 py-1 rounded bg-blue-100 dark:bg-blue-800 text-blue-700 dark:text-blue-300">
+                            {{ chainInfo.name }}
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                        *Address is read-only based on your connected wallet
+                    </p>
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
                         <Label class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="profile-name">Full
@@ -64,9 +89,16 @@ export interface UserProfile {
     whatsapp?: string
 }
 
+export interface ChainInfo {
+    name: string
+    icon: string
+}
+
 defineProps<{
     profile: UserProfile | null
     useProfileData: boolean
+    walletAddress?: string
+    chainInfo?: ChainInfo
 }>()
 
 defineEmits<{
