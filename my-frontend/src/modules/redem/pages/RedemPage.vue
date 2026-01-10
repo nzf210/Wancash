@@ -27,7 +27,7 @@
       <div v-else>
         <!-- Profile Data Section -->
         <ProfileDataCard :profile="userProfile" v-model:useProfileData="useProfileData" :walletAddress="walletAddress"
-          :chainInfo="chainInfo" />
+          :chainInfo="chainInfo" :nativeBalance="nativeBalance" :nativeCurrencySymbol="nativeCurrencySymbol" />
 
         <!-- Recipient Information -->
         <RecipientForm v-model:form="form" v-model:saveToProfile="saveToProfile" />
@@ -81,7 +81,8 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import { Button } from '@/components/ui/button'
-import { useAccount, useChainId } from '@wagmi/vue'
+import { useAccount, useChainId, useConfig } from '@wagmi/vue'
+import { getBalance } from '@wagmi/core'
 import { storeToRefs } from 'pinia'
 
 // Stores & Composables
@@ -112,6 +113,14 @@ const shippingOption = ref<'included' | 'separate'>('included')
 const agreeTerms = ref(false)
 const isLoading = ref(false)
 const showSuccess = ref(false)
+
+// Native coin balance
+const nativeBalance = ref<number>(0)
+const nativeCurrencySymbol = computed(() => {
+  const info = getChainInfo(chainId.value)
+  return info?.symbol || 'ETH'
+})
+const config = useConfig()
 const saveToProfile = ref(false)
 
 // Form data
@@ -164,6 +173,33 @@ const totalToken = computed(() => {
 watch(address, async (newAddress) => {
   if (newAddress) {
     await profileStore.fetchProfile(newAddress)
+  }
+}, { immediate: true })
+
+// Fetch native balance
+const fetchNativeBalance = async () => {
+  if (!isConnected.value || !address.value) return
+  try {
+    const balance = await getBalance(config, {
+      address: address.value as `0x${string}`,
+    })
+    nativeBalance.value = Number(balance.formatted)
+  } catch (err) {
+    console.error('Native balance fetch error:', err)
+  }
+}
+
+// Watch for chain changes to update native balance reactively
+watch(chainId, () => {
+  if (isConnected.value && address.value) {
+    fetchNativeBalance()
+  }
+})
+
+// Initial fetch
+watch(address, (newAddress) => {
+  if (newAddress) {
+    fetchNativeBalance()
   }
 }, { immediate: true })
 

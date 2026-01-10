@@ -34,6 +34,22 @@
                             {{ chainInfo.name }}
                         </div>
                     </div>
+
+                    <!-- Native Coin Balance Display -->
+                    <div v-if="nativeBalance !== undefined" class="mt-3 flex items-center gap-2">
+                        <div
+                            class="w-6 h-6 rounded-md bg-gradient-to-r from-yellow-500 to-orange-400 flex items-center justify-center">
+                            <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.736 6.979C9.208 6.193 9.696 6 10 6c.304 0 .792.193 1.264.979a1 1 0 001.715-1.029C12.279 4.784 11.232 4 10 4s-2.279.784-2.979 1.95c-.285.475-.507 1-.67 1.55H6a1 1 0 000 2h.013a9.358 9.358 0 000 1H6a1 1 0 100 2h.351c.163.55.385 1.075.67 1.55C7.721 15.216 8.768 16 10 16s2.279-.784 2.979-1.95a1 1 0 10-1.715-1.029c-.472.786-.96.979-1.264.979-.304 0-.792-.193-1.264-.979a4.265 4.265 0 01-.264-.521H10a1 1 0 100-2H8.017a7.36 7.36 0 010-1H10a1 1 0 100-2H8.472a4.265 4.265 0 01.264-.521z" />
+                            </svg>
+                        </div>
+                        <span class="text-sm text-gray-600 dark:text-gray-400">Native Balance:</span>
+                        <span class="font-semibold text-yellow-600 dark:text-yellow-400">
+                            {{ formatNumber(nativeBalance) }} {{ nativeCurrencySymbol }}
+                        </span>
+                    </div>
+
                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
                         *Address is read-only based on your connected wallet
                     </p>
@@ -99,9 +115,13 @@ defineProps<{
     useProfileData: boolean
     walletAddress?: string
     chainInfo?: ChainInfo
+    nativeBalance?: number
+    nativeCurrencySymbol?: string
 }>()
 
 defineEmits<{
     'update:useProfileData': [value: boolean]
 }>()
+
+const formatNumber = (num: number) => new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 4 }).format(num)
 </script>
