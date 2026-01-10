@@ -227,7 +227,9 @@ export const useAuth = () => {
     }
 
     const prevStatus = state.value.status
-    state.value.status = 'CHECKING'
+    if (state.value.status !== 'AUTHENTICATED') {
+      state.value.status = 'CHECKING'
+    }
 
     try {
       const res = await fetch('/api/me', {
@@ -241,6 +243,23 @@ export const useAuth = () => {
       }
 
       // Attempt refresh
+      return await refreshSession()
+
+    } catch (error) {
+      console.warn('Session check failed:', error)
+      // Only reset if we were previously authenticated
+      if (prevStatus === 'AUTHENTICATED') {
+        resetState()
+      } else {
+        state.value.status = 'UNAUTHENTICATED'
+      }
+      return false
+    }
+  }
+
+  const refreshSession = async (): Promise<boolean> => {
+    const now = Date.now()
+    try {
       const refreshRes = await fetch('/api/auth/refresh', {
         headers: {
           'X-No-Retry': 'true',
@@ -253,17 +272,9 @@ export const useAuth = () => {
         state.value.lastChecked = now
         return true
       }
-
-      throw new Error('Session invalid')
-
-    } catch (error) {
-      console.warn('Session check failed:', error)
-      // Only reset if we were previously authenticated
-      if (prevStatus === 'AUTHENTICATED') {
-        resetState()
-      } else {
-        state.value.status = 'UNAUTHENTICATED'
-      }
+      return false
+    } catch (e) {
+      console.error('Refresh failed', e)
       return false
     }
   }
@@ -374,6 +385,8 @@ export const useAuth = () => {
     // Actions
     login,
     logout,
-    checkSession
+    checkSession,
+    refreshSession,
+    getAuthHeaders
   }
 }

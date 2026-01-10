@@ -55,22 +55,12 @@ export interface FullProfile extends Profile {
     privacy: PrivacySettings
 }
 
-const getHeaders = (walletAddress?: string) => {
-    const headers: Record<string, string> = {
-        'Content-Type': 'application/json'
-    }
-    if (walletAddress) {
-        headers['X-Wallet-Address'] = walletAddress
-    }
-    return headers
-}
+import { apiClient } from '@/utils/apiClient'
 
 export const profileApi = {
     async getProfile(walletAddress: string): Promise<FullProfile> {
-        const response = await fetch('/api/profile', {
+        const response = await apiClient.fetch('/api/profile', {
             method: 'GET',
-            credentials: 'include',
-            headers: getHeaders(walletAddress)
         })
 
         if (!response.ok) {
@@ -86,10 +76,8 @@ export const profileApi = {
         walletAddress: string,
         data: Partial<Pick<Profile, 'display_name' | 'username' | 'email' | 'bio' | 'avatar_url' | 'phone' | 'shipping_address'>>
     ): Promise<Profile> {
-        const response = await fetch('/api/profile', {
+        const response = await apiClient.fetch('/api/profile', {
             method: 'PUT',
-            credentials: 'include',
-            headers: getHeaders(walletAddress),
             body: JSON.stringify(data)
         })
 
@@ -107,10 +95,8 @@ export const profileApi = {
         walletAddress: string,
         data: Partial<Omit<UserSettings, 'id' | 'user_id' | 'updated_at'>>
     ): Promise<UserSettings> {
-        const response = await fetch('/api/profile/settings', {
+        const response = await apiClient.fetch('/api/profile/settings', {
             method: 'PUT',
-            credentials: 'include',
-            headers: getHeaders(walletAddress),
             body: JSON.stringify(data)
         })
 
@@ -128,10 +114,8 @@ export const profileApi = {
         walletAddress: string,
         data: Partial<Omit<NotificationSettings, 'id' | 'user_id' | 'updated_at'>>
     ): Promise<NotificationSettings> {
-        const response = await fetch('/api/profile/notifications', {
+        const response = await apiClient.fetch('/api/profile/notifications', {
             method: 'PUT',
-            credentials: 'include',
-            headers: getHeaders(walletAddress),
             body: JSON.stringify(data)
         })
 
@@ -149,10 +133,8 @@ export const profileApi = {
         walletAddress: string,
         data: Partial<Omit<PrivacySettings, 'id' | 'user_id' | 'updated_at'>>
     ): Promise<PrivacySettings> {
-        const response = await fetch('/api/profile/privacy', {
+        const response = await apiClient.fetch('/api/profile/privacy', {
             method: 'PUT',
-            credentials: 'include',
-            headers: getHeaders(walletAddress),
             body: JSON.stringify(data)
         })
 
@@ -167,10 +149,8 @@ export const profileApi = {
     },
 
     async deleteAccount(walletAddress: string): Promise<void> {
-        const response = await fetch('/api/profile', {
+        const response = await apiClient.fetch('/api/profile', {
             method: 'DELETE',
-            credentials: 'include',
-            headers: getHeaders(walletAddress)
         })
 
         if (!response.ok) {

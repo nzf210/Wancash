@@ -22,15 +22,7 @@ export interface UpdateAddressBookEntry {
     chain_id?: number
 }
 
-const getHeaders = (walletAddress?: string) => {
-    const headers: Record<string, string> = {
-        'Content-Type': 'application/json'
-    }
-    if (walletAddress) {
-        headers['X-Wallet-Address'] = walletAddress
-    }
-    return headers
-}
+import { apiClient } from '@/utils/apiClient'
 
 export const addressBookApi = {
     async getAddressBook(walletAddress: string, chainId?: number): Promise<AddressBookEntry[]> {
@@ -39,10 +31,8 @@ export const addressBookApi = {
             url += `?chainId=${chainId}`
         }
 
-        const response = await fetch(url, {
+        const response = await apiClient.fetch(url, {
             method: 'GET',
-            credentials: 'include',
-            headers: getHeaders(walletAddress)
         })
 
         if (!response.ok) {
@@ -55,10 +45,8 @@ export const addressBookApi = {
     },
 
     async createEntry(walletAddress: string, data: CreateAddressBookEntry): Promise<AddressBookEntry> {
-        const response = await fetch('/api/address-book', {
+        const response = await apiClient.fetch('/api/address-book', {
             method: 'POST',
-            credentials: 'include',
-            headers: getHeaders(walletAddress),
             body: JSON.stringify(data)
         })
 
@@ -73,10 +61,8 @@ export const addressBookApi = {
     },
 
     async updateEntry(walletAddress: string, id: string, data: UpdateAddressBookEntry): Promise<AddressBookEntry> {
-        const response = await fetch(`/api/address-book/${id}`, {
+        const response = await apiClient.fetch(`/api/address-book/${id}`, {
             method: 'PUT',
-            credentials: 'include',
-            headers: getHeaders(walletAddress),
             body: JSON.stringify(data)
         })
 
@@ -91,10 +77,8 @@ export const addressBookApi = {
     },
 
     async deleteEntry(walletAddress: string, id: string): Promise<void> {
-        const response = await fetch(`/api/address-book/${id}`, {
+        const response = await apiClient.fetch(`/api/address-book/${id}`, {
             method: 'DELETE',
-            credentials: 'include',
-            headers: getHeaders(walletAddress)
         })
 
         if (!response.ok) {

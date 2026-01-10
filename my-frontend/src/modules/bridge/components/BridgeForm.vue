@@ -131,7 +131,7 @@
                                             'Select Token' }}
                                         </div>
                                         <div class="text-sm text-gray-500 dark:text-gray-400">{{ fromToken?.symbol || ''
-                                        }}
+                                            }}
                                         </div>
                                     </div>
                                 </div>
@@ -163,7 +163,7 @@
                                                         token.symbol }}</div>
                                                     <div class="text-xs text-gray-500 dark:text-gray-400 truncate">{{
                                                         token.name
-                                                    }}</div>
+                                                        }}</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -257,7 +257,7 @@
                                         </div>
                                         <div class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{{
                                             toChain?.type || 'Network'
-                                        }}</div>
+                                            }}</div>
                                     </div>
                                 </div>
                                 <ChevronDownIcon
@@ -351,7 +351,7 @@
                             <span>Estimated Time</span>
                         </div>
                         <span class="font-medium text-xs sm:text-sm text-gray-900 dark:text-white">{{ timeEstimate
-                        }}</span>
+                            }}</span>
                     </div>
                     <div class="flex justify-between items-center py-1">
                         <div class="flex items-center space-x-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
@@ -402,6 +402,90 @@
     <AddressBookDialog :open="showAddressBook" :address-book="addressBook" :address-book-search="addressBookSearch"
         @update:open="showAddressBook = $event" @update:address-book-search="addressBookSearch = $event"
         @select-contact="selectContact" />
+
+    <!-- Bridge Confirmation Dialog -->
+    <Dialog :open="showConfirmDialog" @update:open="showConfirmDialog = $event">
+        <DialogContent class="sm:max-w-md">
+            <DialogHeader>
+                <DialogTitle>Review Transaction</DialogTitle>
+                <DialogDescription>
+                    Please review your bridge transaction details before confirming.
+                </DialogDescription>
+            </DialogHeader>
+
+            <div class="space-y-4 py-4">
+                <!-- Source -->
+                <div class="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-2">
+                    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">From</span>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <TokenIcon v-if="fromToken" :token="fromToken" class="w-6 h-6" />
+                            <span class="font-medium text-gray-900 dark:text-white">{{ amount }} {{ fromToken?.symbol
+                            }}</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 text-sm text-gray-500">
+                            <ChainIcon v-if="fromChain" :chain="fromChain" class="w-4 h-4" />
+                            <span>{{ fromChain?.name }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Arrow -->
+                <div class="flex justify-center -my-2 relative z-10">
+                    <div class="bg-gray-100 dark:bg-gray-700 p-1.5 rounded-full ring-4 ring-white dark:ring-gray-900">
+                        <ArrowRightIcon class="w-4 h-4 text-gray-500" />
+                    </div>
+                </div>
+
+                <!-- Destination -->
+                <div class="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-2">
+                    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">To</span>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <TokenIcon v-if="toToken" :token="toToken" class="w-6 h-6" />
+                            <span class="font-medium text-gray-900 dark:text-white">~{{
+                                formatTokenBalance(estimatedAmount)
+                            }} {{ toToken?.symbol }}</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 text-sm text-gray-500">
+                            <ChainIcon v-if="toChain" :chain="toChain" class="w-4 h-4" />
+                            <span>{{ toChain?.name }}</span>
+                        </div>
+                    </div>
+                    <div v-if="destinationAddress"
+                        class="text-xs text-gray-500 pt-1 border-t border-gray-200 dark:border-gray-700 mt-2">
+                        To: <span class="font-mono">{{ shortenAddress(destinationAddress) }}</span>
+                    </div>
+                </div>
+
+                <!-- Fees & Time -->
+                <div class="text-sm space-y-2 pt-2">
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Bridge Fee</span>
+                        <span class="font-medium text-gray-900 dark:text-white">{{ bridgeFee }} {{ fromToken?.symbol
+                        }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Estimated Time</span>
+                        <span class="font-medium text-gray-900 dark:text-white">{{ timeEstimate }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <DialogFooter class="flex-col sm:justify-between gap-2">
+                <DialogClose as-child>
+                    <button
+                        class="w-full sm:w-auto px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700">
+                        Cancel
+                    </button>
+                </DialogClose>
+                <button @click="confirmBridge"
+                    class="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                    Confirm Bridge
+                </button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
 </template>
 
 <script setup lang="ts">
@@ -432,6 +516,15 @@ import {
 import ChainIcon from './ChainIcon.vue'
 import TokenIcon from './TokenIcon.vue'
 import AddressBookDialog from '@/modules/send/components/AddressBookDialog.vue'
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+    DialogDescription,
+    DialogClose
+} from '@/components/ui/dialog'
 
 // Wallet connection
 const { address: walletAddress, chainId } = useConnection()
@@ -623,6 +716,17 @@ const selectFromChain = (chain: Chain, e: MouseEvent) => {
     e.stopPropagation()
     bridgeStore.setFromChain(chain)
     showFromChains.value = false
+
+    // Check for network mismatch
+    if (walletAddress.value && chainId.value && chain.id !== chainId.value) {
+        toast.warning(`Please switch your wallet network to ${chain.name}`, {
+            duration: 5000,
+            action: {
+                label: 'Dismiss',
+                onClick: () => { }
+            }
+        })
+    }
 }
 
 const selectToChain = (chain: Chain, e: MouseEvent) => {
@@ -654,7 +758,20 @@ const timeEstimate = computed(() => {
     return fromChain.value.type === 'Layer 2' || toChain.value.type === 'Layer 2' ? '1-3 minutes' : '2-5 minutes'
 })
 
-const initiateBridge = async () => {
+// Dialog State
+const showConfirmDialog = ref(false)
+
+const initiateBridge = () => {
+    // Check if network matches first
+    if (fromChain.value && chainId.value && fromChain.value.id !== chainId.value) {
+        toast.error(`Please switch network to ${fromChain.value.name} to continue`)
+        return
+    }
+    showConfirmDialog.value = true
+}
+
+const confirmBridge = async () => {
+    showConfirmDialog.value = false
     await bridgeAction()
 }
 </script>

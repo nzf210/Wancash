@@ -4,7 +4,7 @@ import { useRouter } from "vue-router"
 export const useNavigate = () => {
   const router = useRouter()
 
-  const goToPortfolio = () => router.push({ name: 'portfolio' })
+  const goToPortfolio = () => router.push({ name: 'Portfolio' })
   const goToProfile = () => router.push({ name: 'User Profile' })
   const goToSettings = () => router.push({ name: 'settings' })
   const goToTransfer = () => router.push({ name: 'transfer' })
