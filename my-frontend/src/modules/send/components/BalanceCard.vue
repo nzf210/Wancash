@@ -1,7 +1,12 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
 
-defineProps<{ walletBalance: number; tokenPrice: number }>()
+defineProps<{
+  walletBalance: number
+  tokenPrice: number
+  nativeBalance: number
+  nativeCurrencySymbol: string
+}>()
 const emit = defineEmits<{
   refresh: []
 }>()
@@ -42,7 +47,7 @@ const handleRefresh = async () => {
       </button>
 
       <div class="relative p-8">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div class="text-center md:text-left">
             <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Available Token Balance</p>
             <div class="flex items-center justify-center md:justify-start gap-3">
@@ -54,6 +59,20 @@ const handleRefresh = async () => {
                 </svg>
               </div>
               <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ formatNumber(walletBalance) }} WCH</p>
+            </div>
+          </div>
+          <div class="text-center">
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Native Coin Balance</p>
+            <div class="flex items-center justify-center gap-2">
+              <div
+                class="w-8 h-8 rounded-lg bg-gradient-to-r from-yellow-500 to-orange-400 flex items-center justify-center">
+                <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.736 6.979C9.208 6.193 9.696 6 10 6c.304 0 .792.193 1.264.979a1 1 0 001.715-1.029C12.279 4.784 11.232 4 10 4s-2.279.784-2.979 1.95c-.285.475-.507 1-.67 1.55H6a1 1 0 000 2h.013a9.358 9.358 0 000 1H6a1 1 0 100 2h.351c.163.55.385 1.075.67 1.55C7.721 15.216 8.768 16 10 16s2.279-.784 2.979-1.95a1 1 0 10-1.715-1.029c-.472.786-.96.979-1.264.979-.304 0-.792-.193-1.264-.979a4.265 4.265 0 01-.264-.521H10a1 1 0 100-2H8.017a7.36 7.36 0 010-1H10a1 1 0 100-2H8.472a4.265 4.265 0 01.264-.521z" />
+                </svg>
+              </div>
+              <p class="text-xl font-bold text-yellow-600 dark:text-yellow-400">{{ formatNumber(nativeBalance) }} {{
+                nativeCurrencySymbol }}</p>
             </div>
           </div>
           <div class="text-center">

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import Header from './SendHeader.vue'
@@ -18,8 +18,8 @@ import { useConfig, useConnection } from '@wagmi/vue'
 import { useChain } from '@/app/composables/useChain'
 import { wancashAbi, wancashContractAddress } from '@/app/services/contracts'
 import { watchDebounced } from '@vueuse/core'
-import { readContract, writeContract, waitForTransactionReceipt } from '@wagmi/core'
-import { parseEther, formatUnits, type Hash } from 'viem'
+import { readContract, writeContract, waitForTransactionReceipt, getBalance } from '@wagmi/core'
+import { parseEther, type Hash } from 'viem'
 import { addressBookService, type Contact } from '../services/addressBook'
 
 const { isConnected, address: walletAddress, chainId } = useConnection()
@@ -34,6 +34,14 @@ const contractAddress = computed(() => {
 const rawBalance = ref<bigint | null>(null)
 const balanceLoading = ref(true)
 const balanceError = ref(false)
+
+// Native coin balance
+const nativeBalance = ref<number>(0)
+const nativeBalanceLoading = ref(true)
+
+// Get current chain info for native currency symbol
+const currentChainInfo = computed(() => getChainInfo(chainId.value || 0))
+const nativeCurrencySymbol = computed(() => currentChainInfo.value?.symbol || 'ETH')
 
 // Manual control query key
 const queryKey = computed(() => [
@@ -92,8 +100,32 @@ const refreshBalance = async () => {
   }
 }
 
+// Fetch native coin balance (BNB, ETH, etc.)
+const fetchNativeBalance = async () => {
+  if (!isConnected.value || !walletAddress.value) return
+  try {
+    nativeBalanceLoading.value = true
+    const balance = await getBalance(config, {
+      address: walletAddress.value as `0x${string}`,
+    })
+    nativeBalance.value = Number(balance.formatted)
+  } catch (err) {
+    console.error('Native balance fetch error:', err)
+  } finally {
+    nativeBalanceLoading.value = false
+  }
+}
+
+// Watch for chain changes to update native balance reactively
+watch(chainId, () => {
+  if (isConnected.value && walletAddress.value) {
+    fetchNativeBalance()
+  }
+})
+
 onMounted(() => {
   refreshBalance()
+  fetchNativeBalance()
 })
 
 // Interfaces (kept for type safety)
@@ -474,7 +506,8 @@ onMounted(() => {
       <WalletConnectionBanner v-if="!walletConnected" @connect-wallet="connectWallet" />
 
       <div v-if="walletConnected">
-        <BalanceCard :wallet-balance="walletBalance" :token-price="tokenPrice" @refresh="() => refreshBalance()" />
+        <BalanceCard :wallet-balance="walletBalance" :token-price="tokenPrice" :native-balance="nativeBalance"
+          :native-currency-symbol="nativeCurrencySymbol" @refresh="() => { refreshBalance(); fetchNativeBalance() }" />
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div class="lg:col-span-2">
