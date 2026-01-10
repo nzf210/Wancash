@@ -47,6 +47,26 @@ const STORAGE_KEY = 'wancash_transactions';
 const MAX_RECORDS = 100;
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
+// Helper to get auth headers consistently with X-Wallet-Address
+const getAuthHeaders = (additionalHeaders: Record<string, string> = {}) => {
+    const headers: Record<string, string> = { ...additionalHeaders };
+
+    // Get wallet address from localStorage (auth_state)
+    const savedAuth = localStorage.getItem('auth_state');
+    if (savedAuth) {
+        try {
+            const { address } = JSON.parse(savedAuth);
+            if (address) {
+                headers['X-Wallet-Address'] = address;
+            }
+        } catch (e) {
+            console.warn('Failed to parse auth_state for headers');
+        }
+    }
+
+    return headers;
+};
+
 // Helper to convert API record to local format
 const mapApiToLocal = (apiTx: ApiTransactionRecord): TransactionRecord => ({
     id: apiTx.id,
@@ -183,7 +203,7 @@ export const transactionHistoryService = {
         // First save to localStorage
         const localTx = this.addLocal({
             type: tx.type,
-            hash: '', // No hash yet
+            hash: '', // No hash yet (DB now allows NULL)
             from: tx.fromAddress,
             to: tx.toAddress,
             amount: tx.amount,
@@ -201,7 +221,7 @@ export const transactionHistoryService = {
         try {
             const response = await fetch(`${API_BASE}/api/transactions`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
                 credentials: 'include',
                 body: JSON.stringify(tx),
             });
@@ -238,7 +258,7 @@ export const transactionHistoryService = {
         try {
             const response = await fetch(`${API_BASE}/api/transactions/${id}`, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
                 credentials: 'include',
                 body: JSON.stringify({ status: 'success', txHash }),
             });
@@ -263,7 +283,7 @@ export const transactionHistoryService = {
         try {
             const response = await fetch(`${API_BASE}/api/transactions/${id}`, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
                 credentials: 'include',
                 body: JSON.stringify({ status: 'failed' }),
             });
@@ -291,7 +311,10 @@ export const transactionHistoryService = {
 
             const response = await fetch(
                 `${API_BASE}/api/transactions?${params.toString()}`,
-                { credentials: 'include' }
+                {
+                    headers: getAuthHeaders(),
+                    credentials: 'include'
+                }
             );
 
             if (!response.ok) {
@@ -329,7 +352,7 @@ export const transactionHistoryService = {
             try {
                 await fetch(`${API_BASE}/api/transactions`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
                     credentials: 'include',
                     body: JSON.stringify({
                         type: tx.type,
@@ -353,7 +376,7 @@ export const transactionHistoryService = {
                         // Also update status to success in backend
                         await fetch(`${API_BASE}/api/transactions/${data.data.id}`, {
                             method: 'PATCH',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
                             credentials: 'include',
                             body: JSON.stringify({ status: 'success', txHash: tx.hash }),
                         });
