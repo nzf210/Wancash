@@ -1,9 +1,7 @@
 // composables/useTokenBalance.ts
 import { computed, watch, ref, onMounted, getCurrentInstance } from 'vue'
-import {  useConnection } from '@wagmi/vue'
+import { useConnection } from '@wagmi/vue'
 import { useBalanceStore } from '@/app/stores/useBalanceStore'
-// import { wagmiContractConfig } from '@/app/services/contracts'
-// import type { UseReadContractReturnType } from '@wagmi/vue'
 
 interface UseTokenBalanceOptions {
   contractAddress?: string
@@ -46,7 +44,7 @@ export function useTokenBalance(options: UseTokenBalanceOptions = {}): TokenBala
   }
 
   const balanceStore = useBalanceStore()
-  const { chainId: connectedChainId, address: connectedAddress  } = useConnection()
+  const { chainId: connectedChainId, address: connectedAddress } = useConnection()
 
   // Debug logging
   console.log('useTokenBalance initialized with:', {
@@ -89,7 +87,7 @@ export function useTokenBalance(options: UseTokenBalanceOptions = {}): TokenBala
     }
 
     const defaultAddr = balanceStore.defaultContractAddresses[chainIdValue] ||
-                        balanceStore.defaultContractAddresses[1]
+      balanceStore.defaultContractAddresses[1]
     console.log('Selected contract address for chain', chainIdValue, ':', defaultAddr)
     return defaultAddr
   }

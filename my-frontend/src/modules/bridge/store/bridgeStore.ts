@@ -95,7 +95,7 @@ export const useBridgeStore = defineStore('bridge', {
     loadHistory() {
       const bridgeTxs = transactionHistoryService.getByType('bridge')
       this.history = bridgeTxs.map(tx => ({
-        id: tx.id,
+        id: typeof tx.id === 'number' ? tx.id : Date.now(),
         fromChain: tx.fromChainName || 'Unknown',
         toChain: tx.toChainName || 'Unknown',
         token: tx.tokenSymbol,
