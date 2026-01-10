@@ -59,12 +59,19 @@ export const useAuth = () => {
     if (state.value.walletAddress) {
       headers['X-Wallet-Address'] = state.value.walletAddress
     }
+
+    console.log('🔑 [useAuth] getAuthHeaders called:', {
+      hasWalletAddress: !!state.value.walletAddress,
+      walletAddress: state.value.walletAddress,
+      headers
+    })
+
     return headers
   }
 
   // Helper to update state
   const resetState = () => {
-    console.log('🔄 resetting auth state')
+    console.log('🔄 [useAuth] Resetting auth state')
     state.value = {
       status: 'UNAUTHENTICATED',
       user: {},
@@ -73,11 +80,13 @@ export const useAuth = () => {
       lastChecked: Date.now()
     }
     localStorage.removeItem('auth_state')
+    console.log('✅ [useAuth] Auth state reset complete')
   }
 
   // --- API INTERACTION ---
 
   const requestNonce = async (address: string, chainId: number) => {
+    console.log('🔑 [useAuth] Requesting nonce for:', { address, chainId })
     try {
       nonceSchema.parse({ address, chainId })
 
@@ -92,9 +101,11 @@ export const useAuth = () => {
         throw new Error('Failed to get nonce')
       }
 
-      return await response.json()
+      const data = await response.json()
+      console.log('✅ [useAuth] Nonce received successfully')
+      return data
     } catch (error) {
-      console.error('Nonce error:', error)
+      console.error('❌ [useAuth] Nonce error:', error)
       throw error
     }
   }
@@ -133,7 +144,15 @@ export const useAuth = () => {
   }
 
   const login = async (address: string, chainId: number) => {
-    if (state.value.status === 'CHECKING') return
+    console.log('\n🔐 [useAuth] ========== START LOGIN ==========')
+    console.log('🔐 [useAuth] Address:', address)
+    console.log('🔐 [useAuth] Chain ID:', chainId)
+    console.log('🔐 [useAuth] Current status:', state.value.status)
+
+    if (state.value.status === 'CHECKING') {
+      console.log('⚠️ [useAuth] Already checking, aborting')
+      return
+    }
 
     state.value.status = 'CHECKING'
     state.value.walletAddress = address
@@ -144,16 +163,20 @@ export const useAuth = () => {
       const { nonce, message } = await requestNonce(address, chainId)
 
       // 2. Sign Message
+      console.log('🔐 [useAuth] Requesting signature...')
       const signature = await signMessage(address, message)
       if (!signature) throw new Error('Signature failed')
+      console.log('✅ [useAuth] Signature obtained')
 
       // 3. Verify
+      console.log('🔐 [useAuth] Sending verification request...')
       const verifyResponse = await fetch('/api/auth/verify', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...getAuthHeaders()
         },
+        credentials: 'include',
         body: JSON.stringify({
           address,
           signature,
@@ -164,10 +187,12 @@ export const useAuth = () => {
 
       if (!verifyResponse.ok) {
         const err = await verifyResponse.json()
+        console.log('❌ [useAuth] Verification failed:', err)
         throw new Error(err.error || 'Verification failed')
       }
 
       const data = await verifyResponse.json()
+      console.log('✅ [useAuth] Verification successful:', data)
 
       // 4. Update State
       state.value.status = 'AUTHENTICATED'
@@ -175,18 +200,21 @@ export const useAuth = () => {
       state.value.lastChecked = Date.now()
 
       // Persist for quick restore
-      localStorage.setItem('auth_state', JSON.stringify({
+      const authState = {
         address,
         chainId,
         user: data.user,
         timestamp: Date.now()
-      }))
+      }
+      localStorage.setItem('auth_state', JSON.stringify(authState))
+      console.log('✅ [useAuth] Auth state persisted to localStorage')
 
       toast.success('Successfully connected!')
+      console.log('🔐 [useAuth] ========== LOGIN SUCCESS ==========\n')
       return true
 
     } catch (error: any) {
-      console.error('Login failed:', error)
+      console.error('❌ [useAuth] Login failed:', error)
       resetState()
       state.value.status = 'ERROR'
 
@@ -196,6 +224,7 @@ export const useAuth = () => {
       } else {
         toast.error(msg)
       }
+      console.log('🔐 [useAuth] ========== LOGIN FAILED ==========\n')
       return false
     }
   }
@@ -215,14 +244,24 @@ export const useAuth = () => {
   }
 
   const checkSession = async (force = false) => {
+    console.log('\n🔍 [useAuth] ========== CHECK SESSION ==========')
+    console.log('🔍 [useAuth] Force:', force)
+    console.log('🔍 [useAuth] Current status:', state.value.status)
+    console.log('🔍 [useAuth] Wallet address:', state.value.walletAddress)
+    console.log('🔍 [useAuth] Is connected:', isConnected.value)
+
     // Debounce/Throttle check
     const now = Date.now()
     if (!force && isAuthenticated.value && (now - state.value.lastChecked < 30000)) {
+      console.log('⏭️ [useAuth] Skipping check (recently checked)')
+      console.log('🔍 [useAuth] ========== END (cached) ==========\n')
       return true
     }
 
     // Don't check if we haven't even tried to restore or connect yet
     if (!state.value.walletAddress && !isConnected.value) {
+      console.log('⏭️ [useAuth] Skipping check (no wallet address, not connected)')
+      console.log('🔍 [useAuth] ========== END (skip) ==========\n')
       return false
     }
 
@@ -232,49 +271,72 @@ export const useAuth = () => {
     }
 
     try {
+      console.log('🔍 [useAuth] Fetching /api/me with headers:', getAuthHeaders())
       const res = await fetch('/api/me', {
-        headers: getAuthHeaders()
+        headers: getAuthHeaders(),
+        credentials: 'include'
       })
+
+      console.log('🔍 [useAuth] /api/me Response status:', res.status)
 
       if (res.ok) {
         state.value.status = 'AUTHENTICATED'
         state.value.lastChecked = now
+        console.log('✅ [useAuth] Session valid')
+        console.log('🔍 [useAuth] ========== END (success) ==========\n')
         return true
       }
 
       // Attempt refresh
-      return await refreshSession()
+      console.log('⚠️ [useAuth] Session check failed, attempting refresh...')
+      const refreshed = await refreshSession()
+      console.log('🔍 [useAuth] ========== END (attempted refresh) ==========\n')
+      return refreshed
 
     } catch (error) {
-      console.warn('Session check failed:', error)
+      console.warn('❌ [useAuth] Session check error:', error)
       // Only reset if we were previously authenticated
       if (prevStatus === 'AUTHENTICATED') {
+        console.log('🔍 [useAuth] Was authenticated, resetting state')
         resetState()
       } else {
+        console.log('🔍 [useAuth] Was not authenticated, setting UNAUTHENTICATED')
         state.value.status = 'UNAUTHENTICATED'
       }
+      console.log('🔍 [useAuth] ========== END (error) ==========\n')
       return false
     }
   }
 
   const refreshSession = async (): Promise<boolean> => {
+    console.log('\n🔄 [useAuth] ========== REFRESH SESSION ==========')
     const now = Date.now()
     try {
+      console.log('🔄 [useAuth] Calling /api/auth/refresh...')
       const refreshRes = await fetch('/api/auth/refresh', {
         headers: {
           'X-No-Retry': 'true',
           ...getAuthHeaders()
-        }
+        },
+        credentials: 'include'
       })
+
+      console.log('🔄 [useAuth] Refresh response status:', refreshRes.status)
 
       if (refreshRes.ok) {
         state.value.status = 'AUTHENTICATED'
         state.value.lastChecked = now
+        console.log('✅ [useAuth] Refresh successful')
+        console.log('🔄 [useAuth] ========== END (success) ==========\n')
         return true
       }
+
+      console.log('❌ [useAuth] Refresh failed with status:', refreshRes.status)
+      console.log('🔄 [useAuth] ========== END (failed) ==========\n')
       return false
     } catch (e) {
-      console.error('Refresh failed', e)
+      console.error('❌ [useAuth] Refresh error:', e)
+      console.log('🔄 [useAuth] ========== END (error) ==========\n')
       return false
     }
   }

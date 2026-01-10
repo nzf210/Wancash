@@ -49,25 +49,43 @@ const API_BASE = import.meta.env.VITE_API_URL || '';
 
 // Helper to get auth headers consistently with X-Wallet-Address and Authorization
 const getAuthHeaders = (additionalHeaders: Record<string, string> = {}) => {
+    console.log('\n📦 [txHistory] ========== GET AUTH HEADERS ==========')
     const headers: Record<string, string> = { ...additionalHeaders };
 
     // Get wallet address and token from localStorage (auth_state)
     const savedAuth = localStorage.getItem('auth_state');
+    console.log('📦 [txHistory] Saved auth from localStorage:', savedAuth ? 'FOUND' : 'NOT FOUND')
+
     if (savedAuth) {
         try {
             const parsed = JSON.parse(savedAuth);
             const { address, token } = parsed;
 
+            console.log('📦 [txHistory] Parsed auth state:', {
+                hasAddress: !!address,
+                hasToken: !!token,
+                address: address || 'N/A'
+            })
+
             if (address) {
                 headers['X-Wallet-Address'] = address;
+                console.log('✅ [txHistory] Added X-Wallet-Address header:', address)
+            } else {
+                console.log('⚠️ [txHistory] No address in auth_state')
             }
             if (token) {
                 headers['Authorization'] = `Bearer ${token}`;
+                console.log('✅ [txHistory] Added Authorization header')
+            } else {
+                console.log('⚠️ [txHistory] No token in auth_state (this is expected - using cookies)')
             }
         } catch (e) {
-            console.warn('Failed to parse auth_state for headers');
+            console.warn('❌ [txHistory] Failed to parse auth_state:', e);
         }
     }
+
+    console.log('📦 [txHistory] Final headers:', headers)
+    console.log('📦 [txHistory] ========== END ==========\n')
 
     return headers;
 };
