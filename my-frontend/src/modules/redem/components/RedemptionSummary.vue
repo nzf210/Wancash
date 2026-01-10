@@ -38,9 +38,11 @@
 
                     <div
                         class="p-6 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 rounded-xl border border-blue-200 dark:border-blue-800">
-                        <div class="flex justify-between items-center">
-                            <span class="text-xl font-bold text-gray-900 dark:text-white">Total Tokens:</span>
-                            <span class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ totalToken }}
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                            <span class="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">Total
+                                Tokens:</span>
+                            <span class="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400">{{ totalToken
+                                }}
                                 Tokens</span>
                         </div>
                     </div>

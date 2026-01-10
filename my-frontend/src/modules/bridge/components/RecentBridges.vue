@@ -1,7 +1,7 @@
 <template>
     <div class="mt-8">
         <div class="flex items-center justify-between mb-4">
-            <h3 class="text-xl font-bold text-gray-900 dark:text-white">Recent Bridges</h3>
+            <h3 class="text-lg md:text-xl font-bold text-gray-900 dark:text-white">Recent Bridges</h3>
             <router-link to="/bridge/history"
                 class="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center space-x-1">
                 <span>View All</span>

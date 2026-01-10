@@ -1,143 +1,188 @@
 <template>
-    <div class="p-8">
-        <div class="grid lg:grid-cols-2 gap-8">
+    <div class="p-2 sm:p-4 md:p-6 lg:p-8 max-w-4xl mx-auto">
+        <div class="grid lg:grid-cols-2 gap-4 md:gap-6 lg:gap-8">
             <!-- From Section -->
-            <div class="space-y-6">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">From</h3>
-                    <div class="flex items-center gap-4">
-                        <div v-if="fromChain?.id === chainId" class="text-sm text-gray-500 dark:text-gray-400">
-                            <span class="font-semibold text-yellow-600 dark:text-yellow-400">{{
-                                formatNumber(nativeBalance) }} {{ nativeCurrencySymbol }}</span>
-                        </div>
-                        <div class="text-sm text-gray-500 dark:text-gray-400">
-                            Balance: <span class="font-semibold text-gray-900 dark:text-white">{{ formattedBalance }} {{
-                                fromToken?.symbol }}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Source Address -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Source
-                        Address</label>
-                    <div class="p-3 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-2">
-                                <div
-                                    class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
-                                    <PersonIcon class="w-4 h-4 text-white" />
-                                </div>
-                                <div>
-                                    <div class="text-sm font-medium text-gray-900 dark:text-white">Your Wallet</div>
-                                    <div class="text-xs text-gray-500 dark:text-gray-400 font-mono">{{
-                                        shortenAddress(walletAddress) }}</div>
-                                </div>
-                            </div>
-                            <button @click="copyAddress(walletAddress)"
-                                class="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                                <CopyIcon class="w-4 h-4 text-gray-500" />
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Chain Selection -->
-                <div ref="fromChainDropdownRef" class="relative group">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Network</label>
-                    <div @click="toggleFromChains($event)"
-                        class="relative cursor-pointer p-4 bg-gray-50 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl hover:border-blue-500 dark:hover:border-blue-500 transition-all duration-300">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-3">
-                                <div
-                                    class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center">
-                                    <ChainIcon :chain="fromChain" class="w-6 h-6 text-white" />
-                                </div>
-                                <div>
-                                    <div class="font-semibold text-gray-900 dark:text-white">{{ fromChain?.name ||
-                                        'Select Chain' }}
-                                    </div>
-                                    <div class="text-sm text-gray-500 dark:text-gray-400">{{ fromChain?.type ||
-                                        'Network' }}</div>
-                                </div>
-                            </div>
-                            <ChevronDownIcon class="w-5 h-5 text-gray-400 transition-transform duration-300"
-                                :class="{ 'rotate-180': showFromChains }" />
-                        </div>
-                    </div>
-
-                    <!-- Chain Dropdown -->
-                    <Transition name="slide-down">
-                        <div v-if="showFromChains"
-                            class="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl z-50 overflow-hidden">
-                            <div class="max-h-64 overflow-y-auto">
-                                <div v-for="chain in filteredSourceChains" :key="chain.id"
-                                    @click="selectFromChain(chain, $event)"
-                                    class="flex items-center space-x-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors">
-                                    <div
-                                        class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center">
-                                        <ChainIcon :chain="chain" class="w-5 h-5 text-white" />
-                                    </div>
-                                    <div class="flex-1">
-                                        <div class="font-medium text-gray-900 dark:text-white">{{ chain.name }}</div>
-                                        <div class="text-xs text-gray-500 dark:text-gray-400">{{ chain.type }}</div>
-                                    </div>
-                                    <div v-if="chain.fee" class="text-xs font-medium text-gray-700 dark:text-gray-300">
-                                        {{ chain.fee }}%
-                                    </div>
-                                </div>
-                                <div v-if="filteredSourceChains.length === 0"
-                                    class="p-4 text-center text-gray-500 dark:text-gray-400">
-                                    No available chains
-                                </div>
-                            </div>
-                        </div>
-                    </Transition>
-                </div>
-
-                <!-- Token Selection -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Token</label>
+            <div
+                class="bg-gray-50 dark:bg-gray-800/50 rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 border border-gray-200 dark:border-gray-700">
+                <div class="flex items-center gap-2 mb-4">
                     <div
-                        class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700">
-                        <div class="flex items-center justify-between mb-3">
-                            <div class="flex items-center space-x-3">
-                                <div
-                                    class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                                    <TokenIcon :token="fromToken" class="w-6 h-6 text-white" />
-                                </div>
-                                <div>
-                                    <div class="font-semibold text-gray-900 dark:text-white">{{ fromToken?.name ||
-                                        'Select Token' }}
+                        class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-400 flex items-center justify-center">
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd"
+                                d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">From</h3>
+                </div>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                    <div v-if="fromChain?.id === chainId" class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                        <span class="font-semibold text-yellow-600 dark:text-yellow-400">{{
+                            formatNumber(nativeBalance) }} {{ nativeCurrencySymbol }}</span>
+                    </div>
+                    <div class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                        Balance: <span class="font-semibold text-gray-900 dark:text-white">{{ formattedBalance }} {{
+                            fromToken?.symbol }}</span>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+
+                    <!-- Source Address -->
+                    <div>
+                        <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Source
+                            Address</label>
+                        <div
+                            class="p-2 sm:p-3 bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl border border-gray-200 dark:border-gray-700">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <div class="flex items-center space-x-2">
+                                    <div
+                                        class="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
+                                        <PersonIcon class="w-3 h-3 sm:w-4 sm:h-4 text-white" />
                                     </div>
-                                    <div class="text-sm text-gray-500 dark:text-gray-400">{{ fromToken?.symbol || '' }}
+                                    <div>
+                                        <div class="text-xs sm:text-sm font-medium text-gray-900 dark:text-white">Your
+                                            Wallet</div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400 font-mono break-all">{{
+                                            shortenAddress(walletAddress) }}</div>
+                                    </div>
+                                </div>
+                                <button @click="copyAddress(walletAddress)"
+                                    class="p-1.5 sm:p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors self-start sm:self-center">
+                                    <CopyIcon class="w-3 h-3 sm:w-4 sm:h-4 text-gray-500" />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chain Selection -->
+                    <div ref="fromChainDropdownRef" class="relative group">
+                        <label
+                            class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Network</label>
+                        <div @click="toggleFromChains($event)"
+                            class="relative cursor-pointer p-2 sm:p-3 md:p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg sm:rounded-xl hover:border-blue-500 dark:hover:border-blue-500 transition-all duration-300">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2 sm:space-x-3">
+                                    <div
+                                        class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center">
+                                        <ChainIcon :chain="fromChain" class="w-4 h-4 sm:w-6 sm:h-6 text-white" />
+                                    </div>
+                                    <div>
+                                        <div class="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">{{
+                                            fromChain?.name ||
+                                            'Select Chain' }}
+                                        </div>
+                                        <div class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{{
+                                            fromChain?.type ||
+                                            'Network' }}</div>
+                                    </div>
+                                </div>
+                                <ChevronDownIcon
+                                    class="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 transition-transform duration-300"
+                                    :class="{ 'rotate-180': showFromChains }" />
+                            </div>
+                        </div>
+
+                        <!-- Chain Dropdown -->
+                        <Transition name="slide-down">
+                            <div v-if="showFromChains"
+                                class="absolute top-full left-0 w-full mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl z-50 overflow-hidden">
+                                <div class="max-h-64 overflow-y-auto">
+                                    <div v-for="chain in filteredSourceChains" :key="chain.id"
+                                        @click="selectFromChain(chain, $event)"
+                                        class="flex items-center space-x-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors">
+                                        <div
+                                            class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center">
+                                            <ChainIcon :chain="chain" class="w-5 h-5 text-white" />
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <div class="font-medium text-gray-900 dark:text-white truncate">{{
+                                                chain.name }}
+                                            </div>
+                                            <div class="text-xs text-gray-500 dark:text-gray-400">{{ chain.type }}</div>
+                                        </div>
+                                        <div v-if="chain.fee"
+                                            class="text-xs font-medium text-gray-700 dark:text-gray-300">
+                                            {{ chain.fee }}%
+                                        </div>
+                                    </div>
+                                    <div v-if="filteredSourceChains.length === 0"
+                                        class="p-4 text-center text-gray-500 dark:text-gray-400">
+                                        No available chains
                                     </div>
                                 </div>
                             </div>
-                            <select :value="fromToken?.symbol"
-                                class="bg-transparent border-none focus:ring-0 text-right font-medium text-gray-900 dark:text-white"
-                                @change="onFromTokenChange">
-                                <option :value="null" disabled
-                                    class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Select Token
-                                </option>
-                                <option v-for="token in availableTokens" :key="token.address" :value="token.symbol"
-                                    class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
-                                    {{ token.symbol }}
-                                </option>
-                            </select>
-                        </div>
-                        <div class="flex space-x-2 mb-3">
-                            <button v-for="percent in [25, 50, 75, 100]" :key="percent"
-                                @click="setAmountPercentage(percent)"
-                                class="flex-1 py-2 text-sm font-medium rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 transition-colors">
-                                {{ percent }}%
-                            </button>
-                        </div>
-                        <div class="relative">
-                            <input v-model="amountModel" type="number" placeholder="0.00" step="0.0001" min="0"
-                                class="w-full p-3 text-2xl font-bold text-gray-900 dark:text-white bg-transparent border-none focus:ring-0 placeholder-gray-400 dark:placeholder-gray-500 outline-none" />
-                            <div class="absolute right-0 top-0 bottom-0 flex items-center pr-3">
-                                <span class="text-gray-500 dark:text-gray-400">{{ fromToken?.symbol || '' }}</span>
+                        </Transition>
+                    </div>
+
+                    <!-- Token Selection -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Token</label>
+                        <div
+                            class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center space-x-3">
+                                    <div
+                                        class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                                        <TokenIcon :token="fromToken" class="w-6 h-6 text-white" />
+                                    </div>
+                                    <div>
+                                        <div class="font-semibold text-gray-900 dark:text-white">{{ fromToken?.name ||
+                                            'Select Token' }}
+                                        </div>
+                                        <div class="text-sm text-gray-500 dark:text-gray-400">{{ fromToken?.symbol || ''
+                                        }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Old Select Removed -->
+                                <button @click="toggleFromTokens($event)" ref="fromTokenDropdownTrigger"
+                                    class="flex items-center space-x-2 bg-white dark:bg-gray-700 rounded-lg px-3 py-1.5 border border-gray-200 dark:border-gray-600 hover:border-blue-500 transition-colors">
+                                    <span class="font-medium text-gray-900 dark:text-white">{{ fromToken?.symbol ||
+                                        'Select' }}</span>
+                                    <ChevronDownIcon class="w-4 h-4 text-gray-400 transition-transform duration-300"
+                                        :class="{ 'rotate-180': showFromTokens }" />
+                                </button>
+                            </div>
+
+                            <!-- Token Dropdown -->
+                            <div class="relative">
+                                <Transition name="slide-down">
+                                    <div v-if="showFromTokens" ref="fromTokenDropdownRef"
+                                        class="absolute top-0 left-0 sm:left-auto sm:right-0 mt-2 w-full sm:w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl z-50 overflow-hidden">
+                                        <div class="max-h-64 overflow-y-auto">
+                                            <div v-for="token in availableTokens" :key="token.address"
+                                                @click="selectFromToken(token)"
+                                                class="flex items-center space-x-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors">
+                                                <div
+                                                    class="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                                                    <TokenIcon :token="token" class="w-4 h-4 text-white" />
+                                                </div>
+                                                <div class="flex-1 min-w-0">
+                                                    <div class="font-medium text-gray-900 dark:text-white truncate">{{
+                                                        token.symbol }}</div>
+                                                    <div class="text-xs text-gray-500 dark:text-gray-400 truncate">{{
+                                                        token.name
+                                                    }}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </Transition>
+                            </div>
+                            <div class="flex space-x-2 mb-3">
+                                <button v-for="percent in [25, 50, 75, 100]" :key="percent"
+                                    @click="setAmountPercentage(percent)"
+                                    class="flex-1 py-2 text-sm font-medium rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 transition-colors">
+                                    {{ percent }}%
+                                </button>
+                            </div>
+                            <div class="relative">
+                                <input v-model="amountModel" type="number" placeholder="0.00" step="0.0001" min="0"
+                                    class="w-full p-2 md:p-3 text-xl md:text-2xl font-bold text-gray-900 dark:text-white bg-transparent border-none focus:ring-0 placeholder-gray-400 dark:placeholder-gray-500 outline-none" />
+                                <div class="absolute right-0 top-0 bottom-0 flex items-center pr-3">
+                                    <span class="text-gray-500 dark:text-gray-400">{{ fromToken?.symbol || '' }}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -145,148 +190,180 @@
             </div>
 
             <!-- To Section -->
-            <div class="space-y-6">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">To</h3>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">
+            <div
+                class="bg-gray-50 dark:bg-gray-800/50 rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 border border-gray-200 dark:border-gray-700 h-full flex flex-col">
+                <div class="flex items-center gap-2 mb-4">
+                    <div
+                        class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-r from-green-500 to-emerald-400 flex items-center justify-center">
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">To</h3>
+                </div>
+
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                    <div class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                         Estimated: <span class="font-semibold text-gray-900 dark:text-white">{{
                             formatNumber(estimatedAmount) }} {{
                                 toToken?.symbol }}</span>
                     </div>
                 </div>
 
-                <!-- Destination Address -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Destination
-                        Address</label>
-                    <div
-                        class="p-3 bg-gray-50 dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 focus-within:border-green-500">
-                        <div class="flex items-center space-x-2">
-                            <input v-model="destinationAddress" type="text"
-                                placeholder="0x... or select from address book"
-                                class="flex-1 bg-transparent border-none focus:ring-0 text-sm font-mono text-gray-900 dark:text-white placeholder-gray-400 outline-none" />
-                            <button @click="showAddressBook = true"
-                                class="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
-                                title="Address Book">
-                                <IdCardIcon class="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                            </button>
-                        </div>
-                        <div v-if="destinationName" class="mt-2 text-xs text-green-600 dark:text-green-400">
-                            ✓ {{ destinationName }}
-                        </div>
-                    </div>
-                </div>
+                <div class="space-y-4 flex-grow">
 
-                <!-- Chain Selection -->
-                <div ref="toChainDropdownRef" class="relative group">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Destination
-                        Network</label>
-                    <div @click="toggleToChains($event)"
-                        class="relative cursor-pointer p-4 bg-gray-50 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl hover:border-green-500 dark:hover:border-green-500 transition-all duration-300">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-3">
-                                <div
-                                    class="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-emerald-400 flex items-center justify-center">
-                                    <ChainIcon :chain="toChain" class="w-6 h-6 text-white" />
-                                </div>
-                                <div>
-                                    <div class="font-semibold text-gray-900 dark:text-white">{{ toChain?.name ||
-                                        'SelectChain' }}
-                                    </div>
-                                    <div class="text-sm text-gray-500 dark:text-gray-400">{{ toChain?.type || 'Network'
-                                    }}</div>
-                                </div>
+                    <!-- Destination Address -->
+                    <div>
+                        <label
+                            class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Destination
+                            Address</label>
+                        <div
+                            class="p-2 sm:p-3 bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl border border-gray-200 dark:border-gray-700 focus-within:border-green-500 transition-colors">
+                            <div class="flex items-center space-x-2">
+                                <input v-model="destinationAddress" type="text"
+                                    placeholder="0x... or select from address book"
+                                    class="flex-1 bg-transparent border-none focus:ring-0 text-xs sm:text-sm font-mono text-gray-900 dark:text-white placeholder-gray-400 outline-none w-full" />
+                                <button @click="showAddressBook = true"
+                                    class="p-1.5 sm:p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                                    title="Address Book">
+                                    <IdCardIcon class="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                                </button>
                             </div>
-                            <ChevronDownIcon class="w-5 h-5 text-gray-400 transition-transform duration-300"
-                                :class="{ 'rotate-180': showToChains }" />
+                            <div v-if="destinationName" class="mt-2 text-xs text-green-600 dark:text-green-400">
+                                ✓ {{ destinationName }}
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Chain Dropdown -->
-                    <Transition name="slide-down">
-                        <div v-if="showToChains"
-                            class="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl z-50 overflow-hidden">
-                            <div class="max-h-64 overflow-y-auto">
-                                <div v-for="chain in filteredDestChains" :key="chain.id"
-                                    @click="selectToChain(chain, $event)"
-                                    class="flex items-center space-x-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors">
+                    <!-- Chain Selection -->
+                    <div ref="toChainDropdownRef" class="relative group">
+                        <label
+                            class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Destination
+                            Network</label>
+                        <div @click="toggleToChains($event)"
+                            class="relative cursor-pointer p-2 sm:p-3 md:p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg sm:rounded-xl hover:border-green-500 dark:hover:border-green-500 transition-all duration-300">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2 sm:space-x-3">
                                     <div
-                                        class="w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-emerald-400 flex items-center justify-center">
-                                        <ChainIcon :chain="chain" class="w-5 h-5 text-white" />
+                                        class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-green-500 to-emerald-400 flex items-center justify-center">
+                                        <ChainIcon :chain="toChain" class="w-4 h-4 sm:w-6 sm:h-6 text-white" />
                                     </div>
-                                    <div class="flex-1">
-                                        <div class="font-medium text-gray-900 dark:text-white">{{ chain.name }}</div>
-                                        <div class="text-xs text-gray-500 dark:text-gray-400">{{ chain.type }}</div>
-                                    </div>
-                                    <div v-if="chain.fee" class="text-xs font-medium text-gray-700 dark:text-gray-300">
-                                        {{ chain.fee }}%
+                                    <div>
+                                        <div class="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">{{
+                                            toChain?.name ||
+                                            'SelectChain' }}
+                                        </div>
+                                        <div class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{{
+                                            toChain?.type || 'Network'
+                                        }}</div>
                                     </div>
                                 </div>
-                                <div v-if="filteredDestChains.length === 0"
-                                    class="p-4 text-center text-gray-500 dark:text-gray-400">
-                                    No available chains
-                                </div>
+                                <ChevronDownIcon
+                                    class="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 transition-transform duration-300"
+                                    :class="{ 'rotate-180': showToChains }" />
                             </div>
                         </div>
-                    </Transition>
-                </div>
 
-                <!-- Receiving Token -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Receive</label>
-                    <div
-                        class="p-4 bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 rounded-xl border-2 border-green-100 dark:border-green-900/50">
-                        <div class="flex items-center justify-between mb-6">
-                            <div class="flex items-center space-x-3">
-                                <div
-                                    class="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-400 flex items-center justify-center">
-                                    <TokenIcon :token="toToken" class="w-6 h-6 text-white" />
-                                </div>
-                                <div>
-                                    <div class="font-semibold text-gray-900 dark:text-white">{{ toToken?.name ||
-                                        'SelectToken' }}
+                        <!-- Chain Dropdown -->
+                        <Transition name="slide-down">
+                            <div v-if="showToChains"
+                                class="absolute top-full left-0 w-full mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl z-50 overflow-hidden">
+                                <div class="max-h-64 overflow-y-auto">
+                                    <div v-for="chain in filteredDestChains" :key="chain.id"
+                                        @click="selectToChain(chain, $event)"
+                                        class="flex items-center space-x-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors">
+                                        <div
+                                            class="w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-emerald-400 flex items-center justify-center">
+                                            <ChainIcon :chain="chain" class="w-5 h-5 text-white" />
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <div class="font-medium text-gray-900 dark:text-white truncate">{{
+                                                chain.name }}
+                                            </div>
+                                            <div class="text-xs text-gray-500 dark:text-gray-400">{{ chain.type }}</div>
+                                        </div>
+                                        <div v-if="chain.fee"
+                                            class="text-xs font-medium text-gray-700 dark:text-gray-300">
+                                            {{ chain.fee }}%
+                                        </div>
                                     </div>
-                                    <div class="text-sm text-gray-500 dark:text-gray-400">{{ toToken?.symbol || '' }}
+                                    <div v-if="filteredDestChains.length === 0"
+                                        class="p-4 text-center text-gray-500 dark:text-gray-400">
+                                        No available chains
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="text-center">
-                            <div class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                                {{ formatNumber(estimatedAmount) || '0.00' }}
+                        </Transition>
+                    </div>
+
+                    <!-- Receiving Token -->
+                    <div>
+                        <label
+                            class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Receive</label>
+                        <div
+                            class="p-3 sm:p-4 bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 rounded-xl border border-green-100 dark:border-green-900/50">
+                            <div class="flex items-center justify-between mb-4 sm:mb-6">
+                                <div class="flex items-center space-x-3">
+                                    <div
+                                        class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-400 flex items-center justify-center">
+                                        <TokenIcon :token="toToken" class="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                                    </div>
+                                    <div>
+                                        <div class="font-semibold text-gray-900 dark:text-white">{{ toToken?.name ||
+                                            'SelectToken' }}
+                                        </div>
+                                        <div class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{{
+                                            toToken?.symbol || '' }}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="text-gray-500 dark:text-gray-400">{{ toToken?.symbol || '' }}</div>
+                            <div class="text-center">
+                                <div class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                                    {{ formatNumber(estimatedAmount) || '0.00' }}
+                                </div>
+                                <div class="text-sm sm:text-base text-gray-500 dark:text-gray-400">{{ toToken?.symbol ||
+                                    '' }}</div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Bridge Details -->
-                <div class="space-y-3">
-                    <div class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
-                        <div class="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
-                            <RocketIcon class="w-4 h-4" />
+                <div class="space-y-3 pt-4 border-t border-gray-100 dark:border-gray-700 mt-auto">
+
+
+                    <div class="flex justify-between items-center py-1">
+                        <div class="flex items-center space-x-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                            <RocketIcon class="w-3 h-3 sm:w-4 sm:h-4" />
                             <span>Bridge Fee</span>
                         </div>
-                        <span class="font-medium text-gray-900 dark:text-white">{{ bridgeFee }} {{ fromToken?.symbol ||
-                            ''
+                        <span class="font-medium text-xs sm:text-sm text-gray-900 dark:text-white">{{ bridgeFee }}
+                            {{ fromToken?.symbol ||
+                                ''
                             }}</span>
                     </div>
-                    <div class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
-                        <div class="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
-                            <TimerIcon class="w-4 h-4" />
+                    <div class="flex justify-between items-center py-1">
+                        <div class="flex items-center space-x-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                            <TimerIcon class="w-3 h-3 sm:w-4 sm:h-4" />
                             <span>Estimated Time</span>
                         </div>
-                        <span class="font-medium text-gray-900 dark:text-white">{{ timeEstimate }}</span>
+                        <span class="font-medium text-xs sm:text-sm text-gray-900 dark:text-white">{{ timeEstimate
+                        }}</span>
                     </div>
-                    <div class="flex justify-between items-center py-2">
-                        <div class="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
-                            <MinusCircledIcon class="w-4 h-4" />
+                    <div class="flex justify-between items-center py-1">
+                        <div class="flex items-center space-x-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                            <MinusCircledIcon class="w-3 h-3 sm:w-4 sm:h-4" />
                             <span>Minimum Amount</span>
                         </div>
-                        <span class="font-medium text-gray-900 dark:text-white">{{ formatNumber(21000) }} {{
-                            fromToken?.symbol || ''
+                        <span class="font-medium text-xs sm:text-sm text-gray-900 dark:text-white">{{
+                            formatNumber(21000) }} {{
+                                fromToken?.symbol || ''
                             }}</span>
                     </div>
+
                 </div>
             </div>
         </div>
@@ -313,7 +390,7 @@
                     You will receive approximately
                     <span class="font-semibold text-gray-900 dark:text-white">{{ formatNumber(estimatedAmount) }} {{
                         toToken?.symbol
-                        }}</span>
+                    }}</span>
                     on {{ toChain?.name }}
                 </p>
             </div>
@@ -336,7 +413,7 @@ import { toast } from 'vue-sonner'
 import { useBridgeStore } from '@/modules/bridge/store/bridgeStore'
 import { useBridgeBalance } from '@/modules/bridge/composables/useBridgeBalance'
 import { addressBookService, type Contact } from '@/modules/send/services/addressBook'
-import type { Chain } from '@/modules/bridge/types/bridge.types'
+import type { Chain, Token } from '@/modules/bridge/types/bridge.types'
 import { useChain } from '@/app/composables/useChain'
 
 import {
@@ -433,8 +510,11 @@ watch(chainId, (newChainId) => {
 // Local state for UI
 const showFromChains = ref(false)
 const showToChains = ref(false)
+const showFromTokens = ref(false)
 const fromChainDropdownRef = ref<HTMLElement | null>(null)
 const toChainDropdownRef = ref<HTMLElement | null>(null)
+const fromTokenDropdownRef = ref<HTMLElement | null>(null)
+const fromTokenDropdownTrigger = ref<HTMLElement | null>(null)
 
 // Address book state
 const showAddressBook = ref(false)
@@ -506,6 +586,12 @@ const amountModel = computed({
 // Click outside
 onClickOutside(fromChainDropdownRef, () => showFromChains.value = false)
 onClickOutside(toChainDropdownRef, () => showToChains.value = false)
+const closeTokenDropdown = (event: Event) => {
+    const target = event.target as HTMLElement
+    if (fromTokenDropdownTrigger.value && fromTokenDropdownTrigger.value.contains(target)) return
+    showFromTokens.value = false
+}
+onClickOutside(fromTokenDropdownRef, closeTokenDropdown)
 
 // Methods
 const toggleFromChains = (e: MouseEvent) => {
@@ -532,10 +618,14 @@ const selectToChain = (chain: Chain, e: MouseEvent) => {
     showToChains.value = false
 }
 
-const onFromTokenChange = (e: Event) => {
-    const target = e.target as HTMLSelectElement
-    const token = availableTokens.value.find(t => t.symbol === target.value)
-    if (token) bridgeStore.setFromToken(token)
+const selectFromToken = (token: Token) => {
+    bridgeStore.setFromToken(token)
+    showFromTokens.value = false
+}
+
+const toggleFromTokens = (e: MouseEvent) => {
+    e.stopPropagation()
+    showFromTokens.value = !showFromTokens.value
 }
 
 const setAmountPercentage = (percent: number) => {
@@ -559,3 +649,17 @@ const formatNumber = (num: string | number) => {
     return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 }).format(Number(num))
 }
 </script>
+
+<style scoped>
+.slide-down-enter-active,
+.slide-down-leave-active {
+    transition: all 0.2s ease-out;
+    transform-origin: top;
+}
+
+.slide-down-enter-from,
+.slide-down-leave-to {
+    opacity: 0;
+    transform: scaleY(0.95);
+}
+</style>

@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import type { Chain, Token, BridgeHistory } from '../types/bridge.types'
 import { readContract, writeContract, waitForTransactionReceipt } from '@wagmi/core'
-import { parseUnits, encodeAbiParameters, parseAbiParameters, pad } from 'viem'
+import { parseUnits, pad } from 'viem'
 import { wagmiConfig } from '@/app/components/config/appkit'
 import { wancashContractAddress, wancashAbi } from '@/app/services/contracts'
 import { toast } from 'vue-sonner'

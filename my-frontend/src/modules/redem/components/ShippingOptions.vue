@@ -56,10 +56,13 @@
                                     Token</span>
                             </div>
                             <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
-                                <div class="flex justify-between items-center">
-                                    <span class="text-lg font-bold text-gray-900 dark:text-white">Total Token
+                                <div
+                                    class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                                    <span class="text-base sm:text-lg font-bold text-gray-900 dark:text-white">Total
+                                        Token
                                         Required:</span>
-                                    <span class="text-xl font-bold text-blue-600 dark:text-blue-400">{{ totalToken }}
+                                    <span class="text-lg sm:text-xl font-bold text-blue-600 dark:text-blue-400">{{
+                                        totalToken }}
                                         Token</span>
                                 </div>
                             </div>

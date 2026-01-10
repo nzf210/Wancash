@@ -1,14 +1,13 @@
 /* src/style.css */
 
-@import "tailwindcss";
-@import "tw-animate-css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
 
 /* stylelint-enable at-rule-no-unknown */
 @custom-variant dark (&:is(.dark *));
 /* ---break---
 */
 /* ---break--- */
-
 
 @theme inline {
   --color-background: var(--background);
@@ -154,13 +153,17 @@
   }
   body {
     @apply bg-background text-foreground;
+    overflow-x: hidden;
   }
 }
 
 /* ---break--- */
 
 html {
-  transition: color 0.3s ease, background-color 0.3s ease;
+  transition:
+    color 0.3s ease,
+    background-color 0.3s ease;
+  scrollbar-gutter: stable;
 }
 
 .transition-colors {
@@ -170,11 +173,7 @@ html {
 }
 
 .crypto-gradient {
-  background: linear-gradient(
-    to right,
-    hsl(var(--crypto-primary)),
-    hsl(var(--crypto-secondary))
-  );
+  background: linear-gradient(to right, hsl(var(--crypto-primary)), hsl(var(--crypto-secondary)));
 }
 
 /* Custom dark mode styles untuk biru gelap yang lebih terang */
@@ -218,8 +217,9 @@ html {
 
 /* Shadow dengan nuansa biru yang lebih terang */
 .dark .shadow-blue {
-  box-shadow: 0 4px 6px -1px oklch(0.22 0.03 240 / 0.15),
-              0 2px 4px -1px oklch(0.22 0.03 240 / 0.1);
+  box-shadow:
+    0 4px 6px -1px oklch(0.22 0.03 240 / 0.15),
+    0 2px 4px -1px oklch(0.22 0.03 240 / 0.1);
 }
 
 /* Gradient untuk background yang lebih terang */
@@ -242,20 +242,12 @@ html {
 
 /* Button styles untuk dark mode biru yang lebih terang */
 .dark .btn-blue-gradient {
-  background: linear-gradient(
-    135deg,
-    oklch(0.75 0.18 240) 0%,
-    oklch(0.7 0.22 235) 100%
-  );
+  background: linear-gradient(135deg, oklch(0.75 0.18 240) 0%, oklch(0.7 0.22 235) 100%);
   color: white;
 }
 
 .dark .btn-blue-gradient:hover {
-  background: linear-gradient(
-    135deg,
-    oklch(0.8 0.18 240) 0%,
-    oklch(0.75 0.22 235) 100%
-  );
+  background: linear-gradient(135deg, oklch(0.8 0.18 240) 0%, oklch(0.75 0.22 235) 100%);
 }
 
 /* Text colors dengan nuansa biru yang lebih terang */

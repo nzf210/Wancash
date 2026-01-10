@@ -1,8 +1,8 @@
 <template>
-  <div class="container mx-auto px-4 py-8">
+  <div class="container mx-auto px-1 md:px-4 py-8">
     <BridgeHeader />
 
-    <div class="max-w-5xl mx-auto">
+    <div class="max-w-4xl mx-auto">
       <div
         class="bg-white dark:bg-gray-900 rounded-3xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-800">
         <BridgeStats />

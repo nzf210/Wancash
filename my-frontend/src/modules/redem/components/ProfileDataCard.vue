@@ -17,20 +17,20 @@
                 <!-- Wallet Info Section -->
                 <div v-if="walletAddress"
                     class="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800">
-                    <Label class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                    <Label class="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
                         Wallet Address for Receiving Token
                     </Label>
-                    <div class="flex items-center gap-3">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
                         <div v-if="chainInfo" class="flex-shrink-0" :title="chainInfo.name">
                             <img :src="chainInfo.icon" :alt="chainInfo.name"
-                                class="w-8 h-8 rounded-full border border-gray-200 dark:border-gray-700 bg-white" />
+                                class="w-6 h-6 sm:w-8 sm:h-8 rounded-full border border-gray-200 dark:border-gray-700 bg-white" />
                         </div>
                         <div
-                            class="flex-grow font-mono text-sm bg-white dark:bg-gray-800 py-2 px-3 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 select-all">
+                            class="w-full sm:flex-grow font-mono text-xs sm:text-sm bg-white dark:bg-gray-800 py-2 px-3 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 select-all break-all">
                             {{ walletAddress }}
                         </div>
                         <div v-if="chainInfo"
-                            class="text-xs font-semibold px-2 py-1 rounded bg-blue-100 dark:bg-blue-800 text-blue-700 dark:text-blue-300">
+                            class="hidden sm:block text-xs font-semibold px-2 py-1 rounded bg-blue-100 dark:bg-blue-800 text-blue-700 dark:text-blue-300 flex-shrink-0">
                             {{ chainInfo.name }}
                         </div>
                     </div>
