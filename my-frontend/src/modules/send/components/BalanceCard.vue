@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
+import { formatTokenBalance, formatNativeBalance, formatUSD } from '@/utils/format'
 
 defineProps<{
   walletBalance: number
@@ -12,19 +13,6 @@ const emit = defineEmits<{
 }>()
 
 const isRefreshing = ref(false)
-
-const formatNumber = (num: number) => new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 }).format(num)
-const formatCurrency = (num: number) => new Intl.NumberFormat('en-US').format(Math.round(num))
-
-// Special formatting for native balance to show proper decimals
-const formatNativeBalance = (num: number) => {
-  if (num === 0) return '0.0000'
-  if (num < 0.0001) return '< 0.0001'
-  return new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: 4,
-    maximumFractionDigits: 6
-  }).format(num)
-}
 
 const handleRefresh = async () => {
   if (isRefreshing.value) return
@@ -68,7 +56,8 @@ const handleRefresh = async () => {
                     clip-rule="evenodd" />
                 </svg>
               </div>
-              <p class="text-lg md:text-2xl font-bold text-gray-900 dark:text-white">{{ formatNumber(walletBalance) }}
+              <p class="text-lg md:text-2xl font-bold text-gray-900 dark:text-white">{{
+                formatTokenBalance(walletBalance) }}
                 WCH</p>
             </div>
           </div>
@@ -90,9 +79,9 @@ const handleRefresh = async () => {
           </div>
           <div class="text-center">
             <p class="text-xs md:text-sm text-gray-600 dark:text-gray-400 mb-2">Equivalent Value</p>
-            <p class="text-base md:text-xl font-bold text-blue-600 dark:text-blue-400">USD {{
-              formatCurrency(walletBalance *
-              tokenPrice) }}</p>
+            <p class="text-base md:text-xl font-bold text-blue-600 dark:text-blue-400">{{
+              formatUSD(walletBalance *
+                tokenPrice) }}</p>
           </div>
           <div class="text-center md:text-right">
             <p class="text-xs md:text-sm text-gray-600 dark:text-gray-400 mb-2">Token Price</p>

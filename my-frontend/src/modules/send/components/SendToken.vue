@@ -22,6 +22,7 @@ import { readContract, writeContract, waitForTransactionReceipt, getBalance } fr
 import { parseEther, type Hash } from 'viem'
 import { addressBookService, type Contact } from '../services/addressBook'
 import { transactionHistoryService } from '@/app/services/transactionHistoryService'
+import { formatTokenBalance } from '@/utils/format'
 
 const { isConnected, address: walletAddress, chainId } = useConnection()
 const { getChainInfo } = useChain()
@@ -255,7 +256,7 @@ const sendToken = async (): Promise<Hash | null> => {
 
 // Methods
 const updateForm = (updatedForm: FormData) => { form.value = { ...form.value, ...updatedForm } }
-const formatNumber = (num: number) => new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 }).format(num)
+
 const shortenAddress = (address: string) => address ? `${address.slice(0, 6)}...${address.slice(-4)}` : ''
 
 const validateAddress = () => {
@@ -271,7 +272,7 @@ const validateAmount = () => {
   const amount = Number.parseFloat(form.value.amount)
   if (!amount || Number.isNaN(amount)) { amountError.value = ''; return }
   if (amount < minimumTransfer.value) amountError.value = `Minimum transfer is ${minimumTransfer.value} WCH`
-  else if (amount > maxTransferable.value) amountError.value = `Maximum transfer is ${formatNumber(maxTransferable.value)} WCH`
+  else if (amount > maxTransferable.value) amountError.value = `Maximum transfer is ${formatTokenBalance(maxTransferable.value)} WCH`
   else if (amount > walletBalance.value) amountError.value = 'Insufficient balance'
   else amountError.value = ''
 }

@@ -18,7 +18,7 @@
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
                     <div v-if="fromChain?.id === chainId" class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                         <span class="font-semibold text-yellow-600 dark:text-yellow-400">{{
-                            formatNumber(nativeBalance) }} {{ nativeCurrencySymbol }}</span>
+                            formatNativeBalance(nativeBalance) }} {{ nativeCurrencySymbol }}</span>
                     </div>
                     <div class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                         Balance: <span class="font-semibold text-gray-900 dark:text-white">{{ formattedBalance }} {{
@@ -131,7 +131,7 @@
                                             'Select Token' }}
                                         </div>
                                         <div class="text-sm text-gray-500 dark:text-gray-400">{{ fromToken?.symbol || ''
-                                            }}
+                                        }}
                                         </div>
                                     </div>
                                 </div>
@@ -163,7 +163,7 @@
                                                         token.symbol }}</div>
                                                     <div class="text-xs text-gray-500 dark:text-gray-400 truncate">{{
                                                         token.name
-                                                        }}</div>
+                                                    }}</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -207,7 +207,7 @@
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
                     <div class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                         Estimated: <span class="font-semibold text-gray-900 dark:text-white">{{
-                            formatNumber(estimatedAmount) }} {{
+                            formatTokenBalance(estimatedAmount) }} {{
                                 toToken?.symbol }}</span>
                     </div>
                 </div>
@@ -257,7 +257,7 @@
                                         </div>
                                         <div class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{{
                                             toChain?.type || 'Network'
-                                            }}</div>
+                                        }}</div>
                                     </div>
                                 </div>
                                 <ChevronDownIcon
@@ -322,7 +322,7 @@
                             </div>
                             <div class="text-center">
                                 <div class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                                    {{ formatNumber(estimatedAmount) || '0.00' }}
+                                    {{ formatTokenBalance(estimatedAmount) || '0.00' }}
                                 </div>
                                 <div class="text-sm sm:text-base text-gray-500 dark:text-gray-400">{{ toToken?.symbol ||
                                     '' }}</div>
@@ -351,7 +351,7 @@
                             <span>Estimated Time</span>
                         </div>
                         <span class="font-medium text-xs sm:text-sm text-gray-900 dark:text-white">{{ timeEstimate
-                            }}</span>
+                        }}</span>
                     </div>
                     <div class="flex justify-between items-center py-1">
                         <div class="flex items-center space-x-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
@@ -359,7 +359,7 @@
                             <span>Minimum Amount</span>
                         </div>
                         <span class="font-medium text-xs sm:text-sm text-gray-900 dark:text-white">{{
-                            formatNumber(21000) }} {{
+                            formatTokenBalance(21000) }} {{
                                 fromToken?.symbol || ''
                             }}</span>
                     </div>
@@ -388,8 +388,9 @@
             <div v-if="canBridge" class="mt-4 text-center">
                 <p class="text-sm text-gray-500 dark:text-gray-400">
                     You will receive approximately
-                    <span class="font-semibold text-gray-900 dark:text-white">{{ formatNumber(estimatedAmount) }} {{
-                        toToken?.symbol
+                    <span class="font-semibold text-gray-900 dark:text-white">{{ formatTokenBalance(estimatedAmount) }}
+                        {{
+                            toToken?.symbol
                         }}</span>
                     on {{ toChain?.name }}
                 </p>
@@ -415,6 +416,7 @@ import { useBridgeBalance } from '@/modules/bridge/composables/useBridgeBalance'
 import { addressBookService, type Contact } from '@/modules/send/services/addressBook'
 import type { Chain, Token } from '@/modules/bridge/types/bridge.types'
 import { useChain } from '@/app/composables/useChain'
+import { formatTokenBalance, formatNativeBalance } from '@/utils/format'
 
 import {
     ChevronDownIcon,
@@ -654,10 +656,6 @@ const timeEstimate = computed(() => {
 
 const initiateBridge = async () => {
     await bridgeAction()
-}
-const formatNumber = (num: string | number) => {
-    if (!num) return '0.00'
-    return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(num))
 }
 </script>
 

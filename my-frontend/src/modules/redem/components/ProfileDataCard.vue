@@ -46,7 +46,7 @@
                         </div>
                         <span class="text-sm text-gray-600 dark:text-gray-400">Native Balance:</span>
                         <span class="font-semibold text-yellow-600 dark:text-yellow-400">
-                            {{ formatNumber(nativeBalance) }} {{ nativeCurrencySymbol }}
+                            {{ formatNativeBalance(nativeBalance) }} {{ nativeCurrencySymbol }}
                         </span>
                     </div>
 
@@ -96,6 +96,7 @@
 <script lang="ts" setup>
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
+import { formatNativeBalance } from '@/utils/format'
 
 export interface UserProfile {
     name: string
@@ -122,6 +123,4 @@ defineProps<{
 defineEmits<{
     'update:useProfileData': [value: boolean]
 }>()
-
-const formatNumber = (num: number) => new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 }).format(num)
 </script>
