@@ -26,7 +26,7 @@
                     <StatusBadge :status="bridge.status" />
                 </div>
                 <div class="text-sm font-medium text-gray-900 dark:text-white mb-1">
-                    {{ bridge.amount }} {{ bridge.token }}
+                    {{ formatAmount(bridge.amount) }} {{ bridge.token }}
                 </div>
                 <div class="text-xs text-gray-500 dark:text-gray-400 flex items-center">
                     <ClockIcon class="w-3 h-3 mr-1" />
@@ -49,6 +49,14 @@ import type { BridgeHistory } from '@/modules/bridge/types/bridge.types'
 defineProps<{
     recentBridges: BridgeHistory[]
 }>()
+
+const formatAmount = (amount: string | number): string => {
+    const num = typeof amount === 'string' ? parseFloat(amount) : amount
+    return new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(num)
+}
 
 const formatTime = (timestamp: number): string => {
     const minutes = Math.floor((Date.now() - timestamp) / 60000)
