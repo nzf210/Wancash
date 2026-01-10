@@ -104,7 +104,7 @@ export function useBridgeBalance(fromChainId: () => number | null | undefined, s
         const decimals = token?.decimals ?? 18
         // Convert using formatUnits then format to 4 decimals with en-US locale for consistency
         const formatted = formatUnits(rawBalance.value, decimals)
-        return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 }).format(Number(formatted))
+        return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(formatted))
     })
 
     // Manual refresh function

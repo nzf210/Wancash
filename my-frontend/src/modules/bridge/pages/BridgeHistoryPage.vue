@@ -255,7 +255,7 @@ const formatNumber = (num: string | number): string => {
     if (!num) return '0.00'
     return new Intl.NumberFormat('en-US', {
         minimumFractionDigits: 2,
-        maximumFractionDigits: 4
+        maximumFractionDigits: 2
     }).format(Number(num))
 }
 

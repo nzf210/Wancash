@@ -131,7 +131,7 @@
                                             'Select Token' }}
                                         </div>
                                         <div class="text-sm text-gray-500 dark:text-gray-400">{{ fromToken?.symbol || ''
-                                        }}
+                                            }}
                                         </div>
                                     </div>
                                 </div>
@@ -163,7 +163,7 @@
                                                         token.symbol }}</div>
                                                     <div class="text-xs text-gray-500 dark:text-gray-400 truncate">{{
                                                         token.name
-                                                    }}</div>
+                                                        }}</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -178,7 +178,7 @@
                                 </button>
                             </div>
                             <div class="relative">
-                                <input v-model="amountModel" type="number" placeholder="0.00" step="0.0001" min="0"
+                                <input v-model="amountModel" type="text" placeholder="0.00"
                                     class="w-full p-2 md:p-3 text-xl md:text-2xl font-bold text-gray-900 dark:text-white bg-transparent border-none focus:ring-0 placeholder-gray-400 dark:placeholder-gray-500 outline-none" />
                                 <div class="absolute right-0 top-0 bottom-0 flex items-center pr-3">
                                     <span class="text-gray-500 dark:text-gray-400">{{ fromToken?.symbol || '' }}</span>
@@ -257,7 +257,7 @@
                                         </div>
                                         <div class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{{
                                             toChain?.type || 'Network'
-                                        }}</div>
+                                            }}</div>
                                     </div>
                                 </div>
                                 <ChevronDownIcon
@@ -351,7 +351,7 @@
                             <span>Estimated Time</span>
                         </div>
                         <span class="font-medium text-xs sm:text-sm text-gray-900 dark:text-white">{{ timeEstimate
-                        }}</span>
+                            }}</span>
                     </div>
                     <div class="flex justify-between items-center py-1">
                         <div class="flex items-center space-x-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
@@ -390,7 +390,7 @@
                     You will receive approximately
                     <span class="font-semibold text-gray-900 dark:text-white">{{ formatNumber(estimatedAmount) }} {{
                         toToken?.symbol
-                    }}</span>
+                        }}</span>
                     on {{ toChain?.name }}
                 </p>
             </div>
@@ -579,8 +579,19 @@ onMounted(async () => {
 
 // Two-way binding helper for amount
 const amountModel = computed({
-    get: () => amount.value,
-    set: (val) => bridgeStore.setAmount(val ? val.toString() : '')
+    get: () => {
+        const val = amount.value
+        if (!val) return ''
+        const parts = val.split('.')
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+        return parts.join('.')
+    },
+    set: (val) => {
+        const clean = val.replace(/,/g, '')
+        if (clean === '' || /^\d*\.?\d*$/.test(clean)) {
+            bridgeStore.setAmount(clean)
+        }
+    }
 })
 
 // Click outside
@@ -631,7 +642,7 @@ const toggleFromTokens = (e: MouseEvent) => {
 const setAmountPercentage = (percent: number) => {
     const bal = walletBalance.value
     if (bal && !Number.isNaN(bal)) {
-        amountModel.value = ((bal * percent) / 100).toFixed(4)
+        bridgeStore.setAmount(((bal * percent) / 100).toFixed(2))
     }
 }
 
@@ -646,7 +657,7 @@ const initiateBridge = async () => {
 }
 const formatNumber = (num: string | number) => {
     if (!num) return '0.00'
-    return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 }).format(Number(num))
+    return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(num))
 }
 </script>
 

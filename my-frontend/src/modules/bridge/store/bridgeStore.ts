@@ -156,7 +156,7 @@ export const useBridgeStore = defineStore('bridge', {
 
         // Estimated amount is amountLD (1:1)
         this.estimatedAmount = this.amount
-        const feeFormatted = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 }).format(Number(nativeFee) / 1e18)
+        const feeFormatted = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(nativeFee) / 1e18)
         this.bridgeFee = feeFormatted + ' ' + (this.fromChain!.currency || 'ETH')
 
       } catch (e) {
