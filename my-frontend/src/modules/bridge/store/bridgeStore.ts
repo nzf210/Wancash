@@ -92,8 +92,10 @@ export const useBridgeStore = defineStore('bridge', {
     },
 
     // Load bridge history from persistent storage
-    loadHistory() {
-      const bridgeTxs = transactionHistoryService.getByType('bridge')
+    async loadHistory() {
+      // Sync from backend first
+      const bridgeTxs = await transactionHistoryService.fetchFromBackend({ type: 'bridge' })
+
       this.history = bridgeTxs.map(tx => ({
         id: typeof tx.id === 'number' ? tx.id : Date.now(),
         fromChain: tx.fromChainName || 'Unknown',
@@ -169,6 +171,8 @@ export const useBridgeStore = defineStore('bridge', {
       if (!this.canBridge || this.isLoading) return
 
       this.isLoading = true
+      let pendingTxId: string | number | null = null
+
       try {
         const amountLD = parseUnits(this.amount, this.fromToken!.decimals)
         const dstEid = this.toChain!.eid
@@ -177,6 +181,20 @@ export const useBridgeStore = defineStore('bridge', {
         const account = getAccount(wagmiConfig)
 
         if (!account.address) throw new Error("Wallet not connected")
+
+        // Create pending transaction record
+        const pending = await transactionHistoryService.createPending({
+          type: 'bridge',
+          fromAddress: account.address,
+          toAddress: account.address, // Bridge usually sends to self
+          amount: this.amount,
+          tokenSymbol: this.fromToken!.symbol,
+          fromChainId: this.fromChain!.id,
+          fromChainName: this.fromChain!.name,
+          toChainId: this.toChain!.id,
+          toChainName: this.toChain!.name,
+        })
+        pendingTxId = pending.id || pending.localId
 
         const toAddressBytes32 = pad(account.address)
         // Add executor options (gas limit 200k)
@@ -214,11 +232,17 @@ export const useBridgeStore = defineStore('bridge', {
 
         toast.info("Transaction sent! Waiting for confirmation...")
 
+        // Update local with hash
+        transactionHistoryService.updateLocal(pendingTxId, { hash, lzScanUrl: `https://layerzeroscan.com/tx/${hash}` })
+
         await waitForTransactionReceipt(wagmiConfig, { hash })
 
         toast.success(`Bridge Success! Sent ${this.amount} ${this.fromToken?.symbol} to ${this.toChain?.name}`)
 
-        // Add to in-memory history
+        // Mark as success
+        await transactionHistoryService.confirmSuccess(pendingTxId, hash)
+
+        // Add to in-memory history (legacy)
         this.history.unshift({
           id: Date.now(),
           fromChain: this.fromChain!.symbol,
@@ -230,29 +254,13 @@ export const useBridgeStore = defineStore('bridge', {
           txHash: hash
         })
 
-        // Persist to unified transaction history service
-        transactionHistoryService.add({
-          type: 'bridge',
-          hash: hash,
-          from: account.address,
-          to: account.address, // Same address on destination chain
-          amount: this.amount,
-          tokenSymbol: this.fromToken!.symbol,
-          fromChainId: this.fromChain!.id,
-          toChainId: this.toChain!.id,
-          fromChainName: this.fromChain!.name,
-          toChainName: this.toChain!.name,
-          timestamp: Date.now(),
-          status: 'success',
-          lzScanUrl: `https://layerzeroscan.com/tx/${hash}`
-        })
-
         this.amount = '' // Reset
         this.estimatedAmount = '0.00'
 
       } catch (error: any) {
         console.error('Bridge failed:', error)
         toast.error('Bridge failed: ' + (error.message || 'Unknown error'))
+        if (pendingTxId) await transactionHistoryService.markFailed(pendingTxId)
       } finally {
         this.isLoading = false
       }

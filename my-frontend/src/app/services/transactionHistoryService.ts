@@ -47,17 +47,22 @@ const STORAGE_KEY = 'wancash_transactions';
 const MAX_RECORDS = 100;
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
-// Helper to get auth headers consistently with X-Wallet-Address
+// Helper to get auth headers consistently with X-Wallet-Address and Authorization
 const getAuthHeaders = (additionalHeaders: Record<string, string> = {}) => {
     const headers: Record<string, string> = { ...additionalHeaders };
 
-    // Get wallet address from localStorage (auth_state)
+    // Get wallet address and token from localStorage (auth_state)
     const savedAuth = localStorage.getItem('auth_state');
     if (savedAuth) {
         try {
-            const { address } = JSON.parse(savedAuth);
+            const parsed = JSON.parse(savedAuth);
+            const { address, token } = parsed;
+
             if (address) {
                 headers['X-Wallet-Address'] = address;
+            }
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
             }
         } catch (e) {
             console.warn('Failed to parse auth_state for headers');

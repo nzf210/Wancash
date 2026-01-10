@@ -189,6 +189,8 @@ const sendToken = async (): Promise<Hash | null> => {
     return null
   }
 
+  let pendingTxId: string | number | null = null
+
   try {
     const amountInWei = parseEther(form.value.amount)
 
@@ -198,6 +200,19 @@ const sendToken = async (): Promise<Hash | null> => {
       toast.error('Insufficient balance')
       return null
     }
+
+    // Create pending transaction record
+    const pending = await transactionHistoryService.createPending({
+      type: 'send',
+      fromAddress: walletAddress.value,
+      toAddress: form.value.recipientAddress,
+      amount: form.value.amount,
+      tokenSymbol: 'WCH',
+      fromChainId: chainId.value || 0,
+      fromChainName: currentNetworkName.value,
+      memo: form.value.memo || undefined,
+    })
+    pendingTxId = pending.id || pending.localId
 
     // Kirim transaksi
     const hash = await writeContract(config, {
@@ -214,6 +229,9 @@ const sendToken = async (): Promise<Hash | null> => {
       duration: 3000
     })
 
+    // Update with hash (still pending confirmation)
+    transactionHistoryService.updateLocal(pendingTxId, { hash })
+
     // Tunggu konfirmasi
     const receipt = await waitForTransactionReceipt(config, {
       hash,
@@ -226,17 +244,23 @@ const sendToken = async (): Promise<Hash | null> => {
         duration: 5000
       })
 
+      // Mark as success
+      await transactionHistoryService.confirmSuccess(pendingTxId, hash)
+
       // Update balance
       await refreshBalance()
 
       return hash
     } else {
       toast.error('Transaction failed')
+      if (pendingTxId) await transactionHistoryService.markFailed(pendingTxId)
       return null
     }
 
   } catch (error: unknown) {
     console.error('Send token error:', error)
+    if (pendingTxId) await transactionHistoryService.markFailed(pendingTxId)
+
     if (error instanceof Error) {
       // Handle specific errors
       if (error?.message?.includes('user rejected')) {
@@ -353,7 +377,7 @@ const confirmTransfer = async () => {
 
       const amount = Number.parseFloat(form.value.amount) || 0
 
-      // Tambahkan ke riwayat transaksi
+      // Tambahkan ke riwayat transaksi UI (optional, since functionality handles history)
       recentTransfers.value.unshift({
         id: Date.now(),
         recipientShort: shortenAddress(form.value.recipientAddress),
@@ -363,26 +387,13 @@ const confirmTransfer = async () => {
         hash
       })
 
-      // Save to unified transaction history
-      transactionHistoryService.add({
-        type: 'send',
-        hash,
-        from: walletAddress.value!,
-        to: form.value.recipientAddress,
-        amount: amount.toString(),
-        tokenSymbol: 'WCH',
-        fromChainId: chainId.value || 0,
-        fromChainName: currentNetworkName.value,
-        timestamp: Date.now(),
-        status: 'success',
-        memo: form.value.memo || undefined
-      })
+      // Note: We don't call transactionHistoryService.add here anymore because sendToken handles it.
 
       // Reset form setelah sukses
       resetForm()
     } else {
-      // Jika gagal, tetap reset form
-      resetForm()
+      // Jika gagal, form tidak direset agar user bisa coba lagi atau perbaiki
+      // resetForm() // Change: Don't reset if failed/cancelled
     }
   } catch (error) {
     console.error('Confirm transfer error:', error)
@@ -453,10 +464,11 @@ const isFormValid = computed(() => {
 
 // Fungsi untuk memuat riwayat transaksi dari blockchain (opsional)
 const loadTransactionHistory = async () => {
-  if (!walletAddress.value || !contractAddress.value) return
+  if (!walletAddress.value) return
 
   try {
-    const history = JSON.parse(localStorage.getItem('wancash_transactions') || '[]')
+    // Fetch latest from backend (which updates localStorage)
+    const history = await transactionHistoryService.fetchFromBackend({ type: 'send' })
 
     // `shortenAddress` and `Transfer` interface are available in scope
     recentTransfers.value = history.map((tx: any) => ({
@@ -478,10 +490,12 @@ onMounted(() => {
     addressBookService.getContacts(walletAddress.value).then(contacts => {
       addressBook.value = contacts
     }).catch(console.error)
+
+    // Load transaction history
+    loadTransactionHistory()
   }
-  // Load transaction history
-  loadTransactionHistory()
 })
+
 
 </script>
 

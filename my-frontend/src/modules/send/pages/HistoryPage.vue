@@ -14,12 +14,14 @@ const activeFilter = ref<'all' | 'send' | 'bridge'>('all')
 
 let refreshInterval: ReturnType<typeof setInterval> | null = null
 
-const loadHistory = () => {
+const loadHistory = async () => {
     try {
-        transactions.value = transactionHistoryService.getAll()
+        // Fetch from backend to ensure data is fresh
+        transactions.value = await transactionHistoryService.fetchFromBackend({ limit: 50 })
     } catch (error) {
         console.error('Failed to load transaction history:', error)
-        transactions.value = []
+        // Fallback to local storage if API fails
+        transactions.value = transactionHistoryService.getAll()
     } finally {
         loading.value = false
     }
