@@ -1,5 +1,5 @@
 // frontend/src/composables/useAuth.ts
-import { ref, onMounted, watch, onUnmounted, computed, onBeforeUnmount } from 'vue'
+import { ref, onMounted, watch, onUnmounted, computed } from 'vue'
 import { watchAccount, getAccount, signTypedData } from '@wagmi/core'
 import { z } from 'zod'
 import { toast } from 'vue-sonner'
@@ -39,6 +39,8 @@ const isConnected = ref(false)
 const isRestoring = ref(true) // Flag to prevent premature actions during init
 const recentChainChange = ref(false) // Flag to prevent spurious disconnects on chain switch
 let proactiveRefreshTimer: ReturnType<typeof setTimeout> | null = null // Timer for proactive refresh
+let timerScheduledAt: number | null = null // Track when timer was scheduled
+let timerShouldTriggerAt: number | null = null // Track when timer should trigger
 
 const nonceSchema = z.object({
   address: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
@@ -217,8 +219,8 @@ export const useAuth = () => {
       localStorage.setItem('auth_state', JSON.stringify(authState))
       console.log('✅ [useAuth] Auth state persisted to localStorage')
 
-      // Schedule proactive refresh (5 minutes before expiry)
-      scheduleProactiveRefresh(data.expiresIn || 3600)
+      // ✅ Schedule proactive refresh (1 minute before expiry of 4-minute access token)
+      scheduleProactiveRefresh(data.expiresIn || 240)
 
       toast.success('Successfully connected!')
       console.log('🔐 [useAuth] ========== LOGIN SUCCESS ==========\n')
@@ -291,9 +293,17 @@ export const useAuth = () => {
       console.log('🔍 [useAuth] /api/me Response status:', res.status)
 
       if (res.ok) {
+        const data = await res.json()
         state.value.status = 'AUTHENTICATED'
         state.value.lastChecked = now
         console.log('✅ [useAuth] Session valid')
+
+        // Schedule proactive refresh if expiresIn is provided
+        if (data.expiresIn && data.expiresIn > 0) {
+          console.log('⏰ [useAuth] Received expiresIn from server:', data.expiresIn, 'seconds')
+          scheduleProactiveRefresh(data.expiresIn)
+        }
+
         console.log('🔍 [useAuth] ========== END (success) ==========\n')
         return true
       }
@@ -340,11 +350,11 @@ export const useAuth = () => {
         state.value.status = 'AUTHENTICATED'
         state.value.lastChecked = now
 
-        // Schedule proactive refresh (5 minutes before expiry)
-        scheduleProactiveRefresh(data.expiresIn || 3600)
+        // ✅ Schedule proactive refresh (1 minute before expiry of 4-minute access token)
+        scheduleProactiveRefresh(data.expiresIn || 240)
 
         console.log('✅ [useAuth] Refresh successful')
-        console.log('🔄 [useAuth] Next proactive refresh in:', (data.expiresIn - 300), 'seconds')
+        console.log('🔄 [useAuth] Next proactive refresh in:', (data.expiresIn - 60), 'seconds')
         console.log('🔄 [useAuth] ========== END (success) ==========\n')
         return true
       }
@@ -359,74 +369,65 @@ export const useAuth = () => {
     }
   }
 
-  // Proactive token refresh - refresh 5 minutes before expiry
+  // ✅ Proactive token refresh - refresh 1 minute before expiry
+  // ✅ Access Token: 4 minutes (240s)
+  // ✅ Proactive Refresh: 1 minute before expiry (at 3 minutes)
+  // ✅ Page Reload: Timer auto-reschedules (see restoreSession)
   const scheduleProactiveRefresh = (expiresIn: number) => {
     // Clear existing timer
     if (proactiveRefreshTimer) {
+      console.log('⏰ [useAuth] Clearing existing proactive refresh timer')
       clearTimeout(proactiveRefreshTimer)
     }
 
-    // Schedule refresh 5 minutes (300 seconds) before expiry
-    const refreshIn = Math.max((expiresIn - 300) * 1000, 60000) // minimum 1 minute
+    // Schedule refresh 1 minute (60 seconds) before expiry
+    const refreshIn = Math.max((expiresIn - 60) * 1000, 30000) // minimum 30 seconds
 
-    console.log(`⏰ [useAuth] Scheduling proactive refresh in ${refreshIn / 1000} seconds`)
+    // Track scheduling metadata
+    timerScheduledAt = Date.now()
+    timerShouldTriggerAt = timerScheduledAt + refreshIn
+
+    console.log('\n⏰ [useAuth] ========== SCHEDULING PROACTIVE REFRESH ==========')
+    console.log(`⏰ [useAuth] Token expires in: ${expiresIn} seconds`)
+    console.log(`⏰ [useAuth] Will refresh in: ${refreshIn / 1000} seconds (${Math.floor(refreshIn / 60000)} minutes ${Math.floor((refreshIn % 60000) / 1000)} seconds)`)
+    console.log(`⏰ [useAuth] Scheduled at: ${new Date(timerScheduledAt).toLocaleTimeString()}`)
+    console.log(`⏰ [useAuth] Will trigger at: ${new Date(timerShouldTriggerAt).toLocaleTimeString()}`)
+    console.log('⏰ [useAuth] ========== END SCHEDULING ==========\n')
 
     proactiveRefreshTimer = setTimeout(async () => {
-      if (isAuthenticated.value) {
-        console.log('⏰ [useAuth] Proactive refresh triggered')
-        await refreshSession()
+      console.log('\n🔔 [useAuth] ========== PROACTIVE REFRESH TRIGGERED ==========')
+      console.log('🔔 [useAuth] Scheduled at:', new Date(timerScheduledAt!).toLocaleTimeString())
+      console.log('🔔 [useAuth] Triggered at:', new Date().toLocaleTimeString())
+      console.log('🔔 [useAuth] Current auth status:', state.value.status)
+      console.log('🔔 [useAuth] isAuthenticated:', isAuthenticated.value)
+
+      // Always attempt refresh, don't check isAuthenticated to be more aggressive
+      console.log('🔔 [useAuth] Calling refreshSession()...')
+      const success = await refreshSession()
+
+      if (success) {
+        console.log('✅ [useAuth] Proactive refresh successful!')
+        toast.success('Session refreshed', { duration: 2000 })
+      } else {
+        console.log('❌ [useAuth] Proactive refresh failed!')
       }
+      console.log('🔔 [useAuth] ========== END PROACTIVE REFRESH ==========\n')
     }, refreshIn)
   }
 
-  // Helper: Parse JWT and get expiry time (without verification, just parsing)
-  const parseJwtExpiry = (): number | null => {
-    try {
-      // Try to get access_token from document.cookie
-      const cookies = document.cookie.split(';')
-      const accessTokenCookie = cookies.find(c => c.trim().startsWith('access_token='))
 
-      if (!accessTokenCookie) {
-        console.log('⚠️ [useAuth] No access_token cookie found for parsing')
-        return null
+  // Cleanup ONLY on actual page close, NOT on component unmount (SPA navigation)
+  if (typeof window !== 'undefined') {
+    window.addEventListener('beforeunload', () => {
+      console.log('🧹 [useAuth] Page closing, clearing proactive refresh timer')
+      if (proactiveRefreshTimer) {
+        clearTimeout(proactiveRefreshTimer)
+        proactiveRefreshTimer = null
+        timerScheduledAt = null
+        timerShouldTriggerAt = null
       }
-
-      const token = accessTokenCookie.split('=')[1]
-      if (!token) return null
-
-      // Decode JWT payload (base64 decode)
-      const parts = token.split('.')
-      if (parts.length !== 3) return null
-
-      const payload = JSON.parse(atob(parts[1]))
-      const exp = payload.exp // Unix timestamp in seconds
-
-      if (!exp) return null
-
-      const now = Math.floor(Date.now() / 1000)
-      const remainingSeconds = exp - now
-
-      console.log('🔍 [useAuth] JWT expiry parsed:', {
-        exp,
-        now,
-        remainingSeconds,
-        expiresAt: new Date(exp * 1000).toISOString()
-      })
-
-      return remainingSeconds > 0 ? remainingSeconds : null
-    } catch (error) {
-      console.error('❌ [useAuth] Failed to parse JWT expiry:', error)
-      return null
-    }
+    })
   }
-
-  // Cleanup on unmount
-  onBeforeUnmount(() => {
-    if (proactiveRefreshTimer) {
-      clearTimeout(proactiveRefreshTimer)
-      proactiveRefreshTimer = null
-    }
-  })
 
   // --- INITIALIZATION & WATCHERS ---
 
@@ -494,16 +495,8 @@ export const useAuth = () => {
           }
           console.log('📦 [useAuth] Session restored from storage:', parsed.address)
 
-          // 🆕 CRITICAL: Reschedule proactive refresh after page reload
-          const remainingSeconds = parseJwtExpiry()
-          if (remainingSeconds && remainingSeconds > 0) {
-            console.log('⏰ [useAuth] Rescheduling proactive refresh after restore')
-            scheduleProactiveRefresh(remainingSeconds)
-          } else {
-            console.log('⚠️ [useAuth] Token expired or invalid, will check session')
-          }
-
-          // Background verification
+          // ✅ Timer will be rescheduled by checkSession() based on /api/me response
+          // (HttpOnly cookies cannot be read from JavaScript)
           checkSession()
         } else {
           console.log('⚠️ [useAuth] Saved session too old, clearing')
@@ -535,6 +528,27 @@ export const useAuth = () => {
   // Trigger initialization immediately when the composable is used
   if (typeof window !== 'undefined' && isRestoring.value) {
     init()
+  }
+
+  // Debug helper - can be called from console: window.checkAuthTimer()
+  const debugTimerStatus = () => {
+    console.log('\n🔍 [useAuth] ========== TIMER DEBUG INFO ==========')
+    console.log('🔍 Timer exists:', !!proactiveRefreshTimer)
+    console.log('🔍 Scheduled at:', timerScheduledAt ? new Date(timerScheduledAt).toLocaleTimeString() : 'Not scheduled')
+    console.log('🔍 Should trigger at:', timerShouldTriggerAt ? new Date(timerShouldTriggerAt).toLocaleTimeString() : 'Not scheduled')
+    console.log('🔍 Current time:', new Date().toLocaleTimeString())
+    if (timerShouldTriggerAt) {
+      const timeUntilTrigger = timerShouldTriggerAt - Date.now()
+      console.log('🔍 Time until trigger:', Math.floor(timeUntilTrigger / 1000), 'seconds')
+    }
+    console.log('🔍 Auth status:', state.value.status)
+    console.log('🔍 isAuthenticated:', isAuthenticated.value)
+    console.log('🔍 [useAuth] ========== END DEBUG INFO ==========\n')
+  }
+
+  // Expose to window for debugging
+  if (typeof window !== 'undefined') {
+    (window as any).checkAuthTimer = debugTimerStatus
   }
 
   return {
