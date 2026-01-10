@@ -51,8 +51,9 @@ const updateMemo = (value: string) => emit('update:form', { ...props.form, memo:
           </svg>
         </div>
         <div>
-          <h2 class="text-xl font-bold text-gray-900 dark:text-white">Transfer Form</h2>
-          <p class="text-sm text-gray-600 dark:text-gray-400">Fill in token transfer details to the destination address
+          <h2 class="text-lg md:text-xl font-bold text-gray-900 dark:text-white">Transfer Form</h2>
+          <p class="text-xs md:text-sm text-gray-600 dark:text-gray-400">Fill in token transfer details to the
+            destination address
           </p>
         </div>
       </div>
@@ -77,14 +78,14 @@ const updateMemo = (value: string) => emit('update:form', { ...props.form, memo:
 
   <div class="flex flex-col sm:flex-row gap-4 mt-8">
     <Button @click="$emit('reset-form')"
-      class="flex-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-700 rounded-xl py-4 text-lg font-semibold transition-colors">
+      class="flex-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-700 rounded-xl py-4 text-base md:text-lg font-semibold transition-colors">
       <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
       </svg>
       Reset Form
     </Button>
     <Button @click="$emit('preview-transfer')" :disabled="!isFormValid"
-      class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+      class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl py-4 text-base md:text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
       <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
           d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />

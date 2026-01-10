@@ -10,24 +10,24 @@
               clip-rule="evenodd" />
           </svg>
         </div>
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Transfer Information</h3>
+        <h3 class="text-base md:text-lg font-semibold text-gray-900 dark:text-white">Transfer Information</h3>
       </div>
 
       <div class="space-y-4">
         <div class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
-          <span class="text-sm text-gray-600 dark:text-gray-400">Minimum Transfer</span>
+          <span class="text-xs md:text-sm text-gray-600 dark:text-gray-400">Minimum Transfer</span>
           <span class="font-semibold text-gray-900 dark:text-white">{{ formatNumber(minimumTransfer) }} WCH</span>
         </div>
         <div class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
-          <span class="text-sm text-gray-600 dark:text-gray-400">Maximum per Transaction</span>
+          <span class="text-xs md:text-sm text-gray-600 dark:text-gray-400">Maximum per Transaction</span>
           <span class="font-semibold text-gray-900 dark:text-white">{{ formatNumber(maxTransferPerTx) }} WCH</span>
         </div>
         <div class="flex justify-between items-center py-2">
-          <span class="text-sm text-gray-600 dark:text-gray-400">Daily Limit</span>
+          <span class="text-xs md:text-sm text-gray-600 dark:text-gray-400">Daily Limit</span>
           <span class="font-semibold text-gray-900 dark:text-white">{{ formatNumber(dailyLimit) }} WCH</span>
         </div>
         <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
-          <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Network</p>
+          <p class="text-xs md:text-sm text-gray-600 dark:text-gray-400 mb-2">Network</p>
           <div class="flex items-center gap-3">
             <div class="w-8 h-8 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-400 flex items-center justify-center">
               <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">

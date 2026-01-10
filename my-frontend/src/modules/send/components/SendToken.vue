@@ -277,7 +277,15 @@ const validateAmount = () => {
 }
 
 const setMaxAmount = () => {
-  form.value.amount = Math.max(0, maxTransferable.value).toString()
+  // Standardize to 4 decimal places to avoid standard HTML input issues
+  const maxVal = Math.max(0, maxTransferable.value)
+  // use regex to truncate to 4 decimals without rounding up, or just use toFixed(4)
+  // Usually tokens truncate, but toFixed(4) rounds standardly.
+  // Given formatNumber uses toFixed/Intl, let's stick to toFixed(4) for simplicity unless precise truncation is needed.
+  // Actually, to avoid "insufficient balance" due to rounding up, we should floor it.
+  const factor = 10000
+  const truncated = Math.floor(maxVal * factor) / factor
+  form.value.amount = truncated.toString()
   validateAmount()
 }
 

@@ -6,6 +6,7 @@ const { getExplorerTxUrl } = useChain()
 
 defineProps<{ recentTransfers: Array<{ id: number; recipientShort: string; amount: number; time: string; status: string; hash?: string }> }>()
 defineEmits<{ 'go-to-history': [] }>()
+const formatNumber = (num: number) => new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 }).format(num)
 </script>
 
 <template>
@@ -20,7 +21,7 @@ defineEmits<{ 'go-to-history': [] }>()
               clip-rule="evenodd" />
           </svg>
         </div>
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Recent Transfers</h3>
+        <h3 class="text-base md:text-lg font-semibold text-gray-900 dark:text-white">Recent Transfers</h3>
       </div>
 
       <div v-if="recentTransfers.length === 0" class="text-center py-6">
@@ -44,7 +45,7 @@ defineEmits<{ 'go-to-history': [] }>()
             </a>
           </div>
           <div class="text-right">
-            <p class="font-semibold text-red-600 dark:text-red-400">-{{ transfer.amount }} WCH</p>
+            <p class="font-semibold text-red-600 dark:text-red-400">-{{ formatNumber(transfer.amount) }} WCH</p>
             <p class="text-xs text-gray-500 dark:text-gray-400">{{ transfer.status }}</p>
           </div>
         </div>

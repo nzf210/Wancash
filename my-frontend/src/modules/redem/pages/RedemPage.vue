@@ -2,11 +2,11 @@
   <div class="min-h-screen bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-950 p-4 md:p-6">
     <div class="max-w-4xl mx-auto">
       <!-- Header -->
-      <div class="mb-10 text-center">
-        <div class="flex items-center justify-center gap-3 mb-4">
+      <div class="mb-6 md:mb-10 text-center">
+        <div class="flex items-center justify-center gap-2 md:gap-3 mb-2 md:mb-4">
           <div
-            class="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
-            <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+            class="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+            <svg class="w-5 h-5 md:w-6 md:h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M10 2a8 8 0 100 16 8 8 0 000-16zM4 10a6 6 0 1112 0 6 6 0 01-12 0z"
                 clip-rule="evenodd" />
               <path fill-rule="evenodd"
@@ -14,9 +14,11 @@
                 clip-rule="evenodd" />
             </svg>
           </div>
-          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Token Redemption with Gold</h1>
+          <h1 class="text-xl md:text-3xl font-bold text-gray-900 dark:text-white">Token Redemption with Gold</h1>
         </div>
-        <p class="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">Exchange your tokens for physical gold that will
+        <p class="text-xs md:text-base text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">Exchange your tokens for
+          physical
+          gold that will
           be shipped to your address</p>
       </div>
 
