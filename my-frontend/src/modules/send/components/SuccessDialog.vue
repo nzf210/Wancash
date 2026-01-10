@@ -1,12 +1,15 @@
 <script lang="ts" setup>
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { useChain } from '@/app/composables/useChain'
+
+const { getExplorerTxUrl } = useChain()
 
 defineProps<{ open: boolean; form: { recipientAddress: string; amount: string; memo: string }; recipientName: string; transactionHash: string }>()
 
 defineEmits<{ 'update:open': [boolean]; 'copy-transaction-hash': []; 'go-to-history': [] }>()
 
-const formatNumber = (num: number) => new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 4 }).format(num)
+const formatNumber = (num: number) => new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 }).format(num)
 const shortenAddress = (address: string) => address ? `${address.slice(0, 6)}...${address.slice(-4)}` : ''
 const shortenTransactionHash = (hash: string) => hash ? `${hash.slice(0, 8)}...${hash.slice(-6)}` : ''
 </script>
@@ -41,6 +44,16 @@ const shortenTransactionHash = (hash: string) => hash ? `${hash.slice(0, 8)}...$
             </svg>
           </Button>
         </div>
+        <!-- View on Explorer Link -->
+        <a v-if="transactionHash && getExplorerTxUrl(transactionHash)" :href="getExplorerTxUrl(transactionHash)"
+          target="_blank" rel="noopener noreferrer"
+          class="mt-3 inline-flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:underline">
+          <span>View on Explorer</span>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+        </a>
       </div>
       <DialogFooter class="flex-col sm:flex-row gap-2">
         <Button @click="$emit('update:open', false)"

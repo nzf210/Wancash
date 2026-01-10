@@ -1,7 +1,10 @@
 <script lang="ts" setup>
 import { Button } from '@/components/ui/button'
+import { useChain } from '@/app/composables/useChain'
 
-defineProps<{ recentTransfers: Array<{ id: number; recipientShort: string; amount: number; time: string; status: string }> }>()
+const { getExplorerTxUrl } = useChain()
+
+defineProps<{ recentTransfers: Array<{ id: number; recipientShort: string; amount: number; time: string; status: string; hash?: string }> }>()
 defineEmits<{ 'go-to-history': [] }>()
 </script>
 
@@ -29,6 +32,16 @@ defineEmits<{ 'go-to-history': [] }>()
           <div>
             <p class="font-medium text-sm text-gray-900 dark:text-white">{{ transfer.recipientShort }}</p>
             <p class="text-xs text-gray-500 dark:text-gray-400">{{ transfer.time }}</p>
+            <!-- View on Explorer Link -->
+            <a v-if="transfer.hash && getExplorerTxUrl(transfer.hash)" :href="getExplorerTxUrl(transfer.hash)"
+              target="_blank" rel="noopener noreferrer"
+              class="text-xs text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1 mt-1">
+              <span>View Tx</span>
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </a>
           </div>
           <div class="text-right">
             <p class="font-semibold text-red-600 dark:text-red-400">-{{ transfer.amount }} WCH</p>

@@ -5,9 +5,15 @@
             <div class="space-y-6">
                 <div class="flex items-center justify-between">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">From</h3>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">
-                        Balance: <span class="font-semibold text-gray-900 dark:text-white">{{ formattedBalance }} {{
-                            fromToken?.symbol }}</span>
+                    <div class="flex items-center gap-4">
+                        <div v-if="fromChain?.id === chainId" class="text-sm text-gray-500 dark:text-gray-400">
+                            <span class="font-semibold text-yellow-600 dark:text-yellow-400">{{
+                                formatNumber(nativeBalance) }} {{ nativeCurrencySymbol }}</span>
+                        </div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400">
+                            Balance: <span class="font-semibold text-gray-900 dark:text-white">{{ formattedBalance }} {{
+                                fromToken?.symbol }}</span>
+                        </div>
                     </div>
                 </div>
 
@@ -188,7 +194,7 @@
                                         'SelectChain' }}
                                     </div>
                                     <div class="text-sm text-gray-500 dark:text-gray-400">{{ toChain?.type || 'Network'
-                                        }}</div>
+                                    }}</div>
                                 </div>
                             </div>
                             <ChevronDownIcon class="w-5 h-5 text-gray-400 transition-transform duration-300"
@@ -263,7 +269,7 @@
                         </div>
                         <span class="font-medium text-gray-900 dark:text-white">{{ bridgeFee }} {{ fromToken?.symbol ||
                             ''
-                        }}</span>
+                            }}</span>
                     </div>
                     <div class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
                         <div class="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
@@ -279,7 +285,7 @@
                         </div>
                         <span class="font-medium text-gray-900 dark:text-white">{{ formatNumber(21000) }} {{
                             fromToken?.symbol || ''
-                        }}</span>
+                            }}</span>
                     </div>
                 </div>
             </div>
@@ -307,7 +313,7 @@
                     You will receive approximately
                     <span class="font-semibold text-gray-900 dark:text-white">{{ formatNumber(estimatedAmount) }} {{
                         toToken?.symbol
-                    }}</span>
+                        }}</span>
                     on {{ toChain?.name }}
                 </p>
             </div>
@@ -324,12 +330,14 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { onClickOutside } from '@vueuse/core'
 import { storeToRefs } from 'pinia'
-import { useConnection } from '@wagmi/vue'
+import { useConnection, useConfig } from '@wagmi/vue'
+import { getBalance } from '@wagmi/core'
 import { toast } from 'vue-sonner'
 import { useBridgeStore } from '@/modules/bridge/store/bridgeStore'
 import { useBridgeBalance } from '@/modules/bridge/composables/useBridgeBalance'
 import { addressBookService, type Contact } from '@/modules/send/services/addressBook'
 import type { Chain } from '@/modules/bridge/types/bridge.types'
+import { useChain } from '@/app/composables/useChain'
 
 import {
     ChevronDownIcon,
@@ -348,6 +356,35 @@ import AddressBookDialog from '@/modules/send/components/AddressBookDialog.vue'
 
 // Wallet connection
 const { address: walletAddress, chainId } = useConnection()
+const config = useConfig()
+const { getChainInfo } = useChain()
+
+// Native coin balance
+const nativeBalance = ref<number>(0)
+const nativeCurrencySymbol = computed(() => {
+    const info = getChainInfo(chainId.value || 0)
+    return info?.symbol || 'ETH'
+})
+
+// Fetch native coin balance
+const fetchNativeBalance = async () => {
+    if (!walletAddress.value) return
+    try {
+        const balance = await getBalance(config, {
+            address: walletAddress.value as `0x${string}`,
+        })
+        nativeBalance.value = Number(balance.formatted)
+    } catch (err) {
+        console.error('Native balance fetch error:', err)
+    }
+}
+
+// Watch for chain changes to update native balance
+watch(chainId, () => {
+    if (walletAddress.value) {
+        fetchNativeBalance()
+    }
+})
 
 // Store
 const bridgeStore = useBridgeStore()
@@ -362,7 +399,8 @@ const {
     bridgeFee,
     estimatedAmount,
     isLoading: loading,
-    availableTokens
+    availableTokens,
+    sourceChains
 } = storeToRefs(bridgeStore)
 
 // Getters (accessed directly on store, they're already computed)
@@ -374,10 +412,23 @@ const filteredDestChains = computed(() => bridgeStore.filteredDestChains)
 const { initiateBridge: bridgeAction } = bridgeStore
 
 // Balance composable with reactive updates
-const { walletBalance, formattedBalance } = useBridgeBalance(
+const { walletBalance, formattedBalance, refreshBalance } = useBridgeBalance(
     () => fromChain.value?.id,
     () => fromToken.value
 )
+
+// Watch for wallet chain changes to sync fromChain and refresh WCH balance
+watch(chainId, (newChainId) => {
+    if (newChainId) {
+        // Find the chain in sourceChains that matches the wallet's chain
+        const matchingChain = sourceChains.value.find(c => c.id === newChainId)
+        if (matchingChain && fromChain.value?.id !== newChainId) {
+            bridgeStore.setFromChain(matchingChain)
+        }
+        // Refresh token balance for the new chain
+        refreshBalance()
+    }
+})
 
 // Local state for UI
 const showFromChains = ref(false)
@@ -431,6 +482,9 @@ onMounted(async () => {
     if (walletAddress.value && !destinationAddress.value) {
         destinationAddress.value = walletAddress.value
     }
+
+    // Fetch native balance
+    fetchNativeBalance()
 
     if (walletAddress.value) {
         try {
@@ -502,6 +556,6 @@ const initiateBridge = async () => {
 }
 const formatNumber = (num: string | number) => {
     if (!num) return '0.00'
-    return new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 4 }).format(Number(num))
+    return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 }).format(Number(num))
 }
 </script>

@@ -1,12 +1,15 @@
 <script lang="ts" setup>
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { useChain } from '@/app/composables/useChain'
 
-defineProps<{ open: boolean; form: { recipientAddress: string; amount: string; memo: string }; recipientName: string; networkFee: number; totalAmount: number }>()
+const { currentChain } = useChain()
+
+defineProps<{ open: boolean; form: { recipientAddress: string; amount: string; memo: string }; recipientName: string }>()
 
 defineEmits<{ 'update:open': [boolean]; 'confirm-transfer': [] }>()
 
-const formatNumber = (num: number) => new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 4 }).format(num)
+const formatNumber = (num: number) => new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 }).format(num)
 const shortenAddress = (address: string) => address ? `${address.slice(0, 6)}...${address.slice(-4)}` : ''
 </script>
 
@@ -29,23 +32,25 @@ const shortenAddress = (address: string) => address ? `${address.slice(0, 6)}...
             </div>
           </div>
           <div class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
-            <span class="text-gray-600 dark:text-gray-400">Amount:</span>
+            <span class="text-gray-600 dark:text-gray-400">Amount to Send:</span>
             <span class="text-lg font-bold text-blue-600 dark:text-blue-400">{{ formatNumber(Number(form.amount)) }}
               WCH</span>
           </div>
           <div class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
-            <span class="text-gray-600 dark:text-gray-400">Network Fee:</span>
-            <span class="font-medium text-gray-900 dark:text-white">{{ formatNumber(networkFee) }} WCH</span>
-          </div>
-          <div class="flex justify-between items-center py-2">
-            <span class="text-gray-600 dark:text-gray-400">Total:</span>
-            <span class="text-xl font-bold text-blue-600 dark:text-blue-400">{{ formatNumber(totalAmount) }} WCH</span>
+            <span class="text-gray-600 dark:text-gray-400">Network Fee (Gas):</span>
+            <span class="font-medium text-gray-900 dark:text-white">
+              ~0.0001 {{ currentChain?.symbol || 'ETH' }}
+              <span class="text-xs text-gray-500">(estimated)</span>
+            </span>
           </div>
           <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
             <p class="text-gray-600 dark:text-gray-400 mb-2">Note:</p>
             <p class="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 p-3 rounded-xl">{{ form.memo
               || 'No note' }}</p>
           </div>
+          <p class="text-xs text-gray-500 dark:text-gray-400">
+            * Gas fee will be paid in {{ currentChain?.symbol || 'native coin' }} from your wallet
+          </p>
         </div>
       </div>
       <DialogFooter class="flex-col sm:flex-row gap-2">

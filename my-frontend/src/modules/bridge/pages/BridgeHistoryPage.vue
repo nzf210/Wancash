@@ -239,7 +239,7 @@ const formatTime = (timestamp: number): string => {
     const diffDays = Math.floor(diffHours / 24)
     if (diffDays < 7) return `${diffDays}d ago`
 
-    return date.toLocaleDateString('id-ID', {
+    return date.toLocaleDateString('en-US', {
         day: '2-digit',
         month: 'short',
         year: 'numeric'
@@ -247,8 +247,8 @@ const formatTime = (timestamp: number): string => {
 }
 
 const formatNumber = (num: string | number): string => {
-    if (!num) return '0,00'
-    return new Intl.NumberFormat('id-ID', {
+    if (!num) return '0.00'
+    return new Intl.NumberFormat('en-US', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 4
     }).format(Number(num))
@@ -260,6 +260,10 @@ const shortenHash = (hash: string): string => {
 }
 
 const getExplorerUrl = (hash: string): string => {
-    return `https://etherscan.io/tx/${hash}`
+    const isProduction = import.meta.env.VITE_NODE_ENV === 'production'
+    const baseUrl = isProduction
+        ? 'https://layerzeroscan.com/tx'
+        : 'https://testnet.layerzeroscan.com/tx'
+    return `${baseUrl}/${hash}`
 }
 </script>

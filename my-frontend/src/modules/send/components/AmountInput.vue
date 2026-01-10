@@ -7,8 +7,8 @@ defineProps<{ amount: string; minimumTransfer: number; maxTransferable: number; 
 
 defineEmits<{ 'update:amount': [string]; 'validate-amount': []; 'set-max-amount': [] }>()
 
-const formatNumber = (num: number) => new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 4 }).format(num)
-const formatCurrency = (num: number) => new Intl.NumberFormat('id-ID').format(Math.round(num))
+const formatNumber = (num: number) => new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 }).format(num)
+const formatCurrency = (num: number) => new Intl.NumberFormat('en-US').format(Math.round(num))
 </script>
 
 <template>

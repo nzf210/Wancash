@@ -155,7 +155,6 @@ const recipientName = ref<string>('')
 const minimumTransfer = ref<number>(1)
 const maxTransferPerTx = ref<number>(5000000)
 const dailyLimit = ref<number>(21000000)
-const networkFee = ref<number>(0.01)
 const estimatedTime = ref<string>('~15 seconds')
 const addressBookSearch = ref<string>('')
 const addressBook = ref<Contact[]>([])
@@ -165,9 +164,9 @@ const recentTransfers = ref<Transfer[]>([])
 const lastTransaction = ref<LastTransaction>({ amount: '', recipientName: '', transactionHash: '', recipientAddress: '', memo: '' })
 
 // Computed
-const maxTransferable = computed(() => Math.min(walletBalance.value - networkFee.value, maxTransferPerTx.value))
+// Gas fee is paid in native coin, not WCH - so maxTransferable is just the wallet balance
+const maxTransferable = computed(() => Math.min(walletBalance.value, maxTransferPerTx.value))
 const equivalentValue = computed(() => (Number.parseFloat(form.value.amount) || 0) * tokenPrice.value)
-const totalAmount = computed(() => (Number.parseFloat(form.value.amount) || 0) + networkFee.value)
 const currentNetworkName = computed(() => getChainInfo(chainId.value || 0)?.name || 'Unknown Network')
 
 // Fungsi untuk mengirim token
@@ -255,7 +254,7 @@ const sendToken = async (): Promise<Hash | null> => {
 
 // Methods
 const updateForm = (updatedForm: FormData) => { form.value = { ...form.value, ...updatedForm } }
-const formatNumber = (num: number) => new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 4 }).format(num)
+const formatNumber = (num: number) => new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 }).format(num)
 const shortenAddress = (address: string) => address ? `${address.slice(0, 6)}...${address.slice(-4)}` : ''
 
 const validateAddress = () => {
@@ -272,7 +271,7 @@ const validateAmount = () => {
   if (!amount || Number.isNaN(amount)) { amountError.value = ''; return }
   if (amount < minimumTransfer.value) amountError.value = `Minimum transfer is ${minimumTransfer.value} WCH`
   else if (amount > maxTransferable.value) amountError.value = `Maximum transfer is ${formatNumber(maxTransferable.value)} WCH`
-  else if (amount > walletBalance.value - networkFee.value) amountError.value = 'Insufficient balance'
+  else if (amount > walletBalance.value) amountError.value = 'Insufficient balance'
   else amountError.value = ''
 }
 
@@ -354,14 +353,15 @@ const confirmTransfer = async () => {
         hash
       })
 
-      // Simpan riwayat ke localStorage
+      // Save history to localStorage
       saveToTransactionHistory({
         hash,
         from: walletAddress.value!,
         to: form.value.recipientAddress,
         amount,
         timestamp: Date.now(),
-        status: 'success'
+        status: 'success',
+        chainId: chainId.value  // Save chain ID for explorer URL
       })
 
       // Reset form setelah sukses
@@ -378,7 +378,7 @@ const confirmTransfer = async () => {
   }
 }
 
-// Fungsi untuk menyimpan riwayat transaksi ke localStorage
+// Function to save transaction history to localStorage
 interface TransactionHistory {
   hash: string
   from: string
@@ -387,6 +387,7 @@ interface TransactionHistory {
   timestamp: number
   status: 'pending' | 'success' | 'failed'
   memo?: string
+  chainId?: number  // Track which chain the tx was on
 }
 
 const saveToTransactionHistory = (tx: TransactionHistory) => {
@@ -477,7 +478,7 @@ const loadTransactionHistory = async () => {
       id: tx.id || Date.now(),
       recipientShort: shortenAddress(tx.to),
       amount: tx.amount,
-      time: new Intl.DateTimeFormat('id-ID', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(tx.timestamp)),
+      time: new Intl.DateTimeFormat('en-US', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(tx.timestamp)),
       status: tx.status.charAt(0).toUpperCase() + tx.status.slice(1),
       hash: tx.hash
     }))
@@ -488,7 +489,8 @@ const loadTransactionHistory = async () => {
 
 onMounted(() => {
   if (walletAddress.value) {
-    addressBookService.getContacts(walletAddress.value, chainId.value).then(contacts => {
+    // Get all contacts without chain filter - wallet addresses work across all chains
+    addressBookService.getContacts(walletAddress.value).then(contacts => {
       addressBook.value = contacts
     }).catch(console.error)
   }
@@ -512,11 +514,10 @@ onMounted(() => {
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div class="lg:col-span-2">
             <TransferForm :form="form" :minimum-transfer="minimumTransfer" :max-transferable="maxTransferable"
-              :network-fee="networkFee" :estimated-time="estimatedTime" :agree-terms="agreeTerms"
-              :address-error="addressError" :amount-error="amountError" :recipient-name="recipientName"
-              :equivalent-value="equivalentValue" :total-amount="totalAmount" :is-form-valid="isFormValid"
-              @update:form="updateForm" @update:agree-terms="agreeTerms = $event" @validate-address="validateAddress"
-              @validate-amount="validateAmount" @set-max-amount="setMaxAmount"
+              :estimated-time="estimatedTime" :agree-terms="agreeTerms" :address-error="addressError"
+              :amount-error="amountError" :recipient-name="recipientName" :equivalent-value="equivalentValue"
+              :is-form-valid="isFormValid" @update:form="updateForm" @update:agree-terms="agreeTerms = $event"
+              @validate-address="validateAddress" @validate-amount="validateAmount" @set-max-amount="setMaxAmount"
               @show-address-book="showAddressBook = true" @preview-transfer="previewTransfer" @reset-form="resetForm" />
           </div>
 
@@ -537,8 +538,8 @@ onMounted(() => {
 
     <AddContactDialog :open="showAddContact" @update:open="showAddContact = $event" @save-contact="saveContact" />
 
-    <PreviewTransferDialog :open="showPreview" :form="form" :recipient-name="recipientName" :network-fee="networkFee"
-      :total-amount="totalAmount" @update:open="showPreview = $event" @confirm-transfer="confirmTransfer" />
+    <PreviewTransferDialog :open="showPreview" :form="form" :recipient-name="recipientName"
+      @update:open="showPreview = $event" @confirm-transfer="confirmTransfer" />
 
     <LoadingDialog :open="isLoading" />
 

@@ -10,14 +10,12 @@ const props = defineProps<{
   form: { recipientAddress: string; amount: string; memo: string };
   minimumTransfer: number;
   maxTransferable: number;
-  networkFee: number;
   estimatedTime: string;
   agreeTerms: boolean;
   addressError: string;
   amountError: string;
   recipientName: string;
   equivalentValue: number;
-  totalAmount: number;
   isFormValid: boolean;
 }>()
 
@@ -68,7 +66,7 @@ const updateMemo = (value: string) => emit('update:form', { ...props.form, memo:
           :amount-error="amountError" :equivalent-value="equivalentValue" @update:amount="updateAmount"
           @set-max-amount="$emit('set-max-amount')" @validate-amount="$emit('validate-amount')" />
 
-        <NetworkFeeDisplay :network-fee="networkFee" :estimated-time="estimatedTime" :total-amount="totalAmount" />
+        <NetworkFeeDisplay :estimated-time="estimatedTime" :amount="Number(form.amount) || 0" />
 
         <MemoInput :memo="form.memo" @update:memo="updateMemo" />
 

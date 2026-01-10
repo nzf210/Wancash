@@ -46,5 +46,5 @@
 <script lang="ts" setup>
 defineProps<{ minimumTransfer: number; maxTransferPerTx: number; dailyLimit: number; network: string }>()
 
-const formatNumber = (num: number) => new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 4 }).format(num)
+const formatNumber = (num: number) => new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 }).format(num)
 </script>

@@ -2,6 +2,9 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Header from '../components/SendHeader.vue'
+import { useChain } from '@/app/composables/useChain'
+
+const { getExplorerTxUrl, currentChain } = useChain()
 
 interface TransactionHistory {
     id: number
@@ -12,6 +15,7 @@ interface TransactionHistory {
     timestamp: number
     status: 'pending' | 'success' | 'failed'
     memo?: string
+    chainId?: number  // Added to track which chain the tx was on
 }
 
 const router = useRouter()
@@ -31,14 +35,14 @@ const loadHistory = () => {
 }
 
 const formatDate = (timestamp: number) => {
-    return new Intl.DateTimeFormat('id-ID', {
+    return new Intl.DateTimeFormat('en-US', {
         dateStyle: 'medium',
         timeStyle: 'short'
     }).format(new Date(timestamp))
 }
 
 const formatAmount = (amount: number) => {
-    return new Intl.NumberFormat('id-ID', {
+    return new Intl.NumberFormat('en-US', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 4
     }).format(amount)
@@ -56,6 +60,14 @@ const getStatusColor = (status: string) => {
         case 'failed': return 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30'
         default: return 'text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800'
     }
+}
+
+// Get explorer URL based on chainId in transaction, fallback to current chain
+const getTxExplorerUrl = (tx: TransactionHistory) => {
+    // If tx has chainId, use it; otherwise use current chain
+    const chainId = tx.chainId || currentChain.value?.id
+    if (!chainId || !tx.hash) return ''
+    return getExplorerTxUrl(tx.hash, chainId)
 }
 
 const goToPortfolio = () => router.push('/portfolio')
@@ -135,10 +147,16 @@ onMounted(() => {
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 text-sm text-blue-600 dark:text-blue-400 font-mono">
-                                    <a :href="`https://testnet.wanscan.org/tx/${tx.hash}`" target="_blank"
-                                        rel="noopener noreferrer" class="hover:underline">
+                                    <a v-if="getTxExplorerUrl(tx)" :href="getTxExplorerUrl(tx)" target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="hover:underline inline-flex items-center gap-1">
                                         {{ shortenAddress(tx.hash) }}
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                        </svg>
                                     </a>
+                                    <span v-else class="text-gray-400">{{ shortenAddress(tx.hash) }}</span>
                                 </td>
                             </tr>
                         </tbody>
