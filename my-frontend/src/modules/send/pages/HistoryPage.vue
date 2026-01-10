@@ -1,31 +1,22 @@
 <script lang="ts" setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Header from '../components/SendHeader.vue'
 import { useChain } from '@/app/composables/useChain'
+import { transactionHistoryService, type TransactionRecord } from '@/app/services/transactionHistoryService'
 
 const { getExplorerTxUrl, currentChain } = useChain()
 
-interface TransactionHistory {
-    id: number
-    hash: string
-    from: string
-    to: string
-    amount: number
-    timestamp: number
-    status: 'pending' | 'success' | 'failed'
-    memo?: string
-    chainId?: number  // Added to track which chain the tx was on
-}
-
 const router = useRouter()
-const transactions = ref<TransactionHistory[]>([])
+const transactions = ref<TransactionRecord[]>([])
 const loading = ref(true)
+const activeFilter = ref<'all' | 'send' | 'bridge'>('all')
+
+let refreshInterval: ReturnType<typeof setInterval> | null = null
 
 const loadHistory = () => {
     try {
-        const history = JSON.parse(localStorage.getItem('wancash_transactions') || '[]')
-        transactions.value = history
+        transactions.value = transactionHistoryService.getAll()
     } catch (error) {
         console.error('Failed to load transaction history:', error)
         transactions.value = []
@@ -34,6 +25,13 @@ const loadHistory = () => {
     }
 }
 
+const filteredTransactions = computed(() => {
+    if (activeFilter.value === 'all') {
+        return transactions.value
+    }
+    return transactions.value.filter(tx => tx.type === activeFilter.value)
+})
+
 const formatDate = (timestamp: number) => {
     return new Intl.DateTimeFormat('en-US', {
         dateStyle: 'medium',
@@ -41,11 +39,11 @@ const formatDate = (timestamp: number) => {
     }).format(new Date(timestamp))
 }
 
-const formatAmount = (amount: number) => {
+const formatAmount = (amount: string | number) => {
     return new Intl.NumberFormat('en-US', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 4
-    }).format(amount)
+    }).format(Number(amount))
 }
 
 const shortenAddress = (address: string) => {
@@ -62,20 +60,45 @@ const getStatusColor = (status: string) => {
     }
 }
 
+const getTypeColor = (type: string) => {
+    switch (type) {
+        case 'send': return 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30'
+        case 'bridge': return 'text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30'
+        default: return 'text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800'
+    }
+}
+
 // Get explorer URL based on chainId in transaction, fallback to current chain
-const getTxExplorerUrl = (tx: TransactionHistory) => {
-    // If tx has chainId, use it; otherwise use current chain
-    const chainId = tx.chainId || currentChain.value?.id
+const getTxExplorerUrl = (tx: TransactionRecord) => {
+    // For bridge transactions, use LZ Scan URL if available
+    if (tx.type === 'bridge' && tx.lzScanUrl) {
+        return tx.lzScanUrl
+    }
+    // Otherwise use chain explorer
+    const chainId = tx.fromChainId || currentChain.value?.id
     if (!chainId || !tx.hash) return ''
     return getExplorerTxUrl(tx.hash, chainId)
+}
+
+const getChainDisplay = (tx: TransactionRecord) => {
+    if (tx.type === 'bridge') {
+        return `${tx.fromChainName || 'Unknown'} → ${tx.toChainName || 'Unknown'}`
+    }
+    return tx.fromChainName || 'Unknown'
 }
 
 const goToPortfolio = () => router.push('/portfolio')
 
 onMounted(() => {
     loadHistory()
-    // Refresh history every 5 seconds just in case
-    setInterval(loadHistory, 5000)
+    // Refresh history every 10 seconds
+    refreshInterval = setInterval(loadHistory, 10000)
+})
+
+onUnmounted(() => {
+    if (refreshInterval) {
+        clearInterval(refreshInterval)
+    }
 })
 </script>
 
@@ -86,25 +109,55 @@ onMounted(() => {
 
             <div
                 class="mt-8 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-xl overflow-hidden">
-                <div class="p-6 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center">
-                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">Transaction History</h2>
-                    <button @click="router.push('/sendToken')"
-                        class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
-                        Back to Send
-                    </button>
+                <div class="p-6 border-b border-gray-200 dark:border-gray-800">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">Transaction History</h2>
+                        <button @click="router.push('/sendToken')"
+                            class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                            Back to Send
+                        </button>
+                    </div>
+
+                    <!-- Filter Tabs -->
+                    <div class="flex gap-2">
+                        <button @click="activeFilter = 'all'" :class="[
+                            'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                            activeFilter === 'all'
+                                ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                        ]">
+                            All
+                        </button>
+                        <button @click="activeFilter = 'send'" :class="[
+                            'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                            activeFilter === 'send'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                        ]">
+                            Send
+                        </button>
+                        <button @click="activeFilter = 'bridge'" :class="[
+                            'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                            activeFilter === 'bridge'
+                                ? 'bg-purple-600 text-white'
+                                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                        ]">
+                            Bridge
+                        </button>
+                    </div>
                 </div>
 
                 <div v-if="loading" class="p-8 text-center text-gray-500">
                     Loading history...
                 </div>
 
-                <div v-else-if="transactions.length === 0" class="p-12 text-center text-gray-500">
+                <div v-else-if="filteredTransactions.length === 0" class="p-12 text-center text-gray-500">
                     <svg class="w-12 h-12 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <p>No transaction history found</p>
+                    <p>No {{ activeFilter === 'all' ? '' : activeFilter }} transactions found</p>
                 </div>
 
                 <div v-else class="overflow-x-auto">
@@ -113,7 +166,13 @@ onMounted(() => {
                             <tr>
                                 <th
                                     class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Type</th>
+                                <th
+                                    class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Time</th>
+                                <th
+                                    class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Chain</th>
                                 <th
                                     class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     To</th>
@@ -129,21 +188,30 @@ onMounted(() => {
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
-                            <tr v-for="tx in transactions" :key="tx.id"
+                            <tr v-for="tx in filteredTransactions" :key="tx.id"
                                 class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                                <td class="px-6 py-4 text-sm">
+                                    <span class="px-2 py-1 rounded-full text-xs font-medium capitalize"
+                                        :class="getTypeColor(tx.type)">
+                                        {{ tx.type }}
+                                    </span>
+                                </td>
                                 <td class="px-6 py-4 text-sm text-gray-900 dark:text-white whitespace-nowrap">
                                     {{ formatDate(tx.timestamp) }}
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
+                                    {{ getChainDisplay(tx) }}
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300 font-mono">
                                     {{ shortenAddress(tx.to) }}
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-900 dark:text-white font-medium">
-                                    {{ formatAmount(tx.amount) }} WCH
+                                    {{ formatAmount(tx.amount) }} {{ tx.tokenSymbol }}
                                 </td>
                                 <td class="px-6 py-4 text-sm">
-                                    <span class="px-2 py-1 rounded-full text-xs font-medium"
+                                    <span class="px-2 py-1 rounded-full text-xs font-medium capitalize"
                                         :class="getStatusColor(tx.status)">
-                                        {{ tx.status.charAt(0).toUpperCase() + tx.status.slice(1) }}
+                                        {{ tx.status }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 text-sm text-blue-600 dark:text-blue-400 font-mono">

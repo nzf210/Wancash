@@ -21,6 +21,7 @@ import { watchDebounced } from '@vueuse/core'
 import { readContract, writeContract, waitForTransactionReceipt, getBalance } from '@wagmi/core'
 import { parseEther, type Hash } from 'viem'
 import { addressBookService, type Contact } from '../services/addressBook'
+import { transactionHistoryService } from '@/app/services/transactionHistoryService'
 
 const { isConnected, address: walletAddress, chainId } = useConnection()
 const { getChainInfo } = useChain()
@@ -353,15 +354,19 @@ const confirmTransfer = async () => {
         hash
       })
 
-      // Save history to localStorage
-      saveToTransactionHistory({
+      // Save to unified transaction history
+      transactionHistoryService.add({
+        type: 'send',
         hash,
         from: walletAddress.value!,
         to: form.value.recipientAddress,
-        amount,
+        amount: amount.toString(),
+        tokenSymbol: 'WCH',
+        fromChainId: chainId.value || 0,
+        fromChainName: currentNetworkName.value,
         timestamp: Date.now(),
         status: 'success',
-        chainId: chainId.value  // Save chain ID for explorer URL
+        memo: form.value.memo || undefined
       })
 
       // Reset form setelah sukses
@@ -378,36 +383,7 @@ const confirmTransfer = async () => {
   }
 }
 
-// Function to save transaction history to localStorage
-interface TransactionHistory {
-  hash: string
-  from: string
-  to: string
-  amount: number
-  timestamp: number
-  status: 'pending' | 'success' | 'failed'
-  memo?: string
-  chainId?: number  // Track which chain the tx was on
-}
-
-const saveToTransactionHistory = (tx: TransactionHistory) => {
-  try {
-    const history = JSON.parse(localStorage.getItem('wancash_transactions') || '[]')
-    history.unshift({
-      ...tx,
-      id: Date.now()
-    })
-
-    // Simpan maksimal 100 transaksi terakhir
-    if (history.length > 100) {
-      history.pop()
-    }
-
-    localStorage.setItem('wancash_transactions', JSON.stringify(history))
-  } catch (error) {
-    console.error('Failed to save transaction history:', error)
-  }
-}
+// Transaction history is now handled by transactionHistoryService
 
 const resetForm = () => {
   form.value = { recipientAddress: '', amount: '', memo: '' }

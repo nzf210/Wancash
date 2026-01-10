@@ -7,6 +7,7 @@ import { wancashContractAddress, wancashAbi } from '@/app/services/contracts'
 import { toast } from 'vue-sonner'
 import { SUPPORTED_CHAINS } from '@/app/composables/useChain'
 import { Options } from '@layerzerolabs/lz-v2-utilities'
+import { transactionHistoryService } from '@/app/services/transactionHistoryService'
 
 interface BridgeState {
   fromChain: Chain | null
@@ -36,7 +37,7 @@ export const useBridgeStore = defineStore('bridge', {
     fromToken: null,
     toToken: null,
     amount: '',
-    history: [],
+    history: [], // Will be loaded from transactionHistoryService
     isLoading: false,
     bridgeFee: '0.00',
     estimatedAmount: '0.00',
@@ -88,6 +89,21 @@ export const useBridgeStore = defineStore('bridge', {
     setAmount(amount: string) {
       this.amount = amount
       this.debounceQuote()
+    },
+
+    // Load bridge history from persistent storage
+    loadHistory() {
+      const bridgeTxs = transactionHistoryService.getByType('bridge')
+      this.history = bridgeTxs.map(tx => ({
+        id: tx.id,
+        fromChain: tx.fromChainName || 'Unknown',
+        toChain: tx.toChainName || 'Unknown',
+        token: tx.tokenSymbol,
+        amount: tx.amount,
+        timestamp: tx.timestamp,
+        status: tx.status === 'success' ? 'completed' as const : tx.status === 'failed' ? 'failed' as const : 'pending' as const,
+        txHash: tx.hash
+      }))
     },
 
     debounceQuote() {
@@ -202,7 +218,7 @@ export const useBridgeStore = defineStore('bridge', {
 
         toast.success(`Bridge Success! Sent ${this.amount} ${this.fromToken?.symbol} to ${this.toChain?.name}`)
 
-        // Add to history
+        // Add to in-memory history
         this.history.unshift({
           id: Date.now(),
           fromChain: this.fromChain!.symbol,
@@ -212,6 +228,23 @@ export const useBridgeStore = defineStore('bridge', {
           timestamp: Date.now(),
           status: 'completed',
           txHash: hash
+        })
+
+        // Persist to unified transaction history service
+        transactionHistoryService.add({
+          type: 'bridge',
+          hash: hash,
+          from: account.address,
+          to: account.address, // Same address on destination chain
+          amount: this.amount,
+          tokenSymbol: this.fromToken!.symbol,
+          fromChainId: this.fromChain!.id,
+          toChainId: this.toChain!.id,
+          fromChainName: this.fromChain!.name,
+          toChainName: this.toChain!.name,
+          timestamp: Date.now(),
+          status: 'success',
+          lzScanUrl: `https://layerzeroscan.com/tx/${hash}`
         })
 
         this.amount = '' // Reset

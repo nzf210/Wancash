@@ -174,7 +174,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useBridgeStore } from '@/modules/bridge/store/bridgeStore'
@@ -190,6 +190,11 @@ import {
 const router = useRouter()
 const bridgeStore = useBridgeStore()
 const { history } = storeToRefs(bridgeStore)
+
+// Load persisted history on mount
+onMounted(() => {
+    bridgeStore.loadHistory()
+})
 
 // Filter state
 const activeFilter = ref<'all' | 'pending' | 'completed' | 'failed'>('all')
@@ -221,7 +226,7 @@ const goBack = () => {
 }
 
 const refreshHistory = () => {
-    console.log('Refreshing history...')
+    bridgeStore.loadHistory()
 }
 
 const formatTime = (timestamp: number): string => {

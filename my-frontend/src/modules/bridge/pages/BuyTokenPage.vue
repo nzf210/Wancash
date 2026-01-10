@@ -15,6 +15,7 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useBridgeStore } from '@/modules/bridge/store/bridgeStore'
 import BridgeHeader from '@/modules/bridge/components/BridgeHeader.vue'
@@ -24,4 +25,9 @@ import RecentBridges from '@/modules/bridge/components/RecentBridges.vue'
 
 const bridgeStore = useBridgeStore()
 const { history: recentBridges } = storeToRefs(bridgeStore)
+
+// Load persisted bridge history on mount
+onMounted(() => {
+  bridgeStore.loadHistory()
+})
 </script>
