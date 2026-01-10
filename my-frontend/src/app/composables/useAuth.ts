@@ -1,5 +1,5 @@
 // frontend/src/composables/useAuth.ts
-import { ref, onMounted, watch, onUnmounted, computed } from 'vue'
+import { ref, onMounted, watch, onUnmounted, computed, onBeforeUnmount } from 'vue'
 import { watchAccount, getAccount, signTypedData } from '@wagmi/core'
 import { z } from 'zod'
 import { toast } from 'vue-sonner'
@@ -38,6 +38,7 @@ const state = ref<AuthState>({
 const isConnected = ref(false)
 const isRestoring = ref(true) // Flag to prevent premature actions during init
 const recentChainChange = ref(false) // Flag to prevent spurious disconnects on chain switch
+let proactiveRefreshTimer: ReturnType<typeof setTimeout> | null = null // Timer for proactive refresh
 
 const nonceSchema = z.object({
   address: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
@@ -72,6 +73,13 @@ export const useAuth = () => {
   // Helper to update state
   const resetState = () => {
     console.log('🔄 [useAuth] Resetting auth state')
+
+    // Clear proactive refresh timer
+    if (proactiveRefreshTimer) {
+      clearTimeout(proactiveRefreshTimer)
+      proactiveRefreshTimer = null
+    }
+
     state.value = {
       status: 'UNAUTHENTICATED',
       user: {},
@@ -209,6 +217,9 @@ export const useAuth = () => {
       localStorage.setItem('auth_state', JSON.stringify(authState))
       console.log('✅ [useAuth] Auth state persisted to localStorage')
 
+      // Schedule proactive refresh (5 minutes before expiry)
+      scheduleProactiveRefresh(data.expiresIn || 3600)
+
       toast.success('Successfully connected!')
       console.log('🔐 [useAuth] ========== LOGIN SUCCESS ==========\n')
       return true
@@ -314,6 +325,7 @@ export const useAuth = () => {
     try {
       console.log('🔄 [useAuth] Calling /api/auth/refresh...')
       const refreshRes = await fetch('/api/auth/refresh', {
+        method: 'GET',
         headers: {
           'X-No-Retry': 'true',
           ...getAuthHeaders()
@@ -324,9 +336,15 @@ export const useAuth = () => {
       console.log('🔄 [useAuth] Refresh response status:', refreshRes.status)
 
       if (refreshRes.ok) {
+        const data = await refreshRes.json()
         state.value.status = 'AUTHENTICATED'
         state.value.lastChecked = now
+
+        // Schedule proactive refresh (5 minutes before expiry)
+        scheduleProactiveRefresh(data.expiresIn || 3600)
+
         console.log('✅ [useAuth] Refresh successful')
+        console.log('🔄 [useAuth] Next proactive refresh in:', (data.expiresIn - 300), 'seconds')
         console.log('🔄 [useAuth] ========== END (success) ==========\n')
         return true
       }
@@ -340,6 +358,75 @@ export const useAuth = () => {
       return false
     }
   }
+
+  // Proactive token refresh - refresh 5 minutes before expiry
+  const scheduleProactiveRefresh = (expiresIn: number) => {
+    // Clear existing timer
+    if (proactiveRefreshTimer) {
+      clearTimeout(proactiveRefreshTimer)
+    }
+
+    // Schedule refresh 5 minutes (300 seconds) before expiry
+    const refreshIn = Math.max((expiresIn - 300) * 1000, 60000) // minimum 1 minute
+
+    console.log(`⏰ [useAuth] Scheduling proactive refresh in ${refreshIn / 1000} seconds`)
+
+    proactiveRefreshTimer = setTimeout(async () => {
+      if (isAuthenticated.value) {
+        console.log('⏰ [useAuth] Proactive refresh triggered')
+        await refreshSession()
+      }
+    }, refreshIn)
+  }
+
+  // Helper: Parse JWT and get expiry time (without verification, just parsing)
+  const parseJwtExpiry = (): number | null => {
+    try {
+      // Try to get access_token from document.cookie
+      const cookies = document.cookie.split(';')
+      const accessTokenCookie = cookies.find(c => c.trim().startsWith('access_token='))
+
+      if (!accessTokenCookie) {
+        console.log('⚠️ [useAuth] No access_token cookie found for parsing')
+        return null
+      }
+
+      const token = accessTokenCookie.split('=')[1]
+      if (!token) return null
+
+      // Decode JWT payload (base64 decode)
+      const parts = token.split('.')
+      if (parts.length !== 3) return null
+
+      const payload = JSON.parse(atob(parts[1]))
+      const exp = payload.exp // Unix timestamp in seconds
+
+      if (!exp) return null
+
+      const now = Math.floor(Date.now() / 1000)
+      const remainingSeconds = exp - now
+
+      console.log('🔍 [useAuth] JWT expiry parsed:', {
+        exp,
+        now,
+        remainingSeconds,
+        expiresAt: new Date(exp * 1000).toISOString()
+      })
+
+      return remainingSeconds > 0 ? remainingSeconds : null
+    } catch (error) {
+      console.error('❌ [useAuth] Failed to parse JWT expiry:', error)
+      return null
+    }
+  }
+
+  // Cleanup on unmount
+  onBeforeUnmount(() => {
+    if (proactiveRefreshTimer) {
+      clearTimeout(proactiveRefreshTimer)
+      proactiveRefreshTimer = null
+    }
+  })
 
   // --- INITIALIZATION & WATCHERS ---
 
@@ -391,6 +478,7 @@ export const useAuth = () => {
 
   // 2. Restore Session from LocalStorage
   const restoreSession = async () => {
+    console.log('📦 [useAuth] Attempting to restore session from localStorage...')
     const saved = localStorage.getItem('auth_state')
     if (saved) {
       try {
@@ -404,15 +492,29 @@ export const useAuth = () => {
             chainId: parsed.chainId,
             lastChecked: parsed.timestamp
           }
-          console.log('📦 session restored from storage:', parsed.address)
+          console.log('📦 [useAuth] Session restored from storage:', parsed.address)
+
+          // 🆕 CRITICAL: Reschedule proactive refresh after page reload
+          const remainingSeconds = parseJwtExpiry()
+          if (remainingSeconds && remainingSeconds > 0) {
+            console.log('⏰ [useAuth] Rescheduling proactive refresh after restore')
+            scheduleProactiveRefresh(remainingSeconds)
+          } else {
+            console.log('⚠️ [useAuth] Token expired or invalid, will check session')
+          }
+
           // Background verification
           checkSession()
         } else {
+          console.log('⚠️ [useAuth] Saved session too old, clearing')
           localStorage.removeItem('auth_state')
         }
       } catch (e) {
+        console.error('❌ [useAuth] Failed to restore session:', e)
         localStorage.removeItem('auth_state')
       }
+    } else {
+      console.log('📦 [useAuth] No saved session found')
     }
     isRestoring.value = false
   }
