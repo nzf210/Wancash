@@ -21,7 +21,7 @@ import { navigationItems, productMenuItems } from './menuItem'
 
 // Composables
 const { isConnected, address: walletAddress } = useConnection()
-const { checkAuth } = useAuth()
+const { checkSession } = useAuth()
 
 
 // Props & Emits
@@ -48,7 +48,7 @@ const handleNotificationClick = () => {
 onMounted(() => {
   window.addEventListener('scroll', handleScroll)
   if (isConnected.value && walletAddress.value) {
-    checkAuth()
+    checkSession()
   }
 })
 

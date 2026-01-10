@@ -55,7 +55,7 @@ const connectWallet = async () => {
 
 const { isConnected, address: walletAddress, chainId } = useConnection()
 const { isSupportedChain } = useChain()
-const { isAuthenticated, login, loading: authLoading, authStabilizing } = useAuth()
+const { isAuthenticated, login, isLoading: authLoading, isRestoring: authStabilizing } = useAuth()
 
 const handleAuth = async () => {
   try {

@@ -44,15 +44,15 @@ const authGuard = async (
      * const { useAuth } = await import('@/app/composables/useAuth');
      *
      */
-    const { authStabilizing, isAuthenticated } = useAuth();
+    const { isRestoring, isAuthenticated } = useAuth();
 
-    console.log('🔑 [AuthGuard] Authenticated:', isAuthenticated.value, 'Stabilizing:', authStabilizing.value);
+    console.log('🔑 [AuthGuard] Authenticated:', isAuthenticated.value, 'Stabilizing:', isRestoring.value);
 
     // Wait for auth to stabilize if it's currently stabilizing (e.g., waiting for wallet connection)
-    if (authStabilizing.value) {
+    if (isRestoring.value) {
       console.log('⏳ [AuthGuard] Waiting for auth stabilization...');
       await new Promise<void>((resolve) => {
-        const stopWatch = watch(authStabilizing, (val) => {
+        const stopWatch = watch(isRestoring, (val) => {
           if (!val) {
             stopWatch();
             resolve();
@@ -65,7 +65,7 @@ const authGuard = async (
           resolve();
         }, 4000);
       });
-      console.log('✅ [AuthGuard] Auth stabilization finished.');
+      console.log('✅ [AuthGuard] Auth restoration finished. Authenticated:', isAuthenticated.value);
     }
 
     if (isAuthenticated.value) {

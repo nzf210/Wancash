@@ -1,43 +1,39 @@
 <script setup lang="ts">
-import { ref, onMounted, watch, computed, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useConnection, useDisconnect } from '@wagmi/vue'
 import { useAuth } from '@/app/composables/useAuth'
 import { useChain } from '@/app/composables/useChain'
 import { shortenAddress } from '@/utils/helpers'
 import { toast } from 'vue-sonner'
 import ProfileIcon from './ProfileIcon.vue'
-import type { EIP1193Provider } from 'viem'
 import { useAppKitAccount } from '@reown/appkit/vue'
 import { Spinner } from '@/components/ui/spinner'
 import { appkit } from '@/app/components/config/appkit'
 import type { ProfileAuthStores } from './types'
 import { useRouter } from "vue-router"
 
-
 defineProps<{
   isMobile: boolean
 }>()
 
 // Composables
-const { isConnected, address: walletAddress, chainId } = useConnection()
+const { isConnected: wagmiConnected, address: walletAddress, chainId } = useConnection()
 const { mutateAsync: walletDisconnect } = useDisconnect()
-const { isAuthenticated, login, logout, checkAuth, loading: authLoading, user, authStabilizing } = useAuth()
+const { isAuthenticated, login, logout, isLoading, user } = useAuth()
 const { isSupportedChain, getChainInfo } = useChain()
-const accountData = useAppKitAccount()
+const accountData = useAppKitAccount() // Keep reown/appkit for modal opening
+const router = useRouter()
 
 // State
-const connecting = ref(false)
-const recentChainChange = ref(false)
+const isConnectingWallet = ref(false)
 
 // Computed
 const currentChain = computed(() => getChainInfo(chainId.value || 0))
 
-const router = useRouter()
-
 const profileAuthStores = computed(() => ({
   walletAddress: walletAddress.value || null,
   isConnected: isAuthenticated.value,
-  userAvatar: null,
+  userAvatar: user.value?.avatar || null,
   userDisplayName: user.value?.name || 'User',
   userInitials: (user.value?.name?.charAt(0) || 'U').toUpperCase(),
   userEmail: user.value?.email || null,
@@ -46,118 +42,36 @@ const profileAuthStores = computed(() => ({
   handleDisconnect: disconnectWallet
 })) as unknown as ProfileAuthStores
 
-// Watchers
-watch(chainId, () => {
-  console.log('Chain changed to:', chainId.value)
-  recentChainChange.value = true
-  setTimeout(() => {
-    recentChainChange.value = false
-  }, 2000)
-
-  if (chainId.value && !isSupportedChain.value) {
-    toast.warning('Unsupported network, some features may not work')
-  }
-})
-
-watch(walletAddress, async (newAddress, oldAddress) => {
-  console.log('Wallet address change detected:', { new: newAddress, old: oldAddress })
-
-  if (newAddress === undefined && oldAddress && recentChainChange.value) {
-    console.log('Ignoring spurious disconnect after recent chain change')
-    return
-  }
-
-  if (isAuthenticated.value && newAddress && oldAddress && newAddress !== oldAddress) {
-    await logout()
-    toast.warning("Wallet address has changed. Please sign in again.")
-  }
-})
-
-watch([isConnected, walletAddress], async ([connected, address]) => {
-  if (authStabilizing.value) return
-  if (!connected || !address) {
-    console.log('Wallet disconnected')
-  } else {
-    await checkAuth()
-  }
-})
-
-// Lifecycle hooks
-const handleRedirect = async () => {
-  if (isAuthenticated.value) {
-    const route = sessionStorage.getItem('intended_route')
-    console.log('intended_route', route)
-    if (route) {
-      sessionStorage.removeItem('intended_route')
-      router.replace(route)
-    }
-  }
-}
-
-watch(isAuthenticated, (authenticated) => {
-  if (authenticated) {
-    handleRedirect()
-  }
-})
-
-onMounted(async () => {
-  if (globalThis.window?.ethereum) {
-    const ethereum = globalThis.window.ethereum as EIP1193Provider
-
-    const handleAccountsChanged = async (accounts: string[]) => {
-      console.log('MetaMask accounts changed:', accounts)
-
-      if (accounts.length === 0 && recentChainChange.value) {
-        console.log('Ignoring spurious disconnect after recent chain change')
-        return
-      }
-
-      if (isAuthenticated.value && accounts.length > 0 && accounts[0] !== walletAddress.value) {
-        await logout()
-        toast.warning('MetaMask account has changed. Please sign in again.')
-      }
-    }
-
-    ethereum.on('accountsChanged', handleAccountsChanged)
-
-    onUnmounted(() => {
-      ethereum.removeListener('accountsChanged', handleAccountsChanged)
-    })
-  } else {
-    console.log('Ethereum is not available')
-  }
-
-  // Initial check
-  if (isConnected.value && walletAddress.value) {
-    await checkAuth();
-
-  }
-})
-
 // Methods
 const connectWallet = async () => {
   try {
-    connecting.value = true
+    isConnectingWallet.value = true
     if (!accountData.value.isConnected) {
       await appkit.open()
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // Wait a bit for modal to settle
+      await new Promise(resolve => setTimeout(resolve, 500))
     }
-  } catch (error: unknown) {
-    toast.error(error instanceof Error ? error.message : 'Failed to connect')
+  } catch (error: any) {
+    toast.error(error.message || 'Failed to connect')
   } finally {
-    connecting.value = false
+    isConnectingWallet.value = false
   }
 }
 
-const handleAuth = async () => {
+const handleSignIn = async () => {
   try {
     if (!isSupportedChain.value) {
       toast.error('Please switch to a supported network')
       return
     }
-    await login(walletAddress.value!, chainId.value!)
-  } catch (error: unknown) {
-    toast.error(error instanceof Error ? error.message : 'Authentication failed')
+    if (!walletAddress.value || !chainId.value) {
+      toast.error('Wallet not fully connected')
+      return
+    }
+    await login(walletAddress.value, chainId.value)
+  } catch (error: any) {
+    // Error handling is mostly done in useAuth, but safe fallback here
+    console.error(error)
   }
 }
 
@@ -165,43 +79,53 @@ const disconnectWallet = async () => {
   try {
     if (isAuthenticated.value) {
       await logout()
-      console.info('Signed out')
     }
     await walletDisconnect()
-  } catch (error: unknown) {
-    console.error(error instanceof Error ? error.message : 'Disconnect failed')
+  } catch (error: any) {
+    console.error('Disconnect failed', error)
   }
 }
+
+// Watch for authentication to handle redirects
+watch(isAuthenticated, (authenticated) => {
+  if (authenticated) {
+    const route = sessionStorage.getItem('intended_route')
+    if (route) {
+      sessionStorage.removeItem('intended_route')
+      router.replace(route)
+    }
+  }
+})
+
 </script>
 
 <template>
   <div class="wallet-auth-container">
-    <!-- State 1: Not Connected -->
-    <button v-if="!isConnected" @click="connectWallet" :disabled="connecting" class="connect-button">
-      <span v-if="connecting" class="spinner"></span>
-      {{ connecting ? 'Connecting...' : 'Connect Wallet' }}
+    <!-- State 1: Not Connected (Wagmi level) -->
+    <button v-if="!wagmiConnected" @click="connectWallet" :disabled="isConnectingWallet" class="connect-button">
+      <Spinner v-if="isConnectingWallet" class="spinner-sm mr-2" />
+      {{ isConnectingWallet ? 'Connecting...' : 'Connect Wallet' }}
     </button>
 
-    <!-- Loading State -->
-    <div v-if="authLoading" class="flex items-center">
-      <Spinner class="mr-2" />
-      <span class="auth-loading">Loading...</span>
+    <!-- State 2: Loading Auth Status -->
+    <div v-else-if="isLoading" class="flex items-center px-4 py-2 bg-slate-100 rounded-lg dark:bg-slate-800">
+      <Spinner class="spinner-sm mr-2" />
+      <span class="text-sm font-medium">Verifying...</span>
     </div>
 
-    <!-- State 2: Connected but Not Authenticated -->
-    <button v-else-if="isConnected && !isAuthenticated" @click="handleAuth" :disabled="authLoading"
-      class="connect-button">
-      <span v-if="authLoading" class="spinner"></span>
-      <span v-else class="wallet-info">
-        <span class="wallet-address text-[10px]">
+    <!-- State 3: Connected but Not Authenticated (Need to Sign In) -->
+    <button v-else-if="wagmiConnected && !isAuthenticated" @click="handleSignIn"
+      class="connect-button bg-orange-600 hover:bg-orange-700">
+      <span class="wallet-info">
+        <span class="wallet-address text-[10px] opacity-90 mr-2">
           {{ shortenAddress(walletAddress) }}
         </span>
-        <span class="auth-status">(Sign In)</span>
+        <span class="auth-status font-bold">Sign In</span>
       </span>
     </button>
 
-    <!-- State 3: Connected and Authenticated -->
-    <div v-else-if="isConnected && isAuthenticated" class="authenticated-state">
+    <!-- State 4: Fully Authenticated -->
+    <div v-else-if="wagmiConnected && isAuthenticated" class="authenticated-state">
       <ProfileIcon v-if="!isMobile" :auth-stores="profileAuthStores" />
     </div>
   </div>
@@ -247,32 +171,9 @@ const disconnectWallet = async () => {
   font-family: monospace;
 }
 
-.auth-status {
-  font-size: 0.8em;
-  opacity: 0.8;
-}
-
-.spinner {
-  border: 2px solid #ffffff;
-  border-top: 2px solid transparent;
-  border-radius: 50%;
+.spinner-sm {
   width: 16px;
   height: 16px;
-  animation: spin 1s linear infinite;
-  margin-right: 8px;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-.auth-loading {
-  margin-left: 8px;
+  border-width: 2px;
 }
 </style>
