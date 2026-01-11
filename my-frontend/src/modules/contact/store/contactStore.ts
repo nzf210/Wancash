@@ -3,7 +3,7 @@ import { ref, reactive } from 'vue'
 import type { ContactFormData, Attachment } from '../types/contact.types'
 import { submitContactForm } from '../services/contactApi'
 
-export const useContactStore = defineStore('contact', () => {
+export const useContactStore = defineStore('contact-form', () => {
     // State
     const loading = ref(false)
     const selectedType = ref('technical')
