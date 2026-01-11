@@ -113,6 +113,8 @@ export const transactionService = {
                 transactionHash: undefined,
                 processingTime: '1-2 business days',
                 rejectReason: redemption.status === 'rejected' ? redemption.admin_notes : undefined,
+                shippingAddress: redemption.shipping_address,
+                goldAmount: redemption.gold_amount_grams,
             }))
         } catch (error) {
             console.error('Error fetching redeem transactions:', error)

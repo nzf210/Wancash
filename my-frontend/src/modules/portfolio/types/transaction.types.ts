@@ -36,6 +36,8 @@ export interface RedeemTransaction {
     transactionHash?: string
     processingTime?: string
     rejectReason?: string
+    shippingAddress?: string
+    goldAmount?: number
 }
 
 export interface TransactionFilters {

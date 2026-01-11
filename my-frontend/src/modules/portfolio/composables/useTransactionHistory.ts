@@ -102,6 +102,8 @@ export function useTransactionHistory() {
                 transactionHash: undefined, // Redemption doesn't have blockchain tx hash
                 processingTime: '1-2 business days',
                 rejectReason: redemption.status === 'rejected' ? redemption.admin_notes : undefined,
+                shippingAddress: redemption.shipping_address,
+                goldAmount: redemption.gold_amount_grams,
             }))
         } catch (err) {
             error.value = err instanceof Error ? err.message : 'Failed to fetch redeem transactions'
