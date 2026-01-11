@@ -52,9 +52,9 @@
         </div>
 
         <!-- Filter Tabs -->
-        <div class="flex items-center justify-between mb-4">
+        <div class="flex flex-col md:flex-row md:items-center justify-between mb-4 gap-4 md:gap-0">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">All Transactions</h3>
-            <div class="flex items-center space-x-2">
+            <div class="flex flex-wrap items-center gap-2 md:space-x-2">
                 <button v-for="filter in filters" :key="filter.value" @click="activeFilter = filter.value" :class="[
                     'px-3 py-1.5 rounded-lg font-medium text-xs transition-colors',
                     activeFilter === filter.value
@@ -105,58 +105,104 @@
             <!-- Transaction Rows -->
             <div v-else class="divide-y divide-gray-100 dark:divide-gray-800">
                 <div v-for="tx in filteredHistory" :key="tx.id"
-                    class="grid grid-cols-1 md:grid-cols-12 gap-4 px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors items-center">
-                    <!-- Route -->
-                    <div class="col-span-3 flex items-center space-x-2">
-                        <div
-                            class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center">
-                            <span class="text-white text-xs font-bold">{{ tx.fromChain.charAt(0) }}</span>
+                    class="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+
+                    <!-- Mobile View -->
+                    <div class="md:hidden space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <div class="flex items-center -space-x-1">
+                                    <div
+                                        class="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center ring-2 ring-white dark:ring-gray-900 z-10">
+                                        <span class="text-white text-[10px] font-bold">{{ tx.fromChain.charAt(0)
+                                            }}</span>
+                                    </div>
+                                    <div
+                                        class="w-7 h-7 rounded-lg bg-gradient-to-br from-green-500 to-emerald-400 flex items-center justify-center ring-2 ring-white dark:ring-gray-900">
+                                        <span class="text-white text-[10px] font-bold">{{ tx.toChain.charAt(0) }}</span>
+                                    </div>
+                                </div>
+                                <span class="text-xs text-gray-500 dark:text-gray-400">{{ tx.fromChain }} → {{
+                                    tx.toChain }}</span>
+                            </div>
+                            <span class="text-xs text-gray-400">{{ formatTime(tx.timestamp) }}</span>
                         </div>
-                        <ArrowRightIcon class="w-4 h-4 text-gray-400" />
-                        <div
-                            class="w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-emerald-400 flex items-center justify-center">
-                            <span class="text-white text-xs font-bold">{{ tx.toChain.charAt(0) }}</span>
+
+                        <div class="flex items-center justify-between">
+                            <div class="flex flex-col">
+                                <span class="text-sm font-bold text-gray-900 dark:text-white">{{ formatNumber(tx.amount)
+                                    }} {{ tx.token }}</span>
+                            </div>
+                            <StatusBadge :status="tx.status" />
                         </div>
-                        <span class="text-sm text-gray-600 dark:text-gray-400 hidden lg:inline">
-                            {{ tx.fromChain }} → {{ tx.toChain }}
-                        </span>
+
+                        <div
+                            class="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-800">
+                            <span class="text-xs text-gray-400">Transaction Hash</span>
+                            <a v-if="tx.txHash" :href="getExplorerUrl(tx.txHash)" target="_blank"
+                                class="text-xs text-blue-500 hover:underline flex items-center space-x-1">
+                                <span>{{ shortenHash(tx.txHash) }}</span>
+                                <ExternalLinkIcon class="w-3 h-3" />
+                            </a>
+                            <span v-else class="text-xs text-gray-400">-</span>
+                        </div>
                     </div>
 
-                    <!-- Token -->
-                    <div class="col-span-2">
-                        <span class="font-medium text-gray-900 dark:text-white">{{ tx.token }}</span>
-                    </div>
+                    <!-- Desktop View -->
+                    <div class="hidden md:grid grid-cols-12 gap-4 items-center">
+                        <!-- Route -->
+                        <div class="col-span-3 flex items-center space-x-2">
+                            <div
+                                class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center">
+                                <span class="text-white text-xs font-bold">{{ tx.fromChain.charAt(0) }}</span>
+                            </div>
+                            <ArrowRightIcon class="w-4 h-4 text-gray-400" />
+                            <div
+                                class="w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-emerald-400 flex items-center justify-center">
+                                <span class="text-white text-xs font-bold">{{ tx.toChain.charAt(0) }}</span>
+                            </div>
+                            <span class="text-sm text-gray-600 dark:text-gray-400 hidden lg:inline">
+                                {{ tx.fromChain }} → {{ tx.toChain }}
+                            </span>
+                        </div>
 
-                    <!-- Amount -->
-                    <div class="col-span-2 text-right">
-                        <span class="font-semibold text-gray-900 dark:text-white">{{ formatNumber(tx.amount) }}</span>
-                    </div>
+                        <!-- Token -->
+                        <div class="col-span-2">
+                            <span class="font-medium text-gray-900 dark:text-white">{{ tx.token }}</span>
+                        </div>
 
-                    <!-- Status -->
-                    <div class="col-span-2">
-                        <StatusBadge :status="tx.status" />
-                    </div>
+                        <!-- Amount -->
+                        <div class="col-span-2 text-right">
+                            <span class="font-semibold text-gray-900 dark:text-white">{{ formatNumber(tx.amount)
+                                }}</span>
+                        </div>
 
-                    <!-- Time -->
-                    <div class="col-span-2 text-sm text-gray-500 dark:text-gray-400">
-                        {{ formatTime(tx.timestamp) }}
-                    </div>
+                        <!-- Status -->
+                        <div class="col-span-2">
+                            <StatusBadge :status="tx.status" />
+                        </div>
 
-                    <!-- Tx Hash -->
-                    <div class="col-span-1">
-                        <a v-if="tx.txHash" :href="getExplorerUrl(tx.txHash)" target="_blank"
-                            class="text-xs text-blue-500 hover:underline flex items-center space-x-1">
-                            <span>{{ shortenHash(tx.txHash) }}</span>
-                            <ExternalLinkIcon class="w-3 h-3" />
-                        </a>
-                        <span v-else class="text-xs text-gray-400">-</span>
+                        <!-- Time -->
+                        <div class="col-span-2 text-sm text-gray-500 dark:text-gray-400">
+                            {{ formatTime(tx.timestamp) }}
+                        </div>
+
+                        <!-- Tx Hash -->
+                        <div class="col-span-1">
+                            <a v-if="tx.txHash" :href="getExplorerUrl(tx.txHash)" target="_blank"
+                                class="text-xs text-blue-500 hover:underline flex items-center space-x-1">
+                                <span>{{ shortenHash(tx.txHash) }}</span>
+                                <ExternalLinkIcon class="w-3 h-3" />
+                            </a>
+                            <span v-else class="text-xs text-gray-400">-</span>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Stats Summary -->
-        <div class="mt-6 grid grid-cols-3 gap-4">
+        <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-100 dark:border-gray-800">
                 <div class="text-sm text-gray-500 dark:text-gray-400">Total Transactions</div>
                 <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ history.length }}</div>

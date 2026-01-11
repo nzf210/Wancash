@@ -2,15 +2,12 @@
   <div class="flex items-center justify-center">
     <template v-if="token">
       <!-- WAN Token -->
-      <svg v-if="token.symbol === 'WAN'" class="w-full h-full" viewBox="0 0 24 24" fill="currentColor">
-        <circle cx="12" cy="12" r="10" />
-        <text x="12" y="16" text-anchor="middle" font-size="10" fill="white">W</text>
-      </svg>
+      <img v-if="token.symbol === 'WAN' || token.symbol === 'WCH'" :src="wancashLogo" alt="Wancash"
+        class="w-full h-full rounded-full object-contain" />
 
-      <!-- Ethereum -->
-      <svg v-else-if="token.symbol === 'ETH'" class="w-full h-full" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 2L3 12l9 10 9-10L12 2zm0 18l-7-8 7-8 7 8-7 8z" />
-      </svg>
+      <!-- Token Logos from Central Source -->
+      <img v-else-if="getTokenLogo(token.symbol)" :src="getTokenLogo(token.symbol)" :alt="token.symbol"
+        class="w-full h-full object-contain rounded-full" />
 
       <!-- Default token icon -->
       <svg v-else class="w-full h-full" viewBox="0 0 24 24" fill="currentColor">
@@ -29,8 +26,22 @@
 
 <script lang="ts" setup>
 import type { Token } from '../types/bridge.types'
+import { CHAIN_LOGOS } from '@/shared/constants/chainLogos'
+import wancashLogo from '@/assets/image/logo.jpg'
 
 defineProps<{
   token: Token | null
 }>()
+
+const getTokenLogo = (symbol: string): string | undefined => {
+  const map: Record<string, string> = {
+    'ETH': CHAIN_LOGOS.ETHEREUM,
+    'AVAX': CHAIN_LOGOS.AVALANCHE,
+    'MATIC': CHAIN_LOGOS.POLYGON,
+    'BNB': CHAIN_LOGOS.BSC,
+    'ARB': CHAIN_LOGOS.ARBITRUM,
+    'WETH': CHAIN_LOGOS.ETHEREUM,
+  }
+  return map[symbol]
+}
 </script>
