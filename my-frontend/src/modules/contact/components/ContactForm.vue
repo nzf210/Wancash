@@ -26,8 +26,7 @@
                         <div>
                             <div class="font-semibold text-white">{{ CONTACT_INFO.tokenName }} ({{
                                 CONTACT_INFO.tokenSymbol }})</div>
-                            <div class="text-sm text-blue-muted">Current Price: ${{ store.currentPrice.toLocaleString()
-                                }}</div>
+                            <div class="text-sm text-blue-muted">Current Price: {{ formattedWchPrice }}</div>
                         </div>
                     </div>
                 </div>
@@ -174,8 +173,12 @@ import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useContactStore } from '../store/contactStore'
 import { CONTACT_TYPES, CONTACT_INFO } from '../constants/contactData'
+import { usePriceStore } from '@/stores/priceStore'
+import { storeToRefs } from 'pinia'
 
 const store = useContactStore()
+const priceStore = usePriceStore()
+const { formattedWchPrice } = storeToRefs(priceStore)
 
 const handleFileUpload = (event: Event) => {
     const files = (event.target as HTMLInputElement).files

@@ -13,11 +13,12 @@ export function useFormatters() {
      * Format currency (USD)
      */
     const formatCurrency = (num: number): string => {
+        const isSmall = num < 1 && num > 0
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: 'USD',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
+            minimumFractionDigits: isSmall ? 4 : 2,
+            maximumFractionDigits: isSmall ? 6 : 2,
         }).format(num)
     }
 

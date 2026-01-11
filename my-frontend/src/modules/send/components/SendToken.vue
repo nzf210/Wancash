@@ -23,6 +23,11 @@ import { parseEther, type Hash } from 'viem'
 import { addressBookService, type Contact } from '../services/addressBook'
 import { transactionHistoryService } from '@/app/services/transactionHistoryService'
 import { formatTokenBalance } from '@/utils/format'
+import { usePriceStore } from '@/stores/priceStore'
+import { storeToRefs } from 'pinia'
+
+const priceStore = usePriceStore()
+const { wchPrice: tokenPrice } = storeToRefs(priceStore)
 
 const { isConnected, address: walletAddress, chainId } = useConnection()
 const { getChainInfo } = useChain()
@@ -128,6 +133,7 @@ watch(chainId, () => {
 onMounted(() => {
   refreshBalance()
   fetchNativeBalance()
+  priceStore.fetchPrices()
 })
 
 // Interfaces (kept for type safety)
@@ -152,7 +158,8 @@ const walletBalance = computed(() => {
   const num = Number(rawBalance.value) / 1e18
   return Number(num.toFixed(4))
 })
-const tokenPrice = ref<number>(0.0015)
+// Token price is now managed by global store
+// const tokenPrice = ref<number>(0.0015)
 const recipientName = ref<string>('')
 const minimumTransfer = ref<number>(1)
 const maxTransferPerTx = ref<number>(5000000)

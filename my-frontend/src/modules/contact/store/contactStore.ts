@@ -7,7 +7,6 @@ export const useContactStore = defineStore('contact', () => {
     // State
     const loading = ref(false)
     const selectedType = ref('technical')
-    const currentPrice = ref(145.67)
     const attachments = ref<Attachment[]>([])
 
     const form = reactive<ContactFormData>({
@@ -79,7 +78,6 @@ export const useContactStore = defineStore('contact', () => {
         // State
         loading,
         selectedType,
-        currentPrice,
         attachments,
         form,
         // Actions

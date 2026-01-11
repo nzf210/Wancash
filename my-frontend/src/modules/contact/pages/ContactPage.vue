@@ -15,6 +15,7 @@
         <!-- Sidebar -->
         <div class="space-y-6">
           <QuickActions />
+          <TokenPriceCard />
           <ContactInfo />
           <QuickFAQ />
         </div>
@@ -33,4 +34,5 @@ import QuickActions from '../components/QuickActions.vue'
 import ContactInfo from '../components/ContactInfo.vue'
 import QuickFAQ from '../components/QuickFAQ.vue'
 import HelpBanner from '../components/HelpBanner.vue'
+import TokenPriceCard from '../components/TokenPriceCard.vue'
 </script>

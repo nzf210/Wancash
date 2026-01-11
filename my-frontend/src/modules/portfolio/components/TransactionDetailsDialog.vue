@@ -93,7 +93,7 @@ interface Props {
     transaction: SendTransaction | null
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 defineEmits<{
     'update:open': [value: boolean]
 }>()
@@ -101,7 +101,6 @@ defineEmits<{
 const { formatNumber, formatDateTime, shortenTransactionHash, copyToClipboard } = useFormatters()
 
 const handleCopyHash = async () => {
-    const props = defineProps<Props>()
     if (props.transaction?.hash) {
         const success = await copyToClipboard(props.transaction.hash)
         if (success) {
