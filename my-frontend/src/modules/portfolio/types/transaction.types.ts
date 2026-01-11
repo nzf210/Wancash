@@ -1,5 +1,6 @@
 export type TransactionStatus = 'success' | 'pending' | 'failed'
 export type BridgeStatus = 'completed' | 'processing' | 'failed'
+export type RedeemStatus = 'completed' | 'pending' | 'rejected' | 'processing'
 
 export interface SendTransaction {
     id: number
@@ -24,8 +25,22 @@ export interface BridgeTransaction {
     transactionHash?: string
 }
 
+export interface RedeemTransaction {
+    id: number
+    date: Date
+    amount: number
+    bankName: string
+    accountNumber: string
+    accountName: string
+    status: RedeemStatus
+    transactionHash?: string
+    processingTime?: string
+    rejectReason?: string
+}
+
 export interface TransactionFilters {
     searchQuery: string
     filterStatus: 'all' | TransactionStatus
     bridgeFilterStatus: 'all' | BridgeStatus
+    redeemFilterStatus: 'all' | RedeemStatus
 }

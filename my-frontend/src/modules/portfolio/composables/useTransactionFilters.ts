@@ -1,17 +1,19 @@
 import { ref, computed, type Ref } from 'vue'
-import type { SendTransaction, BridgeTransaction, TransactionStatus, BridgeStatus } from '../types'
+import type { SendTransaction, BridgeTransaction, RedeemTransaction, TransactionStatus, BridgeStatus, RedeemStatus } from '../types'
 
 /**
  * Composable for filtering transaction lists
  */
 export function useTransactionFilters(
     sendTransactions: Ref<SendTransaction[]>,
-    bridgeTransactions: Ref<BridgeTransaction[]>
+    bridgeTransactions: Ref<BridgeTransaction[]>,
+    redeemTransactions: Ref<RedeemTransaction[]>
 ) {
     // Filter state
     const searchQuery = ref('')
     const filterStatus = ref<'all' | TransactionStatus>('all')
     const bridgeFilterStatus = ref<'all' | BridgeStatus>('all')
+    const redeemFilterStatus = ref<'all' | RedeemStatus>('all')
 
     /**
      * Filtered send transactions based on search and status
@@ -56,12 +58,28 @@ export function useTransactionFilters(
     })
 
     /**
+     * Filtered redeem transactions based on status
+     */
+    const filteredRedeemTransactions = computed(() => {
+        let filtered = redeemTransactions.value
+
+        // Filter by status
+        if (redeemFilterStatus.value !== 'all') {
+            filtered = filtered.filter((t) => t.status === redeemFilterStatus.value)
+        }
+
+        // Sort by date (newest first)
+        return filtered.sort((a, b) => +b.date - +a.date)
+    })
+
+    /**
      * Reset all filters
      */
     const resetFilters = () => {
         searchQuery.value = ''
         filterStatus.value = 'all'
         bridgeFilterStatus.value = 'all'
+        redeemFilterStatus.value = 'all'
     }
 
     return {
@@ -69,10 +87,12 @@ export function useTransactionFilters(
         searchQuery,
         filterStatus,
         bridgeFilterStatus,
+        redeemFilterStatus,
 
         // Computed
         filteredSendTransactions,
         filteredBridgeTransactions,
+        filteredRedeemTransactions,
 
         // Methods
         resetFilters,

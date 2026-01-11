@@ -407,7 +407,6 @@ export const useAuth = () => {
 
       if (success) {
         console.log('✅ [useAuth] Proactive refresh successful!')
-        toast.success('Session refreshed', { duration: 2000 })
       } else {
         console.log('❌ [useAuth] Proactive refresh failed!')
       }

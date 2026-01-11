@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import type { SendTransaction, BridgeTransaction } from '../types'
+import type { SendTransaction, BridgeTransaction, RedeemTransaction } from '../types'
 
 /**
  * Composable for managing transaction history data
@@ -8,8 +8,10 @@ export function useTransactionHistory() {
     // State
     const sendTransactions = ref<SendTransaction[]>([])
     const bridgeTransactions = ref<BridgeTransaction[]>([])
+    const redeemTransactions = ref<RedeemTransaction[]>([])
     const isLoadingSend = ref(false)
     const isLoadingBridge = ref(false)
+    const isLoadingRedeem = ref(false)
     const error = ref<string | null>(null)
 
     /**
@@ -151,12 +153,76 @@ export function useTransactionHistory() {
     }
 
     /**
+     * Fetch redeem transactions from backend
+     */
+    const fetchRedeemTransactions = async (walletAddress: string) => {
+        try {
+            isLoadingRedeem.value = true
+            error.value = null
+
+            // TODO: Replace with actual API call
+            // const data = await transactionService.fetchRedeemTransactions(walletAddress)
+
+            // Mock data for now
+            redeemTransactions.value = [
+                {
+                    id: 1,
+                    date: new Date('2024-01-15T14:20:00'),
+                    amount: 10000,
+                    bankName: 'Bank Central Asia',
+                    accountNumber: '1234567890',
+                    accountName: 'John Doe',
+                    status: 'completed',
+                    transactionHash: '0x7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b',
+                    processingTime: '1-2 business days',
+                },
+                {
+                    id: 2,
+                    date: new Date('2024-01-14T10:15:00'),
+                    amount: 5000,
+                    bankName: 'Bank Mandiri',
+                    accountNumber: '9876543210',
+                    accountName: 'Jane Smith',
+                    status: 'processing',
+                    processingTime: '1-2 business days',
+                },
+                {
+                    id: 3,
+                    date: new Date('2024-01-13T16:30:00'),
+                    amount: 3000,
+                    bankName: 'Bank Negara Indonesia',
+                    accountNumber: '5555666677',
+                    accountName: 'Alice Johnson',
+                    status: 'pending',
+                    processingTime: '1-2 business days',
+                },
+                {
+                    id: 4,
+                    date: new Date('2024-01-12T09:00:00'),
+                    amount: 2000,
+                    bankName: 'Bank Rakyat Indonesia',
+                    accountNumber: '1111222233',
+                    accountName: 'Bob Williams',
+                    status: 'rejected',
+                    rejectReason: 'Invalid account information',
+                },
+            ]
+        } catch (err) {
+            error.value = err instanceof Error ? err.message : 'Failed to fetch redeem transactions'
+            console.error('Error fetching redeem transactions:', err)
+        } finally {
+            isLoadingRedeem.value = false
+        }
+    }
+
+    /**
      * Refresh all transaction data
      */
     const refreshTransactions = async (walletAddress: string) => {
         await Promise.all([
             fetchSendTransactions(walletAddress),
             fetchBridgeTransactions(walletAddress),
+            fetchRedeemTransactions(walletAddress),
         ])
     }
 
@@ -164,13 +230,16 @@ export function useTransactionHistory() {
         // State
         sendTransactions,
         bridgeTransactions,
+        redeemTransactions,
         isLoadingSend,
         isLoadingBridge,
+        isLoadingRedeem,
         error,
 
         // Methods
         fetchSendTransactions,
         fetchBridgeTransactions,
+        fetchRedeemTransactions,
         refreshTransactions,
     }
 }
