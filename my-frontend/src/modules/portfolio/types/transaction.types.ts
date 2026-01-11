@@ -1,6 +1,6 @@
 export type TransactionStatus = 'success' | 'pending' | 'failed'
 export type BridgeStatus = 'completed' | 'processing' | 'failed'
-export type RedeemStatus = 'completed' | 'pending' | 'rejected' | 'processing'
+export type RedeemStatus = 'completed' | 'pending' | 'rejected' | 'processing' | 'waiting_payment'
 
 export interface SendTransaction {
     id: number
@@ -38,6 +38,14 @@ export interface RedeemTransaction {
     rejectReason?: string
     shippingAddress?: string
     goldAmount?: number
+    shippingCost?: number
+    productId?: string
+    items?: {
+        product_id: string
+        quantity: number
+        name: string
+        weight: number
+    }[]
 }
 
 export interface TransactionFilters {

@@ -4,6 +4,17 @@
  * This is a global service - all modules should use this instead of module-specific APIs
  */
 
+export interface GoldProduct {
+    id: string
+    name: string
+    weight_grams: number
+    purity: string
+    price_wch: number
+    image_url: string
+    stock: number
+    description: string
+}
+
 export interface CreateRedemptionRequest {
     wallet_address: string
     chain_id?: number
@@ -15,9 +26,15 @@ export interface CreateRedemptionRequest {
     shipping_option: 'included' | 'separate'
     gold_amount_grams: number
     token_amount_gold: number
-    shipping_cost_token: number
-    total_token_amount: number
+    shipping_cost_token?: number
+    total_token_amount?: number
     save_to_profile: boolean
+    items: {
+        product_id: string
+        quantity: number
+        snapshot_price: number // Price at time of request
+        snapshot_weight: number
+    }[]
 }
 
 export interface RedemptionRecord {
@@ -35,14 +52,42 @@ export interface RedemptionRecord {
     shipping_cost_token: number
     total_token_amount: number
     shipping_option: 'included' | 'separate'
-    status: 'pending' | 'processing' | 'shipped' | 'completed' | 'rejected'
+    status: 'pending' | 'processing' | 'shipped' | 'completed' | 'rejected' | 'waiting_payment'
     tracking_number?: string
     admin_notes?: string
     created_at: string
     updated_at?: string
+    items?: {
+        product_id: string
+        quantity: number
+        name: string      // Snapshot name for display
+        weight: number    // Snapshot weight
+    }[]
 }
 
+export interface RedemptionConfig {
+    shipping_enabled: boolean
+    shipping_cost_wch: number
+}
+
+// Mock Global Config
+let globalConfig: RedemptionConfig = {
+    shipping_enabled: false,        // Default False (Calculated Later)
+    shipping_cost_wch: 0            // 0 when disabled
+};
+
 const API_BASE = import.meta.env.VITE_API_URL || '';
+
+export interface GoldProduct {
+    id: string
+    name: string
+    description: string
+    weight_grams: number
+    purity: string
+    price_wch: number
+    image_url: string
+    stock: number
+}
 
 // Helper to get auth headers consistently
 const getAuthHeaders = (additionalHeaders: Record<string, string> = {}) => {
@@ -69,6 +114,16 @@ const getAuthHeaders = (additionalHeaders: Record<string, string> = {}) => {
 };
 
 export const redemptionService = {
+    async getSettings(): Promise<RedemptionConfig> {
+        // Simulate API
+        return { ...globalConfig };
+    },
+
+    // For Demo / Admin Simulation
+    async updateSettings(newConfig: Partial<RedemptionConfig>) {
+        globalConfig = { ...globalConfig, ...newConfig };
+        return globalConfig;
+    },
     /**
      * Create a new redemption request
      */
@@ -122,6 +177,78 @@ export const redemptionService = {
             console.error('Error fetching redemption by ID:', error);
             return null;
         }
+    },
+
+    /**
+     * Get available gold products
+     * MOCK IMPLEMENTATION until Backend is ready
+     */
+    async getGoldProducts(): Promise<GoldProduct[]> {
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        return [
+            {
+                id: 'gold-0.1g',
+                name: 'Gold 0.1g',
+                weight_grams: 0.1,
+                purity: '99.9%',
+                price_wch: 10,
+                image_url: 'https://via.placeholder.com/150?text=0.1g+Gold',
+                stock: 100,
+                description: 'Fine Gold 999.9 - 0.1 Gram'
+            },
+            {
+                id: 'gold-1g',
+                name: 'Gold 1g',
+                weight_grams: 1,
+                purity: '99.9%',
+                price_wch: 95,
+                image_url: 'https://via.placeholder.com/150?text=1g+Gold',
+                stock: 50,
+                description: 'Fine Gold 999.9 - 1 Gram'
+            },
+            {
+                id: 'gold-2g',
+                name: 'Gold 2g',
+                weight_grams: 2,
+                purity: '99.9%',
+                price_wch: 185,
+                image_url: 'https://via.placeholder.com/150?text=2g+Gold',
+                stock: 20,
+                description: 'Fine Gold 999.9 - 2 Grams'
+            },
+            {
+                id: 'gold-5g',
+                name: 'Gold 5g',
+                weight_grams: 5,
+                purity: '99.9%',
+                price_wch: 450,
+                image_url: 'https://via.placeholder.com/150?text=5g+Gold',
+                stock: 10,
+                description: 'Fine Gold 999.9 - 5 Grams'
+            },
+        ];
+    },
+
+    /**
+     * Pay for a redemption request
+     */
+    async payRedemption(id: string, transactionHash: string): Promise<RedemptionRecord> {
+        const response = await fetch(`${API_BASE}/api/redemption/${id}/pay`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({ transaction_hash: transactionHash })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to process payment');
+        }
+
+        const result = await response.json();
+        return result.data;
     }
 };
 

@@ -17,53 +17,36 @@
                 </div>
 
                 <div class="space-y-4">
-                    <div class="space-y-3">
-                        <div class="flex items-center space-x-3">
-                            <div class="flex items-center space-x-2">
-                                <input type="radio" id="shipping-included" :checked="shippingOption === 'included'"
-                                    @change="$emit('update:shippingOption', 'included')" value="included"
-                                    class="h-4 w-4 border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:focus:ring-blue-400" />
-                                <Label for="shipping-included" class="text-gray-900 dark:text-white cursor-pointer">
-                                    Token already includes shipping cost
-                                </Label>
-                            </div>
-                        </div>
-                        <div class="flex items-center space-x-3">
-                            <div class="flex items-center space-x-2">
-                                <input type="radio" id="shipping-separate" :checked="shippingOption === 'separate'"
-                                    @change="$emit('update:shippingOption', 'separate')" value="separate"
-                                    class="h-4 w-4 border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:focus:ring-blue-400" />
-                                <Label for="shipping-separate" class="text-gray-900 dark:text-white cursor-pointer">
-                                    Pay separately for shipping cost
-                                </Label>
-                            </div>
-                        </div>
-                    </div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                        {{ description }}
+                    </p>
 
                     <!-- Shipping Details -->
-                    <div
+                    <div v-if="!hideCost"
                         class="mt-6 p-6 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 rounded-xl border border-gray-200 dark:border-gray-700">
                         <div class="space-y-4">
                             <div
                                 class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
-                                <span class="text-gray-700 dark:text-gray-300">Token Amount for Gold:</span>
-                                <span class="font-semibold text-gray-900 dark:text-white">{{ tokenGold }} Token</span>
+                                <span class="text-gray-700 dark:text-gray-300">Gold Subtotal:</span>
+                                <span class="font-semibold text-gray-900 dark:text-white">{{ formatNumber(tokenGold) }}
+                                    WCH</span>
                             </div>
                             <div
                                 class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
                                 <span class="text-gray-700 dark:text-gray-300">Shipping Cost:</span>
-                                <span class="font-semibold text-gray-900 dark:text-white">{{ shippingCost }}
-                                    Token</span>
+                                <span class="font-semibold text-gray-900 dark:text-white">
+                                    {{ shippingCost > 0 ? formatNumber(shippingCost) + ' WCH' : 'Calculated Later' }}
+                                </span>
                             </div>
-                            <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                            <div class="pt-4 border-t-2 border-gray-300 dark:border-gray-600">
                                 <div
                                     class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                                     <span class="text-base sm:text-lg font-bold text-gray-900 dark:text-white">Total
-                                        Token
                                         Required:</span>
-                                    <span class="text-lg sm:text-xl font-bold text-blue-600 dark:text-blue-400">{{
-                                        totalToken }}
-                                        Token</span>
+                                    <span class="text-lg sm:text-2xl font-bold text-blue-600 dark:text-blue-400">
+                                        {{ formatNumber(totalToken) }} WCH
+                                        <span v-if="shippingCost === 0" class="text-sm text-amber-500">+ Shipping</span>
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -77,14 +60,21 @@
 <script lang="ts" setup>
 import { Label } from '@/components/ui/label'
 
+
 defineProps<{
     shippingOption: string
     tokenGold: number
     shippingCost: number
     totalToken: number
+    description?: string
+    hideCost?: boolean
 }>()
 
 defineEmits<{
     'update:shippingOption': [value: string]
 }>()
+
+const formatNumber = (num: number) => {
+    return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(num)
+}
 </script>

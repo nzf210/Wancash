@@ -9,7 +9,9 @@
 export {
     redemptionService as redemptionApi,
     type CreateRedemptionRequest,
-    type RedemptionRecord as RedemptionRequest
+    type RedemptionRecord as RedemptionRequest,
+    type GoldProduct,
+    type RedemptionConfig
 } from '@/app/services/redemptionService';
 
 // For backward compatibility, re-export with old naming

@@ -9,6 +9,7 @@
                     <option value="completed">Completed</option>
                     <option value="processing">Processing</option>
                     <option value="pending">Pending</option>
+                    <option value="waiting_payment">Action Required (Pay)</option>
                     <option value="rejected">Rejected</option>
                 </select>
             </div>
@@ -27,7 +28,8 @@
                                 redeem.status === 'completed' ? 'bg-green-500' :
                                     redeem.status === 'processing' ? 'bg-blue-500' :
                                         redeem.status === 'pending' ? 'bg-amber-500' :
-                                            'bg-red-500'
+                                            redeem.status === 'waiting_payment' ? 'bg-purple-500 animate-pulse' :
+                                                'bg-red-500'
                             ]"></div>
                             <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
                                 {{ getStatusLabel(redeem.status) }}
@@ -55,7 +57,19 @@
                     </div>
 
                     <!-- Bank Details -->
-                    <div class="space-y-3 mb-4">
+                    <div v-if="redeem.items && redeem.items.length > 0">
+                        <!-- Show Cart Summary -->
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Items</p>
+                        <div class="space-y-1 mb-4">
+                            <div v-for="(item, idx) in redeem.items" :key="idx" class="flex justify-between text-sm">
+                                <span class="text-gray-900 dark:text-white">{{ item.name }}</span>
+                                <span class="text-gray-500">x{{ item.quantity }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Legacy / Bank Details (if not items) -->
+                    <div v-else class="space-y-3 mb-4">
                         <div class="flex justify-between items-center">
                             <span class="text-sm text-gray-600 dark:text-gray-400">Bank:</span>
                             <span class="font-medium text-gray-900 dark:text-white">{{ redeem.bankName }}</span>
@@ -69,44 +83,62 @@
                             <span class="font-mono text-gray-900 dark:text-white">{{
                                 formatAccountNumber(redeem.accountNumber) }}</span>
                         </div>
+                    </div>
 
-                        <div v-if="redeem.processingTime" class="flex justify-between items-center">
-                            <span class="text-sm text-gray-600 dark:text-gray-400">Processing Time:</span>
-                            <span class="text-gray-900 dark:text-white">{{ redeem.processingTime }}</span>
+                    <div v-if="redeem.processingTime" class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600 dark:text-gray-400">Processing Time:</span>
+                        <span class="text-gray-900 dark:text-white">{{ redeem.processingTime }}</span>
+                    </div>
+
+                    <!-- Reject Reason (if rejected) -->
+                    <div v-if="redeem.status === 'rejected' && redeem.rejectReason"
+                        class="pt-3 border-t border-gray-200 dark:border-gray-700">
+                        <p class="text-xs font-medium text-gray-900 dark:text-white mb-1">Reject Reason:</p>
+                        <p class="text-sm text-red-600 dark:text-red-400">{{ redeem.rejectReason }}</p>
+                    </div>
+
+                    <!-- Waiting Payment Action -->
+                    <div v-if="redeem.status === 'waiting_payment'"
+                        class="pt-3 border-t border-gray-200 dark:border-gray-700">
+                        <div
+                            class="bg-purple-50 dark:bg-purple-900/20 p-3 rounded-lg flex justify-between items-center">
+                            <div>
+                                <p class="text-xs font-bold text-purple-700 dark:text-purple-300">Admin Approved</p>
+                                <p class="text-xs text-purple-600 dark:text-purple-400">Payment required to proceed
+                                </p>
+                            </div>
+                            <button @click="$router.push('/redem')"
+                                class="text-xs bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-full font-medium transition-colors">
+                                Pay Now
+                            </button>
                         </div>
+                    </div>
 
-                        <!-- Reject Reason (if rejected) -->
-                        <div v-if="redeem.status === 'rejected' && redeem.rejectReason"
-                            class="pt-3 border-t border-gray-200 dark:border-gray-700">
-                            <p class="text-xs font-medium text-gray-900 dark:text-white mb-1">Reject Reason:</p>
-                            <p class="text-sm text-red-600 dark:text-red-400">{{ redeem.rejectReason }}</p>
-                        </div>
-
-                        <!-- Transaction Hash -->
-                        <div v-if="redeem.transactionHash" class="pt-3 border-t border-gray-200 dark:border-gray-700">
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Transaction Hash:</p>
-                            <div class="flex items-center justify-between">
-                                <code class="text-xs font-mono text-gray-900 dark:text-white truncate">
+                    <!-- Transaction Hash -->
+                    <div v-if="redeem.transactionHash" class="pt-3 border-t border-gray-200 dark:border-gray-700">
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Transaction Hash:</p>
+                        <div class="flex items-center justify-between">
+                            <code class="text-xs font-mono text-gray-900 dark:text-white truncate">
                   {{ shortenTransactionHash(redeem.transactionHash) }}
                 </code>
-                                <button @click="handleCopyHash(redeem.transactionHash)"
-                                    class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-xs">
-                                    Copy
-                                </button>
-                            </div>
+                            <button @click="handleCopyHash(redeem.transactionHash)"
+                                class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-xs">
+                                Copy
+                            </button>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Action Button -->
-                    <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-                        <button @click="$emit('view-details', redeem)"
-                            class="w-full py-2 text-center text-sm font-medium text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors">
-                            View Details
-                        </button>
-                    </div>
+                <!-- Action Button -->
+                <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <button @click="$emit('view-details', redeem)"
+                        class="w-full py-2 text-center text-sm font-medium text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors">
+                        View Details
+                    </button>
                 </div>
             </div>
         </div>
+
 
         <!-- Empty State -->
         <div v-else class="text-center py-12">
@@ -156,6 +188,7 @@ const getStatusLabel = (status: RedeemStatus): string => {
         processing: 'Processing',
         pending: 'Pending',
         rejected: 'Rejected',
+        waiting_payment: 'Pay Now'
     }
     return labels[status]
 }
