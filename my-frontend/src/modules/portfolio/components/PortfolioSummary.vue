@@ -6,10 +6,10 @@
         </div>
 
         <div class="relative p-8">
-            <div class="flex items-center justify-between mb-8">
-                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Portfolio Summary</h2>
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6 sm:mb-8">
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Portfolio Summary</h2>
                 <div class="flex items-center gap-2">
-                    <span class="text-sm text-gray-600 dark:text-gray-400">Updated: {{ lastUpdate }}</span>
+                    <span class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Updated: {{ lastUpdate }}</span>
                     <Button @click="$emit('refresh')" size="sm"
                         class="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -56,7 +56,7 @@
                         <span class="text-sm font-medium text-green-600 dark:text-green-400">Available</span>
                     </div>
                     <p class="text-2xl font-bold text-gray-900 dark:text-white mb-1">{{ formatNumber(availableBalance)
-                        }}
+                    }}
                         WCH</p>
                     <p class="text-lg font-semibold text-green-600 dark:text-green-400">{{
                         formatCurrency(availableValue) }}</p>
@@ -79,7 +79,7 @@
                         WCH
                     </p>
                     <p class="text-lg font-semibold text-amber-600 dark:text-amber-400">{{ formatCurrency(lockedValue)
-                        }}</p>
+                    }}</p>
                 </div>
 
                 <!-- Token Price -->

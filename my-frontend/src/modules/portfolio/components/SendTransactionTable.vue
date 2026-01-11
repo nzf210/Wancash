@@ -1,16 +1,16 @@
 <template>
     <div class="space-y-6">
-        <div class="flex items-center justify-between mb-6">
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
             <h3 class="text-xl font-bold text-gray-900 dark:text-white">Token Transfer History</h3>
-            <div class="flex items-center gap-3">
-                <div class="relative">
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+                <div class="relative flex-1 sm:flex-initial">
                     <svg class="absolute left-3 top-2.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                     <input v-model="searchQuery" type="text" placeholder="Search address or amount..."
-                        class="pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        class="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
                 <select v-model="filterStatus"
                     class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -22,9 +22,77 @@
             </div>
         </div>
 
-        <!-- Transaction Table -->
+        <!-- Mobile Card View -->
+        <div class="md:hidden space-y-4">
+            <div v-if="transactions.length === 0"
+                class="text-center py-12 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800">
+                <svg class="w-12 h-12 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <p class="text-gray-500 dark:text-gray-400">No transfer history</p>
+            </div>
+
+            <div v-for="transaction in transactions" :key="transaction.id"
+                class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-4 shadow-sm space-y-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-400 flex items-center justify-center shrink-0">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="text-sm font-medium text-gray-900 dark:text-white">{{ transaction.recipientName
+                                || 'Unknown' }}</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400 font-mono">{{
+                                shortenAddress(transaction.recipient) }}</div>
+                        </div>
+                    </div>
+                    <span :class="[
+                        'px-2.5 py-1 rounded-full text-xs font-medium',
+                        transaction.status === 'success' ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-400' :
+                            transaction.status === 'pending' ? 'bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-400' :
+                                'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-400'
+                    ]">
+                        {{ transaction.status === 'success' ? 'Success' : transaction.status === 'pending' ? 'Pending' :
+                        'Failed' }}
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 py-3 border-y border-gray-100 dark:border-gray-800">
+                    <div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Amount</p>
+                        <p class="text-sm font-bold text-gray-900 dark:text-white">{{ formatNumber(transaction.amount)
+                            }} WCH</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ formatCurrency(transaction.amount *
+                            tokenPrice) }}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Fee</p>
+                        <p class="text-sm font-medium text-gray-900 dark:text-white">{{ formatNumber(transaction.fee) }}
+                            WCH</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <div class="text-xs text-gray-500 dark:text-gray-400">
+                        {{ formatDate(transaction.date) }} • {{ formatTime(transaction.date) }}
+                    </div>
+                    <button @click="$emit('view-details', transaction)"
+                        class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium">
+                        View Details
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Desktop Table View -->
         <div
-            class="relative bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-xl overflow-hidden">
+            class="hidden md:block relative bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-xl overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full">
                     <thead class="bg-gray-50 dark:bg-gray-800">
@@ -80,8 +148,7 @@
                                     </div>
                                     <div>
                                         <div class="text-sm font-medium text-gray-900 dark:text-white">{{
-                                            transaction.recipientName
-                                            || 'Unknown' }}</div>
+                                            transaction.recipientName || 'Unknown' }}</div>
                                         <div class="text-xs text-gray-500 dark:text-gray-400 font-mono">{{
                                             shortenAddress(transaction.recipient) }}</div>
                                     </div>
@@ -91,8 +158,7 @@
                                 <div class="text-sm font-semibold text-red-600 dark:text-red-400">-{{
                                     formatNumber(transaction.amount) }} WCH</div>
                                 <div class="text-xs text-gray-500 dark:text-gray-400">{{
-                                    formatCurrency(transaction.amount *
-                                    tokenPrice) }}</div>
+                                    formatCurrency(transaction.amount * tokenPrice) }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm text-gray-900 dark:text-white">{{ formatNumber(transaction.fee) }}
@@ -106,15 +172,12 @@
                                             'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-400'
                                 ]">
                                     {{ transaction.status === 'success' ? 'Successful' : transaction.status ===
-                                        'pending' ?
-                                    'Pending' : 'Failed' }}
+                                    'pending' ? 'Pending' : 'Failed' }}
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <button @click="$emit('view-details', transaction)"
-                                    class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium">
-                                    Details
-                                </button>
+                                    class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium">Details</button>
                             </td>
                         </tr>
                     </tbody>

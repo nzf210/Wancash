@@ -1,10 +1,10 @@
 <template>
     <div class="space-y-6">
-        <div class="flex items-center justify-between mb-6">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
             <h3 class="text-xl font-bold text-gray-900 dark:text-white">Token Bridge History</h3>
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-3 w-full sm:w-auto">
                 <select v-model="bridgeFilterStatus"
-                    class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    class="w-full sm:w-auto bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="all">All Status</option>
                     <option value="completed">Completed</option>
                     <option value="processing">Processing</option>
@@ -30,15 +30,15 @@
                             <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
                                 {{ bridge.status === 'completed' ? 'Completed' : bridge.status === 'processing' ?
                                     'Processing' :
-                                'Failed' }}
+                                    'Failed' }}
                             </span>
                         </div>
                         <span class="text-xs text-gray-500 dark:text-gray-400">{{ formatDate(bridge.date) }}</span>
                     </div>
 
                     <!-- Bridge Path -->
-                    <div class="flex items-center justify-between mb-6">
-                        <div class="text-center">
+                    <div class="flex flex-col sm:flex-row items-center justify-between mb-6 gap-6 sm:gap-0">
+                        <div class="text-center w-full sm:w-auto">
                             <div
                                 class="w-12 h-12 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-400 flex items-center justify-center mx-auto mb-2">
                                 <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -50,23 +50,27 @@
                             <p class="text-xs text-gray-500 dark:text-gray-400">From</p>
                         </div>
 
-                        <div class="relative flex-1 mx-4">
-                            <div class="absolute inset-0 flex items-center">
+                        <div
+                            class="relative flex-1 mx-0 sm:mx-4 w-full sm:w-auto h-12 sm:h-auto flex items-center justify-center">
+                            <!-- Desktop Line -->
+                            <div class="hidden sm:block absolute inset-0 flex items-center">
                                 <div class="w-full border-t border-gray-300 dark:border-gray-700"></div>
                             </div>
-                            <div class="relative flex justify-center">
-                                <div
-                                    class="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center">
-                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                                    </svg>
-                                </div>
+                            <!-- Mobile Line -->
+                            <div class="sm:hidden absolute inset-0 flex justify-center">
+                                <div class="h-full border-l border-gray-300 dark:border-gray-700"></div>
+                            </div>
+                            <!-- Direction Icon -->
+                            <div
+                                class="relative z-10 w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center transform rotate-90 sm:rotate-0">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                                </svg>
                             </div>
                         </div>
 
-                        <div class="text-center">
+                        <div class="text-center w-full sm:w-auto">
                             <div
                                 class="w-12 h-12 rounded-xl bg-gradient-to-r from-green-500 to-emerald-400 flex items-center justify-center mx-auto mb-2">
                                 <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

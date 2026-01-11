@@ -1,10 +1,10 @@
 <template>
     <div class="space-y-6">
-        <div class="flex items-center justify-between mb-6">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
             <h3 class="text-xl font-bold text-gray-900 dark:text-white">Token Redemption History</h3>
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-3 w-full sm:w-auto">
                 <select v-model="redeemFilterStatus"
-                    class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    class="w-full sm:w-auto bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="all">All Status</option>
                     <option value="completed">Completed</option>
                     <option value="processing">Processing</option>

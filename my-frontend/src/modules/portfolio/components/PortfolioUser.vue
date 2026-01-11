@@ -2,38 +2,41 @@
     <div class="min-h-screen bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-950 p-4 md:p-6">
         <div class="max-w-7xl mx-auto">
             <!-- Header -->
-            <div class="mb-10">
-                <div class="flex items-center justify-between mb-6">
+            <div class="mb-8 sm:mb-10">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div class="flex items-center gap-4">
                         <div
-                            class="w-14 h-14 rounded-2xl bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
-                            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            class="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 shadow-xl shadow-blue-500/20 flex items-center justify-center shrink-0">
+                            <svg class="w-6 h-6 sm:w-8 sm:h-8 text-white" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                             </svg>
                         </div>
                         <div>
-                            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Portfolio & History</h1>
-                            <p class="text-gray-600 dark:text-gray-300">Manage your token assets and monitor all
-                                transactions</p>
+                            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
+                                Portfolio & History</h1>
+                            <p class="text-sm sm:text-base text-gray-500 dark:text-gray-400 mt-1">Manage assets and
+                                track your cross-chain activity</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-3">
-                        <Button @click="handleRefresh"
-                            class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+                    <div class="flex items-stretch sm:items-center gap-3 w-full md:w-auto">
+                        <Button @click="handleRefresh" variant="outline"
+                            class="flex-1 md:flex-none h-11 border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl transition-all">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                             </svg>
                             Refresh
                         </Button>
                         <Button @click="goToTransfer"
-                            class="hidden md:flex bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-700 hover:to-emerald-600 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            class="flex-1 md:flex-none h-11 bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 rounded-xl shadow-lg shadow-gray-900/10 transition-all font-medium">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                             </svg>
-                            Transfer Token
+                            Transfer
                         </Button>
                     </div>
                 </div>
@@ -121,6 +124,9 @@
 
             <!-- Redeem Details Dialog -->
             <RedeemDetailsDialog v-model:open="showRedeemDetails" :transaction="selectedRedeemTransaction" />
+
+            <!-- Bridge Details Dialog -->
+            <BridgeDetailsDialog v-model:open="showBridgeDetails" :transaction="selectedBridgeTransaction" />
         </div>
     </div>
 </template>
@@ -136,6 +142,7 @@ import RedeemTransactionCards from './RedeemTransactionCards.vue'
 import TransactionStatistics from './TransactionStatistics.vue'
 import TransactionDetailsDialog from './TransactionDetailsDialog.vue'
 import RedeemDetailsDialog from './RedeemDetailsDialog.vue'
+import BridgeDetailsDialog from './BridgeDetailsDialog.vue'
 import {
     usePortfolioData,
     useTransactionHistory,
@@ -190,6 +197,8 @@ const showTransactionDetails = ref(false)
 const selectedTransaction = ref<SendTransaction | null>(null)
 const showRedeemDetails = ref(false)
 const selectedRedeemTransaction = ref<RedeemTransaction | null>(null)
+const showBridgeDetails = ref(false)
+const selectedBridgeTransaction = ref<BridgeTransaction | null>(null)
 
 // Tabs configuration
 const tabs = computed(() => [
@@ -247,8 +256,8 @@ const handleViewTransactionDetails = (transaction: SendTransaction) => {
 }
 
 const handleViewBridgeDetails = (bridge: BridgeTransaction) => {
-    console.log('View bridge details:', bridge)
-    // TODO: Implement bridge details modal
+    selectedBridgeTransaction.value = bridge
+    showBridgeDetails.value = true
 }
 
 const handleViewRedeemDetails = (redeem: RedeemTransaction) => {
