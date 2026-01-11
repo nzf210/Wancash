@@ -463,20 +463,21 @@ watch(address, (newAddress) => {
 
 
 // Auto-populate form from profile when profile data becomes available
-watch([profile, isCheckout], ([newProfile, newIsCheckout]) => {
-  // When user navigates to checkout and has profile data, auto-fill if form is empty
-  if (newIsCheckout && newProfile && !form.value.name && !form.value.phone) {
-    useProfileData.value = true
-    form.value = {
-      phone: newProfile.phone || '',
-      telegram: form.value.telegram,
-      whatsapp: form.value.whatsapp,
-      name: newProfile.display_name || '',
-      address: newProfile.shipping_address || ''
-    }
-    toast.success('Profile data has been auto-filled from your account')
-  }
-})
+// DISABLED: User must manually check "use profile data" to auto-fill
+// watch([profile, isCheckout], ([newProfile, newIsCheckout]) => {
+//   // When user navigates to checkout and has profile data, auto-fill if form is empty
+//   if (newIsCheckout && newProfile && !form.value.name && !form.value.phone) {
+//     useProfileData.value = true
+//     form.value = {
+//       phone: newProfile.phone || '',
+//       telegram: form.value.telegram,
+//       whatsapp: form.value.whatsapp,
+//       name: newProfile.display_name || '',
+//       address: newProfile.shipping_address || ''
+//     }
+//     toast.success('Profile data has been auto-filled from your account')
+//   }
+// })
 
 watch(useProfileData, (value) => {
   if (value && userProfile.value) {

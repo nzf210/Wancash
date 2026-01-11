@@ -2,15 +2,24 @@
 import DefaultLayout from '@/app/layout/DefaultLayout.vue'
 import { provideTheme } from '@/app/components/providers/theme-provider'
 import { Toaster } from '@/components/ui/sonner'
-import { toastOptions } from '@/utils/toastUtils';
+import { toastOptions } from '@/utils/toastUtils'
+import OfflineOverlay from '@/shared/components/OfflineOverlay.vue'
+import { useNetworkStatus } from '@/shared/composables/useNetworkStatus'
 
 provideTheme()
+
+// Monitor network status globally
+const { isOnline } = useNetworkStatus()
 </script>
 
 <template>
   <Toaster :duration="3000" :rich-colors="false" :close-button="true" position="top-center" :offset="16" expand unstyled
     class="fixed top-4 left-1/2 -translate-x-1/2 z-[9999]" :toast-options="toastOptions" />
-  <DefaultLayout>
+
+  <!-- Offline Overlay - Blocks all activity when connection is lost -->
+  <OfflineOverlay :is-online="isOnline" />
+
+  <DefaultLayout v-if="isOnline">
     <router-view />
   </DefaultLayout>
 </template>
