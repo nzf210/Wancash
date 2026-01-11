@@ -1,29 +1,54 @@
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import type { PortfolioData, PortfolioValue } from '../types'
 import { usePriceStore } from '@/stores/priceStore'
+import { useWalletStore } from '@/app/stores/wallet.store'
 import { storeToRefs } from 'pinia'
+import { useReadContract } from '@wagmi/vue'
+import { wancashAbi, wancashContractAddress } from '@/app/services/contracts'
+import { formatUnits } from 'viem'
 
 /**
  * Composable for managing portfolio balance data
  */
 export function usePortfolioData() {
     // State
-    const totalBalance = ref(0)
-    const availableBalance = ref(0)
-    const lockedBalance = ref(0)
+    const lockedBalance = ref(0) // Global variable as requested, currently 0
     // Removed local tokenPrice state in favor of global store
     const priceChange = ref(0)
     const isLoading = ref(false)
     const error = ref<string | null>(null)
 
     const priceStore = usePriceStore()
+    const walletStore = useWalletStore()
     const { wchPrice: tokenPrice } = storeToRefs(priceStore)
+    const { address: walletAddress, isConnected, chainId } = storeToRefs(walletStore)
+
+    const contractAddress = computed(() => {
+        if (!chainId.value) return undefined
+        return wancashContractAddress[chainId.value] as `0x${string}` | undefined
+    })
+
+    // Wagmi Contract Read for Available Balance
+    const { data: balanceData, refetch: refetchBalance, isLoading: isBalanceLoading } = useReadContract({
+        address: contractAddress,
+        abi: wancashAbi.abi as any,
+        functionName: 'balanceOf',
+        args: computed(() => walletAddress.value ? [walletAddress.value as `0x${string}`] : undefined),
+        query: {
+            enabled: computed(() => !!walletAddress.value && isConnected.value && !!contractAddress.value),
+        }
+    })
 
     // Computed values
-    const totalValue = computed(() => {
-        // console.log('DEBUG: totalBalance', totalBalance.value, 'tokenPrice', tokenPrice.value)
-        return totalBalance.value * tokenPrice.value
+    const availableBalance = computed(() => {
+        if (!balanceData.value) return 0
+        // formatted WCH balance (assuming 18 decimals)
+        return Number(formatUnits(balanceData.value as bigint, 18))
     })
+
+    const totalBalance = computed(() => availableBalance.value + lockedBalance.value)
+
+    const totalValue = computed(() => totalBalance.value * tokenPrice.value)
     const availableValue = computed(() => availableBalance.value * tokenPrice.value)
     const lockedValue = computed(() => lockedBalance.value * tokenPrice.value)
 
@@ -44,25 +69,20 @@ export function usePortfolioData() {
     /**
      * Fetch portfolio data from API
      */
-    const fetchPortfolioData = async (walletAddress: string) => {
+    const fetchPortfolioData = async (address?: string) => {
         try {
             isLoading.value = true
             error.value = null
 
-            // Mock data for now - using hardcoded values as requested to fix zero view
-            totalBalance.value = 15_000
-            availableBalance.value = 12_000
-            lockedBalance.value = 3_000
-
-            // Trigger price fetch but don't await it to show balance immediately with default store price
-            priceStore.fetchPrices().then(() => {
-                // Update local price change ref after fetch if needed, 
-                // though components should use store refs directly if possible.
-                priceChange.value = priceStore.wchChange24h
-            }).catch(console.error)
-
-            // Initialize priceChange from store immediately (in case it already has data)
+            // Refresh price
+            await priceStore.fetchPrices()
             priceChange.value = priceStore.wchChange24h
+
+            // Refetch balance if address is provided (though wagmi handles reactivity)
+            if (address || walletAddress.value) {
+                await refetchBalance()
+            }
+
         } catch (err) {
             error.value = err instanceof Error ? err.message : 'Failed to fetch portfolio data'
             console.error('Error fetching portfolio data:', err)
@@ -74,9 +94,16 @@ export function usePortfolioData() {
     /**
      * Refresh portfolio data
      */
-    const refreshPortfolioData = async (walletAddress: string) => {
-        await fetchPortfolioData(walletAddress)
+    const refreshPortfolioData = async (address: string) => {
+        await fetchPortfolioData(address)
     }
+
+    // Initialize
+    watch(walletAddress, (newAddress) => {
+        if (newAddress) {
+            fetchPortfolioData(newAddress)
+        }
+    }, { immediate: true })
 
     return {
         // State
@@ -85,7 +112,7 @@ export function usePortfolioData() {
         lockedBalance,
         tokenPrice,
         priceChange,
-        isLoading,
+        isLoading: computed(() => isLoading.value || isBalanceLoading.value),
         error,
 
         // Computed

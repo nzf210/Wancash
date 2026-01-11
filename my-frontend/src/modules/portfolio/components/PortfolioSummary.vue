@@ -21,65 +21,24 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <!-- Total Balance -->
-                <div
-                    class="p-6 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/30 dark:to-cyan-900/30 rounded-2xl border border-blue-100 dark:border-blue-800">
+                <!-- Balance Cards -->
+                <div v-for="item in summaryItems" :key="item.label"
+                    :class="['p-6 rounded-2xl border', item.bgClass, item.borderClass]">
                     <div class="flex items-center justify-between mb-4">
-                        <div
-                            class="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-400 flex items-center justify-center">
-                            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd"
-                                    d="M10 2a8 8 0 100 16 8 8 0 000-16zM4 10a6 6 0 1112 0 6 6 0 01-12 0z"
-                                    clip-rule="evenodd" />
-                            </svg>
-                        </div>
-                        <span class="text-sm font-medium text-blue-600 dark:text-blue-400">Total</span>
-                    </div>
-                    <p class="text-2xl font-bold text-gray-900 dark:text-white mb-1">{{ formatNumber(totalBalance) }}
-                        WCH
-                    </p>
-                    <p class="text-lg font-semibold text-blue-600 dark:text-blue-400">{{ formatCurrency(totalValue) }}
-                    </p>
-                </div>
-
-                <!-- Available Balance -->
-                <div
-                    class="p-6 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 rounded-2xl border border-green-100 dark:border-green-800">
-                    <div class="flex items-center justify-between mb-4">
-                        <div
-                            class="w-10 h-10 rounded-xl bg-gradient-to-r from-green-500 to-emerald-400 flex items-center justify-center">
+                        <div :class="['w-10 h-10 rounded-xl flex items-center justify-center', item.iconBgClass]">
                             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    :d="item.iconPath" />
                             </svg>
                         </div>
-                        <span class="text-sm font-medium text-green-600 dark:text-green-400">Available</span>
+                        <span :class="['text-sm font-medium', item.textClass]">{{ item.label }}</span>
                     </div>
-                    <p class="text-2xl font-bold text-gray-900 dark:text-white mb-1">{{ formatNumber(availableBalance)
-                    }}
-                        WCH</p>
-                    <p class="text-lg font-semibold text-green-600 dark:text-green-400">{{
-                        formatCurrency(availableValue) }}</p>
-                </div>
-
-                <!-- Locked Balance -->
-                <div
-                    class="p-6 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 rounded-2xl border border-amber-100 dark:border-amber-800">
-                    <div class="flex items-center justify-between mb-4">
-                        <div
-                            class="w-10 h-10 rounded-xl bg-gradient-to-r from-amber-500 to-orange-400 flex items-center justify-center">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                            </svg>
-                        </div>
-                        <span class="text-sm font-medium text-amber-600 dark:text-amber-400">Locked</span>
-                    </div>
-                    <p class="text-2xl font-bold text-gray-900 dark:text-white mb-1">{{ formatNumber(lockedBalance) }}
-                        WCH
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+                        {{ formatNumber(item.value) }} WCH
                     </p>
-                    <p class="text-lg font-semibold text-amber-600 dark:text-amber-400">{{ formatCurrency(lockedValue)
-                    }}</p>
+                    <p :class="['text-lg font-semibold', item.textClass]">
+                        {{ formatCurrency(item.subValue) }}
+                    </p>
                 </div>
 
                 <!-- Token Price -->
@@ -121,6 +80,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { Button } from '@/components/ui/button'
 import { useFormatters } from '../composables'
 
@@ -136,10 +96,43 @@ interface Props {
     lastUpdate: string
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 defineEmits<{
     refresh: []
 }>()
 
 const { formatNumber, formatCurrency } = useFormatters()
+
+const summaryItems = computed(() => [
+    {
+        label: 'Total',
+        value: props.totalBalance,
+        subValue: props.totalValue,
+        bgClass: 'bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/30 dark:to-cyan-900/30',
+        borderClass: 'border-blue-100 dark:border-blue-800',
+        iconBgClass: 'bg-gradient-to-r from-blue-500 to-cyan-400',
+        textClass: 'text-blue-600 dark:text-blue-400',
+        iconPath: 'M10 2a8 8 0 100 16 8 8 0 000-16zM4 10a6 6 0 1112 0 6 6 0 01-12 0z' // pie chart icon
+    },
+    {
+        label: 'Available',
+        value: props.availableBalance,
+        subValue: props.availableValue,
+        bgClass: 'bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30',
+        borderClass: 'border-green-100 dark:border-green-800',
+        iconBgClass: 'bg-gradient-to-r from-green-500 to-emerald-400',
+        textClass: 'text-green-600 dark:text-green-400',
+        iconPath: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' // check circle icon
+    },
+    {
+        label: 'Locked',
+        value: props.lockedBalance,
+        subValue: props.lockedValue,
+        bgClass: 'bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30',
+        borderClass: 'border-amber-100 dark:border-amber-800',
+        iconBgClass: 'bg-gradient-to-r from-amber-500 to-orange-400',
+        textClass: 'text-amber-600 dark:text-amber-400',
+        iconPath: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' // lock icon
+    }
+])
 </script>
