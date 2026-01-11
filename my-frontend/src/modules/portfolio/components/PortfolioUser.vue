@@ -118,6 +118,9 @@
 
             <!-- Transaction Details Dialog -->
             <TransactionDetailsDialog v-model:open="showTransactionDetails" :transaction="selectedTransaction" />
+
+            <!-- Redeem Details Dialog -->
+            <RedeemDetailsDialog v-model:open="showRedeemDetails" :transaction="selectedRedeemTransaction" />
         </div>
     </div>
 </template>
@@ -132,6 +135,7 @@ import BridgeTransactionCards from './BridgeTransactionCards.vue'
 import RedeemTransactionCards from './RedeemTransactionCards.vue'
 import TransactionStatistics from './TransactionStatistics.vue'
 import TransactionDetailsDialog from './TransactionDetailsDialog.vue'
+import RedeemDetailsDialog from './RedeemDetailsDialog.vue'
 import {
     usePortfolioData,
     useTransactionHistory,
@@ -184,6 +188,8 @@ const activeTab = ref<'send' | 'bridge' | 'redeem'>('send')
 const lastUpdate = ref(formatDateTime(new Date()))
 const showTransactionDetails = ref(false)
 const selectedTransaction = ref<SendTransaction | null>(null)
+const showRedeemDetails = ref(false)
+const selectedRedeemTransaction = ref<RedeemTransaction | null>(null)
 
 // Tabs configuration
 const tabs = computed(() => [
@@ -246,8 +252,8 @@ const handleViewBridgeDetails = (bridge: BridgeTransaction) => {
 }
 
 const handleViewRedeemDetails = (redeem: RedeemTransaction) => {
-    console.log('View redeem details:', redeem)
-    // TODO: Implement redeem details modal
+    selectedRedeemTransaction.value = redeem
+    showRedeemDetails.value = true
 }
 
 // Lifecycle
