@@ -1,5 +1,6 @@
 <template>
-    <div class="mt-8">
+    <div
+        class="bg-white dark:bg-gray-900 rounded-3xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-800 p-4 md:p-6">
         <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg md:text-xl font-bold text-gray-900 dark:text-white">Recent Bridges</h3>
             <router-link to="/bridge/history"
@@ -8,33 +9,36 @@
                 <ChevronRightIcon class="w-4 h-4" />
             </router-link>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div v-for="bridge in recentBridges" :key="bridge.id"
-                class="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700 transition-colors group">
-                <div class="flex items-center justify-between mb-3">
+        <div class="space-y-3">
+            <div v-for="bridge in recentBridges.slice(0, 6)" :key="bridge.id"
+                class="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3 border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700 transition-colors group">
+                <div class="flex items-center justify-between mb-2">
                     <div class="flex items-center space-x-2">
                         <div
-                            class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center overflow-hidden">
+                            class="w-6 h-6 rounded bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center overflow-hidden">
                             <img v-if="getChainLogo(bridge.fromChain)" :src="getChainLogo(bridge.fromChain)"
-                                :alt="bridge.fromChain" class="w-full h-full object-contain p-1" />
-                            <span v-else class="text-white text-xs font-bold">{{ bridge.fromChain.charAt(0) }}</span>
+                                :alt="bridge.fromChain" class="w-full h-full object-contain p-0.5" />
+                            <span v-else class="text-white text-[10px] font-bold">{{ bridge.fromChain.charAt(0)
+                            }}</span>
                         </div>
-                        <ArrowRightIcon class="w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors" />
+                        <ArrowRightIcon class="w-3 h-3 text-gray-400 group-hover:text-blue-500 transition-colors" />
                         <div
-                            class="w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-emerald-400 flex items-center justify-center overflow-hidden">
+                            class="w-6 h-6 rounded bg-gradient-to-br from-green-500 to-emerald-400 flex items-center justify-center overflow-hidden">
                             <img v-if="getChainLogo(bridge.toChain)" :src="getChainLogo(bridge.toChain)"
-                                :alt="bridge.toChain" class="w-full h-full object-contain p-1" />
-                            <span v-else class="text-white text-xs font-bold">{{ bridge.toChain.charAt(0) }}</span>
+                                :alt="bridge.toChain" class="w-full h-full object-contain p-0.5" />
+                            <span v-else class="text-white text-[10px] font-bold">{{ bridge.toChain.charAt(0) }}</span>
                         </div>
                     </div>
-                    <StatusBadge :status="bridge.status" />
+                    <StatusBadge :status="bridge.status" size="sm" />
                 </div>
-                <div class="text-sm font-medium text-gray-900 dark:text-white mb-1">
-                    {{ formatAmount(bridge.amount) }} {{ bridge.token }}
-                </div>
-                <div class="text-xs text-gray-500 dark:text-gray-400 flex items-center">
-                    <ClockIcon class="w-3 h-3 mr-1" />
-                    {{ formatTime(bridge.timestamp) }}
+                <div class="flex items-center justify-between">
+                    <div class="text-sm font-medium text-gray-900 dark:text-white">
+                        {{ formatAmount(bridge.amount) }} {{ bridge.token }}
+                    </div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 flex items-center">
+                        <ClockIcon class="w-3 h-3 mr-1" />
+                        {{ formatTime(bridge.timestamp) }}
+                    </div>
                 </div>
             </div>
         </div>

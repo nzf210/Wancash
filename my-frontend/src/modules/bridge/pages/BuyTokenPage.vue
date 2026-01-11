@@ -1,15 +1,28 @@
 <template>
   <div class="container mx-auto px-1 md:px-4 py-8">
-    <BridgeHeader />
+    <div class="max-w-6xl mx-auto">
+      <BridgeHeader />
 
-    <div class="max-w-4xl mx-auto">
-      <div
-        class="bg-white dark:bg-gray-900 rounded-3xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-800">
-        <BridgeStats />
-        <BridgeForm />
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-6">
+        <!-- Main Content (Form) -->
+        <div class="lg:col-span-2">
+          <div
+            class="bg-white dark:bg-gray-900 rounded-3xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-800">
+            <BridgeForm />
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+          <!-- Bridge Stats Card -->
+          <div
+            class="bg-white dark:bg-gray-900 rounded-3xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-800">
+            <BridgeStats />
+          </div>
+
+          <RecentBridges :recent-bridges="recentBridges" />
+        </div>
       </div>
-
-      <RecentBridges :recent-bridges="recentBridges" />
     </div>
   </div>
 </template>

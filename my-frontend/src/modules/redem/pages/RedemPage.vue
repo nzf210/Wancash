@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-950 p-4 md:p-6">
-    <div class="max-w-4xl mx-auto">
+    <div class="max-w-6xl mx-auto">
       <!-- Header -->
       <div class="mb-6 md:mb-10 text-center">
         <div class="flex items-center justify-center gap-2 md:gap-3 mb-2 md:mb-4">
@@ -26,48 +26,57 @@
       <WalletConnectPrompt v-if="!walletConnected" @connect="connectWallet" />
 
       <!-- Main Redemption Form -->
-      <div v-else>
-        <!-- Profile Data Section -->
-        <ProfileDataCard :profile="userProfile" v-model:useProfileData="useProfileData" :walletAddress="walletAddress"
-          :chainInfo="chainInfo" :nativeBalance="nativeBalance" :nativeCurrencySymbol="nativeCurrencySymbol" />
+      <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Main Content (Forms) -->
+        <div class="lg:col-span-2 space-y-6">
+          <!-- Profile Data Section -->
+          <ProfileDataCard :profile="userProfile" v-model:useProfileData="useProfileData" :walletAddress="walletAddress"
+            :chainInfo="chainInfo" :nativeBalance="nativeBalance" :nativeCurrencySymbol="nativeCurrencySymbol" />
 
-        <!-- Recipient Information -->
-        <RecipientForm v-model:form="form" v-model:saveToProfile="saveToProfile" />
+          <!-- Recipient Information -->
+          <RecipientForm v-model:form="form" v-model:saveToProfile="saveToProfile" />
 
-        <!-- Shipping Options -->
-        <ShippingOptions v-model:shippingOption="shippingOption" :tokenGold="tokenGold" :shippingCost="shippingCost"
-          :totalToken="totalToken" />
+          <!-- Shipping Options -->
+          <ShippingOptions v-model:shippingOption="shippingOption" :tokenGold="tokenGold" :shippingCost="shippingCost"
+            :totalToken="totalToken" />
+        </div>
 
-        <!-- Summary -->
-        <RedemptionSummary :totalToken="totalToken" v-model:agreeTerms="agreeTerms" />
+        <!-- Sidebar (Summary & Actions) -->
+        <div class="space-y-6">
+          <div class="sticky top-6 space-y-6">
+            <!-- Summary -->
+            <RedemptionSummary :totalToken="totalToken" v-model:agreeTerms="agreeTerms" />
 
-        <!-- Action Buttons -->
-        <div class="flex flex-col sm:flex-row gap-4">
-          <Button @click="cancelRedemption"
-            class="flex-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-700 rounded-xl py-4 text-lg font-semibold transition-colors">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-            Cancel
-          </Button>
-          <Button @click="submitRedemption" :disabled="!isFormValid || isLoading" :class="[
-            'flex-1 text-white rounded-xl py-4 text-lg font-semibold shadow-lg transition-all duration-300',
-            !isFormValid || isLoading
-              ? 'bg-gray-400 cursor-not-allowed opacity-70'
-              : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 hover:shadow-xl'
-          ]">
-            <svg v-if="isLoading" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
-              fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-              </path>
-            </svg>
-            <svg v-else class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-            {{ isLoading ? 'Processing...' : 'Confirm Redemption' }}
-          </Button>
+            <!-- Action Buttons -->
+            <div class="flex flex-col gap-4">
+              <Button @click="submitRedemption" :disabled="!isFormValid || isLoading" :class="[
+                'w-full text-white rounded-xl py-4 text-lg font-semibold shadow-lg transition-all duration-300',
+                !isFormValid || isLoading
+                  ? 'bg-gray-400 cursor-not-allowed opacity-70'
+                  : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 hover:shadow-xl'
+              ]">
+                <svg v-if="isLoading" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                  </path>
+                </svg>
+                <svg v-else class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                {{ isLoading ? 'Processing...' : 'Confirm Redemption' }}
+              </Button>
+
+              <Button @click="cancelRedemption"
+                class="w-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-700 rounded-xl py-4 text-lg font-semibold transition-colors">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Cancel
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
