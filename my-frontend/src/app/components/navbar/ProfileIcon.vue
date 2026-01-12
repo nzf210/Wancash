@@ -17,11 +17,20 @@ import { computed, ref } from 'vue'
 import ReadContract from '../ReadContract.vue'
 import type { ProfileAuthStores } from './types'
 import { useRouter } from 'vue-router'
+import { usePriceStore } from '@/stores/priceStore'
+import { formatUSD } from '@/utils/format'
+import { onMounted } from 'vue'
 
 const { goToPortfolio, goToProfile, goToSettings } = useNavigate()
 const { userRole } = useAuth()
+const priceStore = usePriceStore()
 
 const router = useRouter()
+
+onMounted(() => {
+  // Ensure we have fresh prices
+  priceStore.fetchPrices()
+})
 // Props
 const props = defineProps<{
   authStores: ProfileAuthStores
@@ -38,6 +47,7 @@ const avatarFallback = computed(() => {
     return props.authStores.userInitials
   }
 
+  // Fallback to deriving from display name if initials not provided
   if (props.authStores.userDisplayName) {
     const initials = props.authStores.userDisplayName
       .split(' ')
@@ -265,10 +275,7 @@ const handleMouseLeave = () => {
               <ReadContract />
               <div class="flex items-center justify-between text-sm">
                 <span class="text-gray-500 dark:text-gray-400">
-                  ≈ ${{ (Number(authStores.balance) * 3500).toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                  }) }}
+                  ≈ {{ formatUSD(Number(authStores.balance) * (priceStore.wchPrice || 0)) }}
                 </span>
                 <div class="flex items-center">
                   <div class="w-2 h-2 bg-green-400 rounded-full mr-1"></div>

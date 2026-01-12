@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
-import { useConnection, useDisconnect } from '@wagmi/vue'
+import { useConnection, useDisconnect, useConfig } from '@wagmi/vue'
+import { readContract } from '@wagmi/core'
 import { useAuth } from '@/app/composables/useAuth'
+import { useProfileStore } from '@/modules/profile/store/profileStore'
 import { useChain } from '@/app/composables/useChain'
 import { shortenAddress } from '@/utils/helpers'
 import { toast } from 'vue-sonner'
@@ -11,10 +13,9 @@ import { Spinner } from '@/components/ui/spinner'
 import { appkit } from '@/app/components/config/appkit'
 import type { ProfileAuthStores } from './types'
 import { useRouter } from "vue-router"
+import { wancashAbi, wancashContractAddress } from '@/app/services/contracts'
 
-defineProps<{
-  isMobile: boolean
-}>()
+defineProps<{ isMobile: boolean }>()
 
 // Composables
 const { isConnected: wagmiConnected, address: walletAddress, chainId } = useConnection()
@@ -23,22 +24,69 @@ const { isAuthenticated, login, logout, isLoading, user } = useAuth()
 const { isSupportedChain, getChainInfo } = useChain()
 const accountData = useAppKitAccount() // Keep reown/appkit for modal opening
 const router = useRouter()
+const config = useConfig()
 
 // State
 const isConnectingWallet = ref(false)
+const balance = ref('0.00')
 
 // Computed
 const currentChain = computed(() => getChainInfo(chainId.value || 0))
+const contractAddress = computed(() => {
+  if (!chainId.value) return null
+  return wancashContractAddress[chainId.value] ?? '0x03A71968491d55603FFe1b11A9e23eF013f75bCF'
+})
+
+const profileStore = useProfileStore()
+
+// Balance Fetching
+const refreshBalance = async () => {
+  if (!wagmiConnected.value || !walletAddress.value || !contractAddress.value) {
+    balance.value = '0.00'
+    return
+  }
+  try {
+    const rawBalance = await readContract(config, {
+      address: contractAddress.value as `0x${string}`,
+      abi: wancashAbi.abi,
+      functionName: 'balanceOf',
+      args: [walletAddress.value as `0x${string}`],
+    }) as bigint
+
+    // Format balance (assuming 18 decimals)
+    const formatted = Number(rawBalance) / 1e18
+    balance.value = formatted.toFixed(4)
+  } catch (err) {
+    console.error('Failed to fetch balance:', err)
+    balance.value = '0.00' // Keep as 0 on error
+  }
+}
+
+// Watchers
+watch([wagmiConnected, walletAddress, chainId], () => {
+  refreshBalance()
+})
+
+// Watch for auth changes to fetch profile
+watch([() => isAuthenticated.value, () => walletAddress.value], async ([auth, address]) => {
+  if (auth && address) {
+    await profileStore.fetchProfile(address)
+    refreshBalance() // Also fetch balance when auth changes
+  } else {
+    profileStore.reset()
+    balance.value = '0.00'
+  }
+}, { immediate: true })
 
 const profileAuthStores = computed(() => ({
   walletAddress: walletAddress.value || null,
   isConnected: isAuthenticated.value,
-  userAvatar: user.value?.avatar || null,
-  userDisplayName: user.value?.name || 'User',
-  userInitials: (user.value?.name?.charAt(0) || 'U').toUpperCase(),
-  userEmail: user.value?.email || null,
+  userAvatar: profileStore.avatarUrl || user.value?.avatar || null,
+  userDisplayName: profileStore.displayName || user.value?.name || 'User',
+  userInitials: ((profileStore.displayName || user.value?.name)?.charAt(0) || 'U').toUpperCase(),
+  userEmail: profileStore.profile?.email || user.value?.email || null,
   network: currentChain.value?.name || '',
-  balance: '0.00',
+  balance: balance.value,
   handleDisconnect: disconnectWallet
 })) as unknown as ProfileAuthStores
 
