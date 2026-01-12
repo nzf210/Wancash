@@ -67,6 +67,15 @@ export interface RedemptionRecord {
     created_at: string
     updated_at?: string
     items?: RedemptionItem[]
+
+    // Reconciliation fields
+    payment_status?: 'unpaid' | 'pending' | 'confirmed' | 'failed'
+    reconciliation_status?: 'pending' | 'verified' | 'failed' | 'manual_review'
+    reconciliation_verified_at?: string
+    reconciliation_error?: string
+    expected_amount?: number
+    actual_amount?: number
+    expected_recipient?: string
 }
 
 export interface RedemptionConfig {
@@ -294,6 +303,58 @@ export const redemptionService = {
 
         // No return value needed as per Promise<void>
     },
+
+    /**
+     * Get reconciliation status for a redemption
+     */
+    async getReconciliationStatus(id: string): Promise<{
+        payment_status?: string
+        reconciliation_status?: string
+        reconciliation_verified_at?: string
+        reconciliation_error?: string
+        expected_amount?: number
+        actual_amount?: number
+        expected_recipient?: string
+        transaction_hash?: string
+    }> {
+        const response = await fetch(`${API_BASE}/api/redemption/${id}/reconciliation-status`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: getAuthHeaders()
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to fetch reconciliation status');
+        }
+
+        const result = await response.json();
+        return result.data;
+    },
+
+    /**
+     * Admin: Manually trigger payment reconciliation
+     */
+    async adminReconcilePayment(id: string): Promise<{
+        success: boolean
+        message?: string
+        error?: string
+        data?: any
+    }> {
+        const response = await fetch(`${API_BASE}/api/redemption/admin/${id}/reconcile`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: getAuthHeaders()
+        });
+
+        const result = await response.json();
+
+        if (!response.ok && !result.success) {
+            throw new Error(result.error || 'Failed to verify payment');
+        }
+
+        return result;
+    }
 };
 
 export default redemptionService;

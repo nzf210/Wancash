@@ -24,9 +24,9 @@
                     <!-- Left: Info -->
                     <div>
                         <div class="flex items-center gap-3 mb-2">
-                            <span :class="getStatusClass(req.status)"
+                            <span :class="getStatusClass(req.status, req.payment_status)"
                                 class="px-3 py-1 rounded-full text-xs font-semibold uppercase">
-                                {{ getStatusLabel(req.status) }}
+                                {{ getStatusLabel(req.status, req.payment_status) }}
                             </span>
                             <span class="text-sm text-gray-500 dark:text-gray-400">{{ formatDate(req.created_at)
                                 }}</span>
@@ -84,9 +84,10 @@
                                 View Details
                             </Button>
 
-                            <!-- Pay Button (Only for waiting_payment status) -->
-                            <Button v-if="req.status === 'waiting_payment'" @click="handlePayment(req)"
-                                :disabled="isPaying === req.id"
+                            <!-- Pay Button (Only for waiting_payment status AND no payment submitted yet) -->
+                            <Button
+                                v-if="req.status === 'waiting_payment' && (!req.payment_status || req.payment_status === 'unpaid' || req.payment_status === 'failed')"
+                                @click="handlePayment(req)" :disabled="isPaying === req.id"
                                 class="w-full bg-green-600 hover:bg-green-700 text-white">
                                 <svg v-if="isPaying === req.id" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
                                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -102,6 +103,24 @@
                                 </svg>
                                 {{ isPaying === req.id ? 'Confirming...' : 'Pay Now' }}
                             </Button>
+
+                            <!-- Payment Pending Verification Message -->
+                            <div v-else-if="req.status === 'waiting_payment' && req.payment_status === 'pending'"
+                                class="w-full p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 animate-pulse" fill="none"
+                                        stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <div>
+                                        <p class="text-sm font-medium text-blue-800 dark:text-blue-300">Payment
+                                            Submitted</p>
+                                        <p class="text-xs text-blue-600 dark:text-blue-400">Awaiting admin verification
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
 
                             <!-- Cancel Button (Only for pending or waiting_payment) -->
                             <Button v-if="req.status === 'pending' || req.status === 'waiting_payment'"
@@ -219,7 +238,12 @@ const fetchRequests = async () => {
     }
 }
 
-const getStatusLabel = (status: string) => {
+const getStatusLabel = (status: string, paymentStatus?: string) => {
+    // If payment submitted but not verified yet
+    if (status === 'waiting_payment' && paymentStatus === 'pending') {
+        return 'Payment Pending Verification'
+    }
+
     switch (status) {
         case 'waiting_payment': return 'Action Required: Pay'
         case 'pending': return 'Waiting for Quote'
@@ -227,7 +251,12 @@ const getStatusLabel = (status: string) => {
     }
 }
 
-const getStatusClass = (status: string) => {
+const getStatusClass = (status: string, paymentStatus?: string) => {
+    // If payment submitted but not verified yet
+    if (status === 'waiting_payment' && paymentStatus === 'pending') {
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 animate-pulse'
+    }
+
     switch (status) {
         case 'completed': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
         case 'processing': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'

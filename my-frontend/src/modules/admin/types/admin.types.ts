@@ -26,6 +26,15 @@ export interface AdminRedemptionRequest {
         snapshot_price: number
         snapshot_weight: number
     }[]
+
+    // Reconciliation fields
+    payment_status?: 'unpaid' | 'pending' | 'confirmed' | 'failed'
+    reconciliation_status?: 'pending' | 'verified' | 'failed' | 'manual_review'
+    reconciliation_verified_at?: string
+    reconciliation_error?: string
+    expected_amount?: number
+    actual_amount?: number
+    expected_recipient?: string
 }
 
 export interface DashboardStats {

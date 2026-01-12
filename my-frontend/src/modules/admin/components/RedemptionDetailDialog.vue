@@ -75,7 +75,7 @@
                         <div class="flex justify-between text-sm">
                             <span class="text-gray-600 dark:text-gray-400">Total Weight</span>
                             <span class="font-medium text-gray-900 dark:text-white">{{ request.gold_amount_grams
-                            }}g</span>
+                                }}g</span>
                         </div>
 
                         <!-- Shipping Cost Editor -->
@@ -110,7 +110,7 @@
                             class="flex justify-between text-base font-bold pt-2 border-t border-gray-200 dark:border-gray-700">
                             <span class="text-gray-900 dark:text-white">Total Amount</span>
                             <span class="text-blue-600 dark:text-blue-400">{{ formatNumber(request.total_token_amount)
-                            }} WCH</span>
+                                }} WCH</span>
                         </div>
                     </div>
                 </div>
@@ -143,6 +143,90 @@
                         <div class="col-span-2">
                             <p class="text-gray-500 dark:text-gray-400">Admin Notes</p>
                             <p class="font-medium text-gray-900 dark:text-white">{{ request.admin_notes || '-' }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Reconciliation Section -->
+                <div v-if="request.transaction_hash"
+                    class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                            <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                            </svg>
+                            Payment Reconciliation
+                        </h3>
+                        <span v-if="request.payment_status" :class="getPaymentStatusClass(request.payment_status)">
+                            {{ request.payment_status }}
+                        </span>
+                    </div>
+
+                    <div class="space-y-3 text-sm">
+                        <!-- Reconciliation Status -->
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600 dark:text-gray-400">Reconciliation Status</span>
+                            <span :class="getReconciliationStatusClass(request.reconciliation_status || 'pending')">
+                                {{ request.reconciliation_status || 'pending' }}
+                            </span>
+                        </div>
+
+                        <!-- Expected vs Actual Amount -->
+                        <div v-if="request.expected_amount" class="grid grid-cols-2 gap-2">
+                            <div>
+                                <p class="text-gray-500 dark:text-gray-400 text-xs">Expected Amount</p>
+                                <p class="font-medium text-gray-900 dark:text-white">{{
+                                    formatNumber(request.expected_amount) }} WCH</p>
+                            </div>
+                            <div v-if="request.actual_amount">
+                                <p class="text-gray-500 dark:text-gray-400 text-xs">Actual Amount</p>
+                                <p class="font-medium text-gray-900 dark:text-white">{{
+                                    formatNumber(request.actual_amount) }} WCH</p>
+                            </div>
+                        </div>
+
+                        <!-- Verified At -->
+                        <div v-if="request.reconciliation_verified_at" class="flex justify-between items-center">
+                            <span class="text-gray-600 dark:text-gray-400">Verified At</span>
+                            <span class="font-medium text-gray-900 dark:text-white text-xs">
+                                {{ formatDate(request.reconciliation_verified_at) }}
+                            </span>
+                        </div>
+
+                        <!-- Error Message -->
+                        <div v-if="request.reconciliation_error"
+                            class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded p-3">
+                            <p class="text-red-800 dark:text-red-300 text-xs font-medium">Verification Failed:</p>
+                            <p class="text-red-700 dark:text-red-400 text-xs mt-1">{{ request.reconciliation_error }}
+                            </p>
+                        </div>
+
+                        <!-- Verify Payment Button -->
+                        <Button v-if="request.payment_status === 'pending' || request.payment_status === 'failed'"
+                            @click="verifyPayment" :disabled="isVerifying"
+                            class="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                            <svg v-if="isVerifying" class="animate-spin -ml-1 mr-2 h-4 w-4" fill="none"
+                                viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                </path>
+                            </svg>
+                            {{ isVerifying ? 'Verifying on blockchain...' : 'Verify Payment' }}
+                        </Button>
+
+                        <!-- Already Verified Message -->
+                        <div v-else-if="request.payment_status === 'confirmed' && request.reconciliation_status === 'verified'"
+                            class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded p-3 text-center">
+                            <svg class="w-6 h-6 text-green-600 dark:text-green-400 mx-auto mb-1" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <p class="text-green-800 dark:text-green-300 text-xs font-medium">Payment Verified ✓</p>
                         </div>
                     </div>
                 </div>
@@ -232,6 +316,7 @@ import { toast } from 'vue-sonner'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { adminApi } from '../services/adminApi'
+import redemptionService from '@/app/services/redemptionService'
 import type { AdminRedemptionRequest } from '../types/admin.types'
 
 const props = defineProps<{
@@ -404,6 +489,67 @@ const formatDate = (dateString: string) => {
         hour: '2-digit',
         minute: '2-digit'
     })
+}
+
+const isVerifying = ref(false)
+
+const verifyPayment = async () => {
+    if (!props.request) return
+
+    isVerifying.value = true
+    try {
+        const result = await redemptionService.adminReconcilePayment(props.request.id)
+
+        if (result.success) {
+            toast.success('Payment verified successfully!')
+
+            // Update local request data
+            if (result.data) {
+                Object.assign(props.request, result.data)
+            }
+
+            emit('updated')
+        } else {
+            toast.error(result.error || 'Payment verification failed')
+        }
+    } catch (error: any) {
+        console.error('Verify payment error:', error)
+        toast.error(error.message || 'Failed to verify payment')
+    } finally {
+        isVerifying.value = false
+    }
+}
+
+const getPaymentStatusClass = (status: string) => {
+    const classes = 'px-2 py-1 text-xs font-semibold rounded-full inline-block '
+    switch (status) {
+        case 'unpaid':
+            return classes + 'bg-gray-100 text-gray-800 dark:bg-gray-500/20 dark:text-gray-300'
+        case 'pending':
+            return classes + 'bg-yellow-100 text-yellow-800 dark:bg-yellow-500/20 dark:text-yellow-300'
+        case 'confirmed':
+            return classes + 'bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-300'
+        case 'failed':
+            return classes + 'bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-300'
+        default:
+            return classes + 'bg-gray-100 text-gray-800 dark:bg-gray-500/20 dark:text-gray-300'
+    }
+}
+
+const getReconciliationStatusClass = (status: string) => {
+    const classes = 'px-2 py-1 text-xs font-semibold rounded-full inline-block '
+    switch (status) {
+        case 'pending':
+            return classes + 'bg-yellow-100 text-yellow-800 dark:bg-yellow-500/20 dark:text-yellow-300'
+        case 'verified':
+            return classes + 'bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-300'
+        case 'failed':
+            return classes + 'bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-300'
+        case 'manual_review':
+            return classes + 'bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300'
+        default:
+            return classes + 'bg-gray-100 text-gray-800 dark:bg-gray-500/20 dark:text-gray-300'
+    }
 }
 
 // Reset editing state when dialog closes
