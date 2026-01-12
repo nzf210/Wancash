@@ -95,13 +95,20 @@
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Status</label>
                     <select v-model="filters.status"
                         class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500">
-                        <option value="">All Status</option>
-                        <option value="pending">Pending</option>
-                        <option value="waiting_payment">Waiting Payment</option>
-                        <option value="processing">Processing</option>
-                        <option value="shipped">Shipped</option>
-                        <option value="completed">Completed</option>
-                        <option value="rejected">Rejected</option>
+                        <option value="" class="bg-white dark:bg-gray-700 text-gray-900 dark:text-white">All Status
+                        </option>
+                        <option value="pending" class="bg-white dark:bg-gray-700 text-gray-900 dark:text-white">Pending
+                        </option>
+                        <option value="waiting_payment" class="bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                            Waiting Payment</option>
+                        <option value="processing" class="bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                            Processing</option>
+                        <option value="shipped" class="bg-white dark:bg-gray-700 text-gray-900 dark:text-white">Shipped
+                        </option>
+                        <option value="completed" class="bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                            Completed</option>
+                        <option value="rejected" class="bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                            Rejected</option>
                     </select>
                 </div>
 
@@ -299,19 +306,19 @@ const getStatusClass = (status: string) => {
     const classes = 'px-3 py-1 text-xs font-semibold rounded-full '
     switch (status) {
         case 'pending':
-            return classes + 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+            return classes + 'bg-yellow-100 text-yellow-800 dark:bg-yellow-500/20 dark:text-yellow-300'
         case 'waiting_payment':
-            return classes + 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+            return classes + 'bg-orange-100 text-orange-800 dark:bg-orange-500/20 dark:text-orange-300'
         case 'processing':
-            return classes + 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+            return classes + 'bg-purple-100 text-purple-800 dark:bg-purple-500/20 dark:text-purple-300'
         case 'shipped':
-            return classes + 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+            return classes + 'bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300'
         case 'completed':
-            return classes + 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+            return classes + 'bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-300'
         case 'rejected':
-            return classes + 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+            return classes + 'bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-300'
         default:
-            return classes + 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+            return classes + 'bg-gray-100 text-gray-800 dark:bg-gray-500/20 dark:text-gray-300'
     }
 }
 

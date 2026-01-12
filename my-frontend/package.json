@@ -1,4 +1,5 @@
 {
+  "$schema": "https://json.schemastore.org/package.json",
   "name": "@wancash-oft/my-frontend",
   "version": "0.0.0",
   "private": true,

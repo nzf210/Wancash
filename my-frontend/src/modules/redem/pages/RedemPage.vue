@@ -16,7 +16,8 @@
           </div>
           <h1 class="text-xl md:text-3xl font-bold text-gray-900 dark:text-white">Token Redemption with Gold</h1>
         </div>
-        <p class="text-xs md:text-base text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">Exchange your tokens for
+        <p class="text-xs md:text-base text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+          Exchange your tokens for
           physical
           gold that will
           be shipped to your address</p>
@@ -161,8 +162,8 @@
 
                 <!-- Profile Data Section -->
                 <ProfileDataCard :profile="userProfile" v-model:useProfileData="useProfileData"
-                  :walletAddress="walletAddress" :chainInfo="chainInfo" :nativeBalance="nativeBalance"
-                  :nativeCurrencySymbol="nativeCurrencySymbol" />
+                  :walletAddress="walletAddress" :chainInfo="chainInfo" :nativeBalance="wchBalance"
+                  :nativeCurrencySymbol="'WCH'" />
 
                 <!-- Recipient Information -->
                 <RecipientForm v-model:form="form" v-model:saveToProfile="saveToProfile" />
@@ -209,7 +210,7 @@
                         </div>
 
                         <!-- Balance Warning -->
-                        <div v-if="nativeBalance < estimatedTotalWithShipping"
+                        <div v-if="wchBalance < estimatedTotalWithShipping"
                           class="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
                           <div class="flex items-start gap-2">
                             <svg class="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" fill="currentColor"
@@ -221,9 +222,9 @@
                             <div class="flex-1">
                               <p class="text-sm font-semibold text-red-800 dark:text-red-300">Insufficient Balance</p>
                               <p class="text-xs text-red-700 dark:text-red-400 mt-1">
-                                Your balance: {{ formatNumber(nativeBalance) }} WCH<br />
+                                Your balance: {{ formatNumber(wchBalance) }} WCH<br />
                                 Required: {{ formatNumber(estimatedTotalWithShipping) }} WCH<br />
-                                Short by: {{ formatNumber(estimatedTotalWithShipping - nativeBalance) }} WCH
+                                Short by: {{ formatNumber(estimatedTotalWithShipping - wchBalance) }} WCH
                               </p>
                             </div>
                           </div>
@@ -302,13 +303,14 @@ import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import { Button } from '@/components/ui/button'
 import { useAccount, useChainId, useConfig } from '@wagmi/vue'
-import { getBalance } from '@wagmi/core'
+import { readContract } from '@wagmi/core'
 import { storeToRefs } from 'pinia'
 
 // Stores & Composables
 import { useProfileStore } from '@/modules/profile/store/profileStore'
 import { useChain } from '@/app/composables/useChain'
 import { redemptionApi, type CreateRedemptionRequest, type GoldProduct, type RedemptionConfig } from '../services/redemptionApi'
+import { wancashAbi, wancashContractAddress } from '@/app/services/contracts'
 
 // Components
 import WalletConnectPrompt from '../components/WalletConnectPrompt.vue'
@@ -411,14 +413,18 @@ const goToCheckout = () => {
   isCheckout.value = true
 }
 
-// Native coin balance
-const nativeBalance = ref<number>(0)
+// WCH Token balance
+const wchBalance = ref<number>(0)
 const nativeCurrencySymbol = computed(() => {
   const info = getChainInfo(chainId.value)
   return info?.symbol || 'ETH'
 })
 const config = useConfig()
 const saveToProfile = ref(false)
+const contractAddress = computed(() => {
+  if (!chainId.value) return null
+  return wancashContractAddress[chainId.value] ?? '0x03A71968491d55603FFe1b11A9e23eF013f75bCF'
+})
 
 // Form data
 const form = ref({
@@ -459,27 +465,30 @@ watch(address, async (newAddress) => {
   }
 }, { immediate: true })
 
-const fetchNativeBalance = async () => {
-  if (!isConnected.value || !address.value) return
+const fetchWchBalance = async () => {
+  if (!isConnected.value || !address.value || !contractAddress.value) return
   try {
-    const balance = await getBalance(config, {
-      address: address.value as `0x${string}`,
+    const balance = await readContract(config, {
+      address: contractAddress.value as `0x${string}`,
+      abi: wancashAbi.abi,
+      functionName: 'balanceOf',
+      args: [address.value as `0x${string}`],
     })
-    nativeBalance.value = Number(balance.formatted)
+    wchBalance.value = Number(balance as bigint) / 1e18
   } catch (err) {
-    console.error('Native balance fetch error:', err)
+    console.error('WCH balance fetch error:', err)
   }
 }
 
 watch(chainId, () => {
   if (isConnected.value && address.value) {
-    fetchNativeBalance()
+    fetchWchBalance()
   }
 })
 
 watch(address, (newAddress) => {
   if (newAddress) {
-    fetchNativeBalance()
+    fetchWchBalance()
   }
 }, { immediate: true })
 
@@ -563,7 +572,7 @@ const submitRedemption = async () => {
 
   // Validate balance
   const totalRequired = estimatedTotalWithShipping.value
-  const currentBalance = nativeBalance.value // Corrected from `balance.value` to `nativeBalance.value`
+  const currentBalance = wchBalance.value
 
   if (currentBalance < totalRequired) {
     toast.error(`Insufficient balance! You need ${totalRequired.toFixed(2)} WCH but only have ${currentBalance.toFixed(2)} WCH`, {
