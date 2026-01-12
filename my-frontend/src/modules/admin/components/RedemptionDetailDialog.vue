@@ -22,13 +22,19 @@
                             <p class="font-medium text-gray-900 dark:text-white">{{ request.phone_number }}</p>
                         </div>
                         <div>
-                            <p class="text-gray-500 dark:text-gray-400">Wallet Address</p>
-                            <p class="font-mono text-xs text-gray-900 dark:text-white">{{ request.wallet_address }}</p>
+                            <p class="text-gray-500 dark:text-gray-400">Telegram</p>
+                            <p class="font-medium text-gray-900 dark:text-white">{{ request.telegram_username || '-' }}
+                            </p>
                         </div>
                         <div>
                             <p class="text-gray-500 dark:text-gray-400">WhatsApp</p>
                             <p class="font-medium text-gray-900 dark:text-white">{{ request.whatsapp_number || '-' }}
                             </p>
+                        </div>
+                        <div class="col-span-2">
+                            <p class="text-gray-500 dark:text-gray-400">Wallet Address</p>
+                            <p class="font-mono text-xs text-gray-900 dark:text-white break-all">{{
+                                request.wallet_address }}</p>
                         </div>
                         <div class="col-span-2">
                             <p class="text-gray-500 dark:text-gray-400">Shipping Address</p>
@@ -75,7 +81,7 @@
                         <div class="flex justify-between text-sm">
                             <span class="text-gray-600 dark:text-gray-400">Total Weight</span>
                             <span class="font-medium text-gray-900 dark:text-white">{{ request.gold_amount_grams
-                                }}g</span>
+                            }}g</span>
                         </div>
 
                         <!-- Shipping Cost Editor -->
@@ -110,7 +116,7 @@
                             class="flex justify-between text-base font-bold pt-2 border-t border-gray-200 dark:border-gray-700">
                             <span class="text-gray-900 dark:text-white">Total Amount</span>
                             <span class="text-blue-600 dark:text-blue-400">{{ formatNumber(request.total_token_amount)
-                                }} WCH</span>
+                            }} WCH</span>
                         </div>
                     </div>
                 </div>
@@ -361,8 +367,8 @@ const allowedNextStatuses = computed(() => {
         ],
         'waiting_payment': [
             // Only allow processing if payment is reconciled
-            ...(props.request.reconciliation_status === 'verified' 
-                ? [{ value: 'processing', label: 'Processing' }] 
+            ...(props.request.reconciliation_status === 'verified'
+                ? [{ value: 'processing', label: 'Processing' }]
                 : []),
             { value: 'rejected', label: 'Rejected' }
         ],
