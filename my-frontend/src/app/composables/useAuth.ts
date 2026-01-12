@@ -24,6 +24,7 @@ interface AuthState {
   walletAddress: string | null
   chainId: number | null
   lastChecked: number
+  userRole: 'user' | 'admin'
 }
 
 // Global State (Singleton pattern for composable)
@@ -32,7 +33,8 @@ const state = ref<AuthState>({
   user: {},
   walletAddress: null,
   chainId: null,
-  lastChecked: 0
+  lastChecked: 0,
+  userRole: 'user'
 })
 
 const isConnected = ref(false)
@@ -87,7 +89,8 @@ export const useAuth = () => {
       user: {},
       walletAddress: null,
       chainId: null,
-      lastChecked: Date.now()
+      lastChecked: Date.now(),
+      userRole: 'user'
     }
     localStorage.removeItem('auth_state')
     console.log('✅ [useAuth] Auth state reset complete')
@@ -296,7 +299,8 @@ export const useAuth = () => {
         const data = await res.json()
         state.value.status = 'AUTHENTICATED'
         state.value.lastChecked = now
-        console.log('✅ [useAuth] Session valid')
+        state.value.userRole = data.user?.role || 'user'
+        console.log('✅ [useAuth] Session valid, role:', state.value.userRole)
 
         // Schedule proactive refresh if expiresIn is provided
         if (data.expiresIn && data.expiresIn > 0) {
@@ -490,7 +494,8 @@ export const useAuth = () => {
             user: parsed.user,
             walletAddress: parsed.address,
             chainId: parsed.chainId,
-            lastChecked: parsed.timestamp
+            lastChecked: parsed.timestamp,
+            userRole: 'user' // Will be updated by checkSession
           }
           console.log('📦 [useAuth] Session restored from storage:', parsed.address)
 
@@ -558,6 +563,7 @@ export const useAuth = () => {
     isConnected,
     isRestoring,
     walletAddress: computed(() => state.value.walletAddress),
+    userRole: computed(() => state.value.userRole),
 
     // Actions
     login,

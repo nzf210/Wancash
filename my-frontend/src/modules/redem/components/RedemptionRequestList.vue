@@ -29,7 +29,7 @@
                                 {{ getStatusLabel(req.status) }}
                             </span>
                             <span class="text-sm text-gray-500 dark:text-gray-400">{{ formatDate(req.created_at)
-                            }}</span>
+                                }}</span>
                         </div>
 
                         <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">
@@ -39,8 +39,8 @@
                         <div v-if="req.items && req.items.length > 0" class="space-y-1 mb-3">
                             <div v-for="item in req.items" :key="item.product_id"
                                 class="text-sm text-gray-700 dark:text-gray-300 flex justify-between gap-4">
-                                <span>{{ item.name }} ({{ item.weight }}g)</span>
-                                <span class="font-medium">x{{ item.quantity }}</span>
+                                <span>{{ item.snapshot_name }} ({{ item.snapshot_weight }}g)</span>
+                                <span class="font-medium">× {{ item.quantity }} pcs</span>
                             </div>
                         </div>
                         <div v-else class="text-sm text-gray-700 dark:text-gray-300 mb-3">
@@ -71,9 +71,22 @@
                             </p>
                         </div>
 
-                        <!-- Payment Action -->
-                        <div v-if="req.status === 'waiting_payment'" class="w-full">
-                            <Button @click="handlePayment(req)" :disabled="isPaying === req.id"
+                        <!-- Action Buttons -->
+                        <div class="w-full space-y-2">
+                            <!-- View Details Button (Always visible) -->
+                            <Button @click="viewDetails(req)" variant="outline" class="w-full">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                                View Details
+                            </Button>
+
+                            <!-- Pay Button (Only for waiting_payment status) -->
+                            <Button v-if="req.status === 'waiting_payment'" @click="handlePayment(req)"
+                                :disabled="isPaying === req.id"
                                 class="w-full bg-green-600 hover:bg-green-700 text-white">
                                 <svg v-if="isPaying === req.id" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
                                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -83,7 +96,30 @@
                                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
                                     </path>
                                 </svg>
+                                <svg v-else class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
                                 {{ isPaying === req.id ? 'Confirming...' : 'Pay Now' }}
+                            </Button>
+
+                            <!-- Cancel Button (Only for pending or waiting_payment) -->
+                            <Button v-if="req.status === 'pending' || req.status === 'waiting_payment'"
+                                @click="cancelRequest(req)" :disabled="isCanceling === req.id" variant="outline"
+                                class="w-full text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20">
+                                <svg v-if="isCanceling === req.id" class="animate-spin -ml-1 mr-2 h-4 w-4"
+                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                        stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor"
+                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                    </path>
+                                </svg>
+                                <svg v-else class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                {{ isCanceling === req.id ? 'Canceling...' : 'Cancel Request' }}
                             </Button>
                         </div>
                     </div>
@@ -97,6 +133,9 @@
             </div>
         </div>
     </div>
+
+    <!-- Detail Dialog -->
+    <UserRedemptionDetailDialog v-model:open="showDetailDialog" :request="selectedRequest" />
 </template>
 
 <script setup lang="ts">
@@ -108,14 +147,66 @@ import { useAccount, useConfig } from '@wagmi/vue'
 import { writeContract, waitForTransactionReceipt } from '@wagmi/core'
 import { parseAbi } from 'viem'
 import { wancashContractAddress } from '@/app/services/contracts'
+import UserRedemptionDetailDialog from './UserRedemptionDetailDialog.vue'
 
 const requests = ref<RedemptionRecord[]>([])
 const isLoading = ref(true)
 const isPaying = ref<string | null>(null)
+const isCanceling = ref<string | null>(null)
+const showDetailDialog = ref(false)
+const selectedRequest = ref<RedemptionRecord | null>(null)
+const treasuryAddress = ref<string>('0x0000000000000000000000000000000000000000')
 const { address, chainId } = useAccount()
 const config = useConfig()
 
-const TREASURY_ADDRESS = '0x1234567890123456789012345678901234567890' // Placeholder
+// Fetch treasury address from config
+const fetchConfig = async () => {
+    try {
+        const configData = await redemptionService.getSettings()
+        if (configData.treasury_address) {
+            treasuryAddress.value = configData.treasury_address
+        }
+    } catch (error) {
+        console.error('Failed to fetch config:', error)
+    }
+}
+
+const viewDetails = (req: RedemptionRecord) => {
+    selectedRequest.value = req
+    showDetailDialog.value = true
+}
+
+const cancelRequest = async (req: RedemptionRecord) => {
+    if (!confirm(`Are you sure you want to cancel this redemption request?\n\nThis action cannot be undone.`)) {
+        return
+    }
+
+    isCanceling.value = req.id
+    try {
+        // Call backend to delete/cancel the request
+        const response = await fetch(`/api/redemption/${req.id}`, {
+            method: 'DELETE',
+            credentials: 'include',
+            headers: {
+                'X-Wallet-Address': address.value || ''
+            }
+        })
+
+        if (!response.ok) {
+            throw new Error('Failed to cancel request')
+        }
+
+        toast.success('Redemption request canceled successfully')
+
+        // Refresh the list
+        await fetchRequests()
+    } catch (error: any) {
+        console.error('Cancel error:', error)
+        toast.error('Failed to cancel request: ' + (error.message || 'Unknown error'))
+    } finally {
+        isCanceling.value = null
+    }
+}
 
 const fetchRequests = async () => {
     isLoading.value = true
@@ -179,7 +270,7 @@ const handlePayment = async (req: RedemptionRecord) => {
             address: tokenAddress as `0x${string}`,
             abi,
             functionName: 'transfer',
-            args: [TREASURY_ADDRESS, amountWei]
+            args: [treasuryAddress.value as `0x${string}`, amountWei]
         })
 
         toast.info('Payment transaction sent. Waiting for confirmation...')
@@ -215,5 +306,6 @@ const handlePayment = async (req: RedemptionRecord) => {
 
 onMounted(() => {
     fetchRequests()
+    fetchConfig()
 })
 </script>

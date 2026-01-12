@@ -7,6 +7,8 @@
     "node": "^20.19.0 || >=22.12.0"
   },
   "scripts": {
+    "scr1": "~/Desktop/dev/wancash_staking/my-frontend/watch-errors.sh",
+    "scr2": "~/Desktop/dev/wancash_staking/my-frontend/watch-errors-auto.sh",
     "dev": "vite",
     "dev:all": "run-p dev c:dev",
     "build": "run-p type-check \"build-only {@}\" --",

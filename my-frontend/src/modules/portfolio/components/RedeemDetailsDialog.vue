@@ -245,6 +245,8 @@ const statusClass = computed(() => {
             return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
         case 'processing':
             return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+        case 'waiting_payment':
+            return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
         case 'pending':
             return 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
         case 'rejected':
@@ -256,10 +258,11 @@ const statusClass = computed(() => {
 
 const getStatusLabel = (status: RedeemStatus): string => {
     const labels: Record<RedeemStatus, string> = {
-        completed: 'Completed',
-        processing: 'Processing',
         pending: 'Pending',
-        rejected: 'Rejected',
+        waiting_payment: 'Waiting Payment',
+        processing: 'Processing',
+        completed: 'Completed',
+        rejected: 'Rejected'
     }
     return labels[status]
 }
@@ -267,21 +270,25 @@ const getStatusLabel = (status: RedeemStatus): string => {
 const getStatusInfo = (status: RedeemStatus): { title: string; description: string } => {
     const info: Record<RedeemStatus, { title: string; description: string }> = {
         pending: {
-            title: 'Awaiting Processing',
-            description: 'Your redemption request has been submitted and is waiting to be processed by our team.'
+            title: 'Request Submitted',
+            description: 'Your redemption request has been received and is awaiting admin review.'
+        },
+        waiting_payment: {
+            title: 'Waiting for Payment',
+            description: 'Please complete the payment to proceed with your redemption.'
         },
         processing: {
             title: 'Being Processed',
-            description: 'Your redemption is currently being processed. You will receive confirmation shortly.'
+            description: 'Your request is currently being processed by our team.'
         },
         completed: {
-            title: 'Redemption Complete',
-            description: 'Your token redemption has been successfully completed.'
+            title: 'Completed',
+            description: 'Your redemption has been completed successfully!'
         },
         rejected: {
-            title: 'Redemption Rejected',
-            description: 'Unfortunately, your redemption request was rejected. Please check the reason above.'
-        },
+            title: 'Request Rejected',
+            description: 'Your redemption request was rejected. Please check the rejection reason below.'
+        }
     }
     return info[status]
 }

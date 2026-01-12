@@ -201,11 +201,33 @@
                         </span>
                         <span v-else class="font-medium text-amber-500">Calculated Later</span>
                       </div>
-                      <div class="border-t border-gray-200 dark:border-gray-700 my-2"></div>
-                      <div class="flex justify-between text-base font-bold">
-                        <span class="text-gray-900 dark:text-white">Estimated Total</span>
-                        <span class="text-blue-600">{{ formatNumber(estimatedTotalWithShipping) }} WCH {{
-                          !adminSettings.shipping_enabled ? '+ Shipping' : '' }}</span>
+                      <div class="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+                        <div class="flex justify-between items-center text-xl font-bold">
+                          <span class="text-gray-900 dark:text-white">Total</span>
+                          <span class="text-blue-600 dark:text-blue-400">{{ formatNumber(estimatedTotalWithShipping) }}
+                            WCH</span>
+                        </div>
+
+                        <!-- Balance Warning -->
+                        <div v-if="nativeBalance < estimatedTotalWithShipping"
+                          class="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                          <div class="flex items-start gap-2">
+                            <svg class="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" fill="currentColor"
+                              viewBox="0 0 20 20">
+                              <path fill-rule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                clip-rule="evenodd" />
+                            </svg>
+                            <div class="flex-1">
+                              <p class="text-sm font-semibold text-red-800 dark:text-red-300">Insufficient Balance</p>
+                              <p class="text-xs text-red-700 dark:text-red-400 mt-1">
+                                Your balance: {{ formatNumber(nativeBalance) }} WCH<br />
+                                Required: {{ formatNumber(estimatedTotalWithShipping) }} WCH<br />
+                                Short by: {{ formatNumber(estimatedTotalWithShipping - nativeBalance) }} WCH
+                              </p>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
@@ -522,11 +544,37 @@ const formatNumber = (num: number) => {
 }
 
 const submitRedemption = async () => {
-  if (!isFormValid.value) return
+  if (!address.value) {
+    toast.error('Please connect your wallet')
+    return
+  }
 
-  isLoading.value = true
+  // Validate form
+  if (!form.value.name || !form.value.phone || !form.value.address) {
+    toast.error('Please fill all required fields')
+    return
+  }
+
+  // Validate cart
+  if (Object.keys(cart.value).length === 0) {
+    toast.error('Your cart is empty')
+    return
+  }
+
+  // Validate balance
+  const totalRequired = estimatedTotalWithShipping.value
+  const currentBalance = nativeBalance.value // Corrected from `balance.value` to `nativeBalance.value`
+
+  if (currentBalance < totalRequired) {
+    toast.error(`Insufficient balance! You need ${totalRequired.toFixed(2)} WCH but only have ${currentBalance.toFixed(2)} WCH`, {
+      duration: 5000
+    })
+    return
+  }
 
   try {
+    isLoading.value = true
+
     const requestData: CreateRedemptionRequest = {
       wallet_address: address.value!,
       chain_id: chainId.value,
@@ -545,8 +593,8 @@ const submitRedemption = async () => {
       items: cartItemsDetails.value.map(item => ({
         product_id: item.id,
         quantity: item.quantity,
-        snapshot_price: item.price_wch,
-        snapshot_weight: item.weight_grams
+        snapshot_price: Number(item.price_wch),
+        snapshot_weight: Number(item.weight_grams)
       }))
     }
 

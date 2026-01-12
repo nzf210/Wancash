@@ -32,6 +32,7 @@ const authGuard = async (
   next: NavigationGuardNext
 ): Promise<void> => {
   const requiresAuth = to.matched.some((record) => record.meta?.requiresAuth as boolean | undefined);
+  const requiresAdmin = to.matched.some((record) => record.meta?.requiresAdmin as boolean | undefined);
 
   if (to.meta.requiresAuth) {
     sessionStorage.setItem('intended_route', to.fullPath)
@@ -44,7 +45,7 @@ const authGuard = async (
      * const { useAuth } = await import('@/app/composables/useAuth');
      *
      */
-    const { isRestoring, isAuthenticated } = useAuth();
+    const { isRestoring, isAuthenticated, userRole } = useAuth();
 
     console.log('🔑 [AuthGuard] Authenticated:', isAuthenticated.value, 'Stabilizing:', isRestoring.value);
 
@@ -68,11 +69,22 @@ const authGuard = async (
       console.log('✅ [AuthGuard] Auth restoration finished. Authenticated:', isAuthenticated.value);
     }
 
-    if (isAuthenticated.value) {
-      next();
-    } else {
-      next('/');
+    if (!isAuthenticated.value) {
+      console.log('⛔ [AuthGuard] Not authenticated, redirecting to home');
+      return next('/');
     }
+
+    // Check admin role if required
+    if (requiresAdmin) {
+      console.log('🔑 [AuthGuard] Admin required. User role:', userRole.value);
+      if (userRole.value !== 'admin') {
+        console.warn('⛔ [AuthGuard] Access denied: Admin role required');
+        return next('/');
+      }
+      console.log('✅ [AuthGuard] Admin access granted');
+    }
+
+    next();
   } catch (error) {
     console.error('Auth guard error:', error);
     next('/');

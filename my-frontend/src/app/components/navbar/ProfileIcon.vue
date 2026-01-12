@@ -3,6 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
 import { useNavigate } from '../../composables/useNavigate'
+import { useAuth } from '../../composables/useAuth'
 import {
   Tooltip,
   TooltipContent,
@@ -10,7 +11,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { Badge } from '@/components/ui/badge'
-import { Copy, User, BriefcaseBusiness, Settings, LogOut } from 'lucide-vue-next'
+import { Copy, User, BriefcaseBusiness, Settings, LogOut, Shield } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import { computed, ref } from 'vue'
 import ReadContract from '../ReadContract.vue'
@@ -18,7 +19,7 @@ import type { ProfileAuthStores } from './types'
 import { useRouter } from 'vue-router'
 
 const { goToPortfolio, goToProfile, goToSettings } = useNavigate()
-
+const { userRole } = useAuth()
 
 const router = useRouter()
 // Props
@@ -185,6 +186,13 @@ const handleMouseLeave = () => {
               <DropdownMenuItem @click="goToSettings" class="cursor-pointer">
                 <Settings class="mr-2 h-4 w-4" />
                 <span>Settings</span>
+              </DropdownMenuItem>
+
+              <!-- Admin Dashboard - Only visible to admins -->
+              <DropdownMenuItem v-if="userRole === 'admin'" @click="() => router.push('/admin')"
+                class="cursor-pointer bg-purple-50 dark:bg-purple-900/20">
+                <Shield class="mr-2 h-4 w-4 text-purple-600 dark:text-purple-400" />
+                <span class="text-purple-600 dark:text-purple-400 font-medium">Admin Dashboard</span>
               </DropdownMenuItem>
 
               <DropdownMenuSeparator />
