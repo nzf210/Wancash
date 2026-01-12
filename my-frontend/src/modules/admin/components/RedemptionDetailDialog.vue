@@ -360,7 +360,10 @@ const allowedNextStatuses = computed(() => {
             { value: 'rejected', label: 'Rejected' }
         ],
         'waiting_payment': [
-            { value: 'processing', label: 'Processing' },
+            // Only allow processing if payment is reconciled
+            ...(props.request.reconciliation_status === 'verified' 
+                ? [{ value: 'processing', label: 'Processing' }] 
+                : []),
             { value: 'rejected', label: 'Rejected' }
         ],
         'processing': [
