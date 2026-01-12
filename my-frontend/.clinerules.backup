@@ -1,0 +1,310 @@
+# Wancash Staking Project - Development Rules
+
+## 🎯 Core Principles
+
+### 1. Variable & State Management
+
+- **ALWAYS** check and trace variable usage before making changes to global variables
+- Search for all references using `grep_search` or `find_by_name`
+- Document all affected components/files
+- Verify state management patterns (Pinia stores, composables, reactive refs)
+
+**Example checklist:**
+
+```
+[ ] Search for variable usage across codebase
+[ ] Identify all consumers (components, composables, stores)
+[ ] Check if variable is used in computed properties
+[ ] Verify reactive dependencies
+[ ] Update all references consistently
+```
+
+### 2. Backend API Endpoint Changes
+
+- **ALWAYS** identify all consumers before modifying any BE endpoint
+- Check both frontend and backend for endpoint usage
+- Verify request/response contract compatibility
+- Ensure synchronization between FE and BE
+
+**Required checks:**
+
+```
+[ ] Search for endpoint usage in frontend (fetch, axios calls)
+[ ] Check API route definitions in backend
+[ ] Verify request payload structure
+[ ] Verify response structure
+[ ] Check error handling on both sides
+[ ] Update TypeScript types if needed
+[ ] Test all affected consumers
+```
+
+### 3. Planning Before Execution
+
+- **ALWAYS** create an implementation plan before making changes
+- Use `implementation_plan.md` artifact for complex changes
+- Get user approval before proceeding with implementation
+- Break down work into clear, reviewable steps
+
+**Planning template:**
+
+```markdown
+# [Feature/Fix Name]
+
+## Problem
+
+[Clear description of the issue or requirement]
+
+## Proposed Changes
+
+### Component 1
+
+- Change A
+- Change B
+
+### Component 2
+
+- Change C
+
+## Affected Areas
+
+- [ ] Frontend components: [list]
+- [ ] Backend endpoints: [list]
+- [ ] Global state: [list]
+- [ ] Types/Interfaces: [list]
+
+## Verification Plan
+
+- [ ] Test case 1
+- [ ] Test case 2
+```
+
+---
+
+## 📁 Project Structure
+
+### Frontend (`/my-frontend`)
+
+```
+src/
+├── app/
+│   ├── components/     # Shared components
+│   ├── composables/    # Vue composables (useAuth, etc)
+│   └── router/         # Vue Router config
+├── modules/            # Feature modules
+├── stores/             # Pinia stores
+└── utils/              # Utility functions
+```
+
+### Backend (`/cloude-flare-wancash`)
+
+- Cloudflare Workers
+- API endpoints
+- Database migrations
+
+---
+
+## 🔍 Pre-Change Checklist
+
+Before making ANY code change:
+
+### For Variable Changes:
+
+1. ✅ Search for all usages: `grep_search` with variable name
+2. ✅ Check if it's a global state (Pinia store, composable)
+3. ✅ Identify all consumers (components, other composables)
+4. ✅ Verify reactive dependencies
+5. ✅ Plan updates for all affected files
+
+### For API Endpoint Changes:
+
+1. ✅ Search frontend for endpoint usage: `grep_search` with endpoint path
+2. ✅ Check backend route handler
+3. ✅ Verify request/response types match
+4. ✅ Check error handling on both sides
+5. ✅ List all consumers that need updates
+6. ✅ Plan synchronization strategy
+
+### For Component Changes:
+
+1. ✅ Check if component is used in multiple places
+2. ✅ Verify props/emits contracts
+3. ✅ Check parent-child dependencies
+4. ✅ Test responsive design (mobile/desktop)
+
+---
+
+## 🚀 Development Workflow
+
+### Step 1: Analysis
+
+- Understand the requirement fully
+- Ask clarifying questions if needed
+- Identify all affected areas
+- if add devendency chek existing dev to syncronising
+
+### Step 2: Planning
+
+- Create `implementation_plan.md`
+- List all files to be changed
+- Identify potential risks
+- Get user approval via `notify_user`
+
+### Step 3: Implementation
+
+- Make changes incrementally
+- Follow the plan
+- Update related files together
+- Keep changes atomic and focused
+
+### Step 4: Verification
+
+- Test all affected functionality
+- Verify no regressions
+- Check console for errors
+- Create `walkthrough.md` with results
+
+---
+
+## 🛠️ Technology Stack
+
+### Frontend
+
+- **Framework**: Vue 3 (Composition API)
+- **State**: Pinia stores + Composables
+- **Router**: Vue Router
+- **Wallet**: Wagmi + Web3Modal
+- **UI**: Custom components + Tailwind CSS
+- **Build**: Vite + Bun
+
+### Backend
+
+- **Platform**: Cloudflare Workers
+- **Database**: D1 (SQLite)
+- **Auth**: Cookie-based with JWT
+
+---
+
+## ⚠️ Common Pitfalls to Avoid
+
+1. **Don't** modify global variables without checking all usages
+2. **Don't** change API contracts without updating all consumers
+3. **Don't** skip the planning phase for complex changes
+4. **Don't** make assumptions - always verify with grep/search
+5. **Don't** forget to check both FE and BE when changing endpoints
+
+---
+
+## 📝 Code Style Guidelines
+
+### TypeScript
+
+- Use explicit types for function parameters and returns
+- Prefer `interface` over `type` for object shapes
+- Use `const` for immutable values
+- Use descriptive variable names
+- use bun
+
+### Vue Components
+
+- Use Composition API with `<script setup>`
+- Keep components focused and single-purpose
+- Extract reusable logic to composables
+- Use TypeScript for props and emits
+
+### Naming Conventions
+
+- Components: PascalCase (e.g., `UserProfile.vue`)
+- Composables: camelCase with `use` prefix (e.g., `useAuth.ts`)
+- Stores: camelCase with `Store` suffix (e.g., `userStore.ts`)
+- Constants: UPPER_SNAKE_CASE
+
+---
+
+## 🔐 Authentication Flow
+
+Current implementation uses:
+
+- Wagmi for wallet connection
+- Cookie-based sessions (HttpOnly)
+- Access tokens (4 min) + Refresh tokens (7 days)
+- Proactive token refresh (1 min before expiry)
+- Role-based access (user/admin)
+
+**Key files:**
+
+- `/src/app/composables/useAuth.ts` - Main auth logic
+- `/src/app/router/index.ts` - Route guards
+- Backend: `/cloude-flare-wancash/src/index.ts`
+
+---
+
+## 📋 Example: Changing a Global Variable
+
+```typescript
+// ❌ WRONG - Direct change without checking
+const isConnected = ref(false) // Changed from true
+
+// ✅ CORRECT - Follow the process
+// 1. Search for all usages
+grep_search('isConnected', '*.ts', '*.vue')
+
+// 2. Document findings
+// Found in:
+// - useAuth.ts (definition)
+// - Header.vue (displays connection status)
+// - WalletButton.vue (enables/disables button)
+
+// 3. Create plan
+// - Update useAuth.ts logic
+// - Verify Header.vue still works
+// - Verify WalletButton.vue still works
+// - Test connection flow
+
+// 4. Get approval, then implement
+```
+
+---
+
+## 📋 Example: Changing an API Endpoint
+
+```typescript
+// Changing: POST /api/auth/verify
+
+// ✅ CORRECT Process:
+// 1. Search frontend usage
+grep_search('/api/auth/verify', '*.ts', '*.vue')
+// Found in: useAuth.ts line 186
+
+// 2. Check backend handler
+// File: cloude-flare-wancash/src/auth.ts
+
+// 3. Document contract
+// Request: { address, signature, message, chainId }
+// Response: { user, expiresIn }
+
+// 4. Plan changes
+// - Update backend handler
+// - Update frontend call in useAuth.ts
+// - Update TypeScript types
+// - Test login flow
+
+// 5. Get approval, implement, verify
+```
+
+---
+
+## 🎯 Remember
+
+> **"Plan first, code second, verify always"**
+
+Every change should follow this pattern:
+
+1. 🔍 **Search** - Find all affected code
+2. 📋 **Plan** - Document what will change
+3. ✅ **Approve** - Get user confirmation
+4. 🛠️ **Implement** - Make the changes
+5. ✨ **Verify** - Test everything works
+
+---
+
+_Last updated: 2026-01-12_
