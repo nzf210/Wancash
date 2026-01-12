@@ -207,23 +207,37 @@ export const useAuth = () => {
       const data = await verifyResponse.json()
       console.log('✅ [useAuth] Verification successful:', data)
 
-      // 4. Update State
+      // 🔍 DEBUG: Log exact response structure
+      console.log('🔍 [DEBUG] Full verify response:', JSON.stringify(data, null, 2))
+      console.log('🔍 [DEBUG] data.user:', data.user)
+      console.log('🔍 [DEBUG] data.user?.role:', data.user?.role)
+      console.log('🔍 [DEBUG] data.role:', data.role)
+
+      // 4. Update State (Note: verify endpoint doesn't return role)
       state.value.status = 'AUTHENTICATED'
       state.value.user = data.user
+      // Don't set userRole here - it will be fetched from /api/me
       state.value.lastChecked = Date.now()
 
-      // Persist for quick restore
-      const authState = {
-        address,
-        chainId,
-        user: data.user,
-        timestamp: Date.now()
-      }
-      localStorage.setItem('auth_state', JSON.stringify(authState))
-      console.log('✅ [useAuth] Auth state persisted to localStorage')
+      console.log('🔍 [DEBUG] userRole not in verify response, will fetch from /api/me')
 
       // ✅ Schedule proactive refresh (1 minute before expiry of 4-minute access token)
       scheduleProactiveRefresh(data.expiresIn || 240)
+
+      // Fetch role from /api/me immediately
+      console.log('🔐 [useAuth] Fetching user role from /api/me...')
+      await checkSession(true)
+
+      // Persist for quick restore (now includes role from checkSession)
+      const authState = {
+        address,
+        chainId,
+        user: state.value.user,
+        userRole: state.value.userRole,
+        timestamp: Date.now()
+      }
+      localStorage.setItem('auth_state', JSON.stringify(authState))
+      console.log('✅ [useAuth] Auth state persisted to localStorage, Role:', state.value.userRole)
 
       toast.success('Successfully connected!')
       console.log('🔐 [useAuth] ========== LOGIN SUCCESS ==========\n')
@@ -297,10 +311,18 @@ export const useAuth = () => {
 
       if (res.ok) {
         const data = await res.json()
+
+        // 🔍 DEBUG: Log exact response structure
+        console.log('🔍 [DEBUG] Full /api/me response:', JSON.stringify(data, null, 2))
+        console.log('🔍 [DEBUG] data.user:', data.user)
+        console.log('🔍 [DEBUG] data.user?.role:', data.user?.role)
+        console.log('🔍 [DEBUG] data.role:', data.role)
+
         state.value.status = 'AUTHENTICATED'
         state.value.lastChecked = now
         state.value.userRole = data.user?.role || 'user'
         console.log('✅ [useAuth] Session valid, role:', state.value.userRole)
+        console.log('🔍 [DEBUG] Set userRole to:', state.value.userRole)
 
         // Schedule proactive refresh if expiresIn is provided
         if (data.expiresIn && data.expiresIn > 0) {
@@ -495,9 +517,9 @@ export const useAuth = () => {
             walletAddress: parsed.address,
             chainId: parsed.chainId,
             lastChecked: parsed.timestamp,
-            userRole: 'user' // Will be updated by checkSession
+            userRole: parsed.userRole || 'user' // Restore userRole from localStorage
           }
-          console.log('📦 [useAuth] Session restored from storage:', parsed.address)
+          console.log('📦 [useAuth] Session restored from storage:', parsed.address, 'Role:', state.value.userRole)
 
           // ✅ Timer will be rescheduled by checkSession() based on /api/me response
           // (HttpOnly cookies cannot be read from JavaScript)
