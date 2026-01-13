@@ -118,7 +118,7 @@
 
 ## 📁 Project Structure
 
-### Frontend (`/my-frontend/src`)
+### Frontend (`my-frontend/src`)
 
 ```
 src/
@@ -151,7 +151,7 @@ src/
 └── lib/                   # External libraries config
 ```
 
-### Backend (`/cloude-flare-wancash/src`)
+### Backend (`my-frontend/cloude-flare-wancash/src`)
 
 ```
 src/
@@ -166,6 +166,18 @@ src/
 ├── support.ts            # Support/help endpoints
 ├── stats.ts              # Statistics & analytics endpoints
 └── addressBook.ts        # Address book management endpoints
+```
+
+### Smart Contracts (`my-ofts`)
+
+```
+src/
+├── contracts/          # Solidity contracts
+├── deploy/             # Deployment scripts
+├── tasks/              # Hardhat tasks
+├── test/               # Tests
+├── hardhat.config.ts   # Hardhat configuration
+└── layerzero.config.ts # LayerZero configuration
 ```
 
 ### Backend API Endpoints
@@ -297,6 +309,13 @@ Before making ANY code change:
 - **Auth**: Cookie-based with JWT
 - **Runtime**: Cloudflare Workers Runtime
 
+### Smart Contracts
+
+- **Framework**: Hardhat
+- **Language**: Solidity, TypeScript
+- **Protocol**: LayerZero V2
+- **Testing**: Hardhat / Foundry
+
 ---
 
 ## ⚠️ Common Pitfalls to Avoid
@@ -360,11 +379,11 @@ Current implementation uses:
 
 ```typescript
 // ❌ WRONG - Direct change without checking
-const isConnected = ref(false) // Changed from true
+const isConnected = ref(false); // Changed from true
 
 // ✅ CORRECT - Follow the process
 // 1. Search for all usages
-grep_search('isConnected', ['*.ts', '*.vue'])
+grep_search("isConnected", ["*.ts", "*.vue"]);
 
 // 2. Document findings
 // Found in:
@@ -390,7 +409,7 @@ grep_search('isConnected', ['*.ts', '*.vue'])
 
 // ✅ CORRECT Process:
 // 1. Search frontend usage
-grep_search('/api/auth/verify', ['*.ts', '*.vue'])
+grep_search("/api/auth/verify", ["*.ts", "*.vue"]);
 // Found in: useAuth.ts line 186
 
 // 2. Check services layer
