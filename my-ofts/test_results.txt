@@ -1,0 +1,55 @@
+
+
+  Wancash Enhanced Features
+    1) Should deploy with correct Vesting and Supply
+    2) Should enforce Max Transaction Limit (0.1%)
+    ✔ Should enforce Is Excluded From Fee
+    3) Should enforce Taxes on Buys/Sells
+    4) Should enforce Taxes on Buys/Sells
+    5) Should enforce Anti-Bot Cooldown
+
+
+  1 passing (1s)
+  5 failing
+
+  1) Wancash Enhanced Features
+       Should deploy with correct Vesting and Supply:
+
+      AssertionError: expected { Object (_hex, _isBigNumber) } to equal { Object (_hex, _isBigNumber) }
+      + expected - actual
+
+
+      at Context.<anonymous> (test/Wancash.test.ts:45:48)
+
+  2) Wancash Enhanced Features
+       Should enforce Max Transaction Limit (0.1%):
+     Error: Invalid Chai property: revertedWith
+      at Object.proxyGetter [as get] (node_modules/chai/lib/chai/utils/proxify.js:78:17)
+      at Context.<anonymous> (test/Wancash.test.ts:72:16)
+
+  3) Wancash Enhanced Features
+       Should enforce Taxes on Buys/Sells:
+
+      AssertionError: expected { Object (_hex, _isBigNumber) } to equal { Object (_hex, _isBigNumber) }
+      + expected - actual
+
+
+      at Context.<anonymous> (test/Wancash.test.ts:106:62)
+
+  4) Wancash Enhanced Features
+       Should enforce Taxes on Buys/Sells:
+
+      AssertionError: expected { Object (_hex, _isBigNumber) } to equal { Object (_hex, _isBigNumber) }
+      + expected - actual
+
+
+      at Context.<anonymous> (test/Wancash.test.ts:128:62)
+
+  5) Wancash Enhanced Features
+       Should enforce Anti-Bot Cooldown:
+     Error: Invalid Chai property: revertedWith
+      at Object.proxyGetter [as get] (node_modules/chai/lib/chai/utils/proxify.js:78:17)
+      at Context.<anonymous> (test/Wancash.test.ts:145:16)
+
+
+

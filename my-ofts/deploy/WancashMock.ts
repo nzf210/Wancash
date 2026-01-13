@@ -47,6 +47,7 @@ const deploy: DeployFunction = async (hre) => {
             config.token.symbol,
             endpointV2Deployment,
             deployer,
+            deployer,
             mainChainId,
             initialSupplyWei,
         ],

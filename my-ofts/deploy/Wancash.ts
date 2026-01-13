@@ -57,7 +57,8 @@ const deploy: DeployFunction = async (hre) => {
             config.token.name,
             config.token.symbol,
             endpointV2Address, // LayerZero's EndpointV2 address
-            deployer, // owner,
+            deployer, // owner
+            deployer, // treasury (Refactored to use deployer address)
             MAIN_CHAIN_ID, // main chain
             supply, // initial supply
         ],

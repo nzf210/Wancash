@@ -78,6 +78,7 @@ const config: CustomHardhatConfig = {
                         enabled: true,
                         runs: 200,
                     },
+                    viaIR: true,
                 },
             },
         ],
