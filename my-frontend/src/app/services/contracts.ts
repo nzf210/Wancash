@@ -1,17 +1,34 @@
-export const wancashContractAddress: Record<number, string> = {
-  1: '0x03A71968491d55603FFe1b11A9e23eF013f75bCF', // Ethereum Mainnet
-  56: '0x03A71968491d55603FFe1b11A9e23eF013f75bCF', // BSC Mainnet
-  8453: '0x03A71968491d55603FFe1b11A9e23eF013f75bCF', // Base
-  43114: '0x03A71968491d55603FFe1b11A9e23eF013f75bCF', // Avalanche
-  42161: '0x03A71968491d55603FFe1b11A9e23eF013f75bCF', // Arbitrum
-  137: '0x03A71968491d55603FFe1b11A9e23eF013f75bCF', // Polygon
-  80002: '0x03A71968491d55603FFe1b11A9e23eF013f75bCF', // Amoy
-  11155111: '0xcE9F3d7b1d4e5dAe4Ba9F9564d2008667ed59344', // Sepolia
-  97: '0x30ca352E6931C5e1e87B7259BA3521BEb6E0013B', // BSC Testnet
-  43113: '0x5241625774FB5b9F8e7b8F1fe8b861Af3F6D786b', // Fuji
-}
+// Environment-aware contract addresses
+const ENV = import.meta.env.VITE_NODE_ENV || 'development';
+const isProd = ENV === 'production';
 
-export const wancashAbi = {  abi: [
+// Helper to get env var or fallback to empty string to avoid crashes
+const getEnv = (key: string) => (import.meta.env as any)[key] || '';
+
+// Staging (Testnet) Addresses
+const stagingAddresses: Record<number, string> = {
+  97: getEnv('VITE_WCH_TOKEN_BSC_TEST'),        // BSC Testnet
+  80002: getEnv('VITE_WCH_TOKEN_POLYGON_AMOY'), // Amoy
+  11155111: getEnv('VITE_WCH_TOKEN_ETHEREUM_SEPOLIA'), // Sepolia
+  43113: getEnv('VITE_WCH_TOKEN_AVALANCHE_FUJI'), // Fuji
+  421614: getEnv('VITE_WCH_TOKEN_ARBITRUM_SEPOLIA'), // Arbitrum Sepolia
+  31: getEnv('VITE_WCH_TOKEN_ROOTSTOCK'),       // Rootstock Testnet
+};
+
+// Production (Mainnet) Addresses
+const productionAddresses: Record<number, string> = {
+  56: getEnv('VITE_WCH_TOKEN_BSC'),             // BSC Mainnet
+  137: getEnv('VITE_WCH_TOKEN_POLYGON'),        // Polygon
+  1: getEnv('VITE_WCH_TOKEN_ETHEREUM'),         // Ethereum
+  43114: getEnv('VITE_WCH_TOKEN_AVALANCHE'),    // Avalanche
+  42161: getEnv('VITE_WCH_TOKEN_ARBITRUM'),     // Arbitrum
+  30: getEnv('VITE_WCH_TOKEN_ROOTSTOCK'),       // Rootstock Mainnet (assuming same var name or add _MAINNET if different)
+};
+
+export const wancashContractAddress: Record<number, string> = isProd ? productionAddresses : stagingAddresses;
+
+export const wancashAbi = {
+  abi: [
     {
       "inputs": [
         {
