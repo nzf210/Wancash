@@ -7,7 +7,7 @@ import { formatUnits } from 'viem'
 
 const { chainId, address: userAddress } = useConnection()
 
-const contract = computed<string>(() => wancashContractAddress[chainId.value ?? 1] ?? '0x03A71968491d55603FFe1b11A9e23eF013f75bCF') // Fallback to Ethereum if chainId undefined
+const contract = computed<string>(() => wancashContractAddress[chainId.value ?? 1] ?? '0x00000000000055603FFe1b11A9e0000000000000') // Fallback to Ethereum if chainId undefined
 
 const { data: balance, isError, isLoading } = useReadContract({
   ...wancashAbi,
