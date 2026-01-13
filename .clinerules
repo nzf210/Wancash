@@ -15,7 +15,7 @@
 [**] Search for variable usage across codebase
 [**] Identify all consumers (components, composables, stores)
 [**] Check if variable is used in computed properties
-[] Verify reactive dependencies
+[**] Verify reactive dependencies
 [**] Update all references consistently
 ```
 

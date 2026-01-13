@@ -1,352 +1,162 @@
 include .env
 export
 
-# Dynamic Cross-Chain Makefile
-.PHONY: help setup-env list-networks
+# ==============================================================================
+#  WANCASH CROSS-CHAIN AUTOMATION
+# ==============================================================================
+#  A unified command interface for deployment, verification, and cross-chain operations.
+#  
+#  Required: .env file (run 'make setup-env' to check)
+# ==============================================================================
 
-# Colors
+.PHONY: help setup-env list-networks deploy-auto deploy verify send peer-setup peer-check
+
+# --- Colors ---
 RED=\033[0;31m
 GREEN=\033[0;32m
 YELLOW=\033[0;33m
 NC=\033[0m
 
-# Default target
+# --- Configuration defaults ---
+DEFAULT_AMOUNT=1.0
+
+# ==============================================================================
+#  DEFAULT TARGET: HELP MENU
+# ==============================================================================
 help:
-	@echo "🚀 Cross-Chain OFT Commands"
-	@echo "=========================="
-	@echo "Setup:"
-	@echo "  setup-env          - Generate .env template"
-	@echo "  list-networks      - Show all configured networks"
+	@echo "🚀 $(GREEN)WANCASH CROSS-CHAIN TOOLKIT$(NC)"
+	@echo "=================================================================="
+	@echo "$(YELLOW)Setup:$(NC)"
+	@echo "  make setup-env          - Create .env from example if missing"
+	@echo "  make list-networks      - Show available Hardhat networks"
 	@echo ""
-	@echo "Deployment:"
-	@echo "  deploy-all         - Deploy to all networks"
-	@echo "  deploy-NETWORK     - Deploy to specific network (e.g. deploy-bsc)"
+	@echo "$(YELLOW)Automated Pipelines (Recommended):$(NC)"
+	@echo "  make deploy-auto        - Run the full interactive deployment & sync pipeline"
+	@echo "                            (Deploys, Verify, Wire, Sync Env)"
 	@echo ""
-	@echo "Cross-Chain Transfer:"
-	@echo "  send FROM=src TO=dst AMOUNT=1.0 RECIPIENT=0xAddress"
+	@echo "$(YELLOW)Manual Deployment & Verification:$(NC)"
+	@echo "  make deploy NETWORK=... - Deploy to a specific network"
+	@echo "                            (e.g., make deploy NETWORK=bsc)"
+	@echo "  make verify NETWORK=... - Verify contract on Etherscan/Blockscout"
+	@echo "                            (e.g., make verify NETWORK=polygon)"
 	@echo ""
-	@echo "Examples:"
-	@echo "  make send FROM=bsc TO=ethereum AMOUNT=1.0 RECIPIENT=0x123..."
-	@echo "  make send FROM=polygon TO=avalance AMOUNT=0.5 RECIPIENT=0x456..."
+	@echo "$(YELLOW)Cross-Chain Operations:$(NC)"
+	@echo "  make send FROM=... TO=... [AMOUNT=...] [RECIPIENT=...]"
+	@echo "    - Send tokens across chains."
+	@echo "    - Defaults: AMOUNT=1.0, RECIPIENT=Your configured default"
+	@echo "    - Example: make send FROM=bsc TO=ethereum AMOUNT=50"
 	@echo ""
-	@echo "Peer Management:"
-	@echo "  peer-setup FROM=bsc TO=sepolia"
-	@echo "  peer-check NETWORK=bsc-testnet EID=40161"
+	@echo "$(YELLOW)LayerZero Peer Management:$(NC)"
+	@echo "  make peer-setup FROM=... TO=... "
+	@echo "    - Auto-wire peers between two networks."
+	@echo "  make peer-check NETWORK=... EID=..."
+	@echo "    - Check if a peer is set for a specific Endpoint ID."
+	@echo ""
+	@echo "$(YELLOW)Run this scrypt$(NC)"
+	@echo "======================="
+	@echo "$(GREEN)"
+	@echo "make deploy-auto"
+	@echo "make send FROM=bsc TO=ethereum AMOUNT=100"
+	@echo "make verify NETWORK=polygon ADDRESS=0x4B567FE342D250976c18421B453B947c57C9AD60"
+	@echo "make peer-setup FROM=bsc TO=ethereum"
+	@echo "make peer-check NETWORK=bsc EID=40161"
+	@echo "$(NC)"
+	@echo "======================="
+	@echo ""
 
-op:
-	npx hardhat lz:oapp:wire
+# ==============================================================================
+#  SETUP & CONFIG
+# ==============================================================================
+setup-env:
+	@if [ ! -f .env ]; then \
+		cp .env.example .env; \
+		echo "$(GREEN)Created .env from .env.example. Please populate it!$(NC)"; \
+	else \
+		echo "$(YELLOW).env already exists. No changes made.$(NC)"; \
+	fi
 
-dev:
-	npx hardhat lz:deploy --tags WancashMock
-	
-dev-main:
-	npx hardhat lz:deploy --tags Wancash
+list-networks:
+	@npx hardhat verify --list-networks
 
-dev-stk:
-	npx hardhat lz:deploy --tags EnhancedStaking
+# ==============================================================================
+#  DEPLOYMENT AUTOMATION
+# ==============================================================================
+deploy-auto:
+	@echo "$(GREEN)Starting Auto-Deployment Pipeline...$(NC)"
+	@bun scripts/auto-deploy.ts
 
-dev-stkn:
-	npx hardhat lz:deploy --tags EnhancedStakingUsdt
+deploy:
+	@if [ -z "$(NETWORK)" ]; then \
+		echo "$(RED)Error: NETWORK is required.$(NC)"; \
+		echo "Usage: make deploy NETWORK=bsc"; \
+		exit 1; \
+	fi
+	@echo "$(GREEN)Deploying to $(NETWORK)...$(NC)"
+	@npx hardhat lz:deploy --tags Wancash --network $(NETWORK)
 
+verify:
+	@if [ -z "$(NETWORK)" ]; then \
+		echo "$(RED)Error: NETWORK is required.$(NC)"; \
+		echo "Usage: make verify NETWORK=polygon [ADDRESS=0x...]"; \
+		exit 1; \
+	fi
+	@if [ -n "$(ADDRESS)" ]; then \
+		echo "$(GREEN)Verifying contract at $(ADDRESS) on $(NETWORK)...$(NC)"; \
+		npx hardhat verify --network $(NETWORK) $(ADDRESS) $(ARGS); \
+	else \
+		echo "$(GREEN)Verifying all deployments on $(NETWORK)...$(NC)"; \
+		npx hardhat etherscan-verify --network $(NETWORK); \
+	fi
 
-# Verifikasi Contracts
-c-conf:
-	npx hardhat lz:oapp:config:get --oapp-config layerzero.config.ts
-
-# Universal send command
+# ==============================================================================
+#  CROSS-CHAIN TRANSFERS (OFT)
+# ==============================================================================
 send:
-	@if [ -z "$(FROM)" ] || [ -z "$(TO)" ] || [ -z "$(AMOUNT)" ] || [ -z "$(RECIPIENT)" ]; then \
-		echo "❌ Missing parameters!"; \
-		echo "Usage: make send FROM=source_network TO=destination_network AMOUNT=amount RECIPIENT=address"; \
-		echo "Example: make send FROM=bsc TO=ethereum AMOUNT=1.0 RECIPIENT=0x123..."; \
+	@if [ -z "$(FROM)" ] || [ -z "$(TO)" ]; then \
+		echo "$(RED)Error: FROM and TO are required.$(NC)"; \
+		echo "Usage: make send FROM=bsc TO=ethereum AMOUNT=10 RECIPIENT=0x123..."; \
 		exit 1; \
 	fi
-	@echo "🚀 Sending $(AMOUNT) tokens from $(FROM) to $(TO)"
+	@echo "$(GREEN)🚀 Sending $(if $(AMOUNT),$(AMOUNT),$(DEFAULT_AMOUNT)) tokens from $(FROM) to $(TO)...$(NC)"
 	@npx hardhat --network $(FROM) lz:oft:send \
-		--amount $(AMOUNT) \
+		--amount $(if $(AMOUNT),$(AMOUNT),$(DEFAULT_AMOUNT)) \
 		--dst $(TO) \
-		--to $(RECIPIENT)
+		$(if $(RECIPIENT),--to $(RECIPIENT),)
 
-bsc-to-eth:
-	@make send FROM=bsc TO=ethereum AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-bsc-to-poly:
-	@make send FROM=bsc TO=polygon AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-bsc-to-ava:
-	@make send FROM=bsc TO=avalance AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-bsc-to-root:
-	@make send FROM=bsc TO=rootstock AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-bsc-to-arb:
-	@make send FROM=bsc TO=arbitrum AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-eth-to-bsc:
-	@make send FROM=ethereum TO=bsc AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-eth-to-poly:
-	@make send FROM=ethereum TO=polygon AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-eth-to-ava:
-	@make send FROM=ethereum TO=avalance AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-eth-to-root:
-	@make send FROM=ethereum TO=rootstock AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-eth-to-arb:
-	@make send FROM=ethereum TO=arbitrum AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-poly-to-bsc:
-	@make send FROM=polygon TO=bsc AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-poly-to-eth:
-	@make send FROM=polygon TO=ethereum AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-poly-to-ava:
-	@make send FROM=polygon TO=avalance AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-poly-to-arb:
-	@make send FROM=polygon TO=arbitrum AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-poly-to-root:
-	@make send FROM=polygon TO=rootstock AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-ava-to-poly:
-	@make send FROM=avalance TO=polygon AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-ava-to-eth:
-	@make send FROM=avalance TO=ethereum AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-ava-to-bsc:
-	@make send FROM=avalance TO=bsc AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-ava-to-root:
-	@make send FROM=avalance TO=rootstock AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-ava-to-arb:
-	@make send FROM=avalance TO=arbitrum AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-root-to-bsc:
-	@make send FROM=rootstock TO=bsc AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-root-to-eth:
-	@make send FROM=rootstock TO=ethereum AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-root-to-poly:
-	@make send FROM=rootstock TO=polygon AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-root-to-ava:
-	@make send FROM=rootstock TO=avalance AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-root-to-arb:
-	@make send FROM=rootstock TO=arbitrum AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-arb-to-bsc:
-	@make send FROM=arbitrum TO=bsc AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-arb-to-eth:
-	@make send FROM=arbitrum TO=ethereum AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-arb-to-poly:
-	@make send FROM=arbitrum TO=polygon AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-arb-to-ava:
-	@make send FROM=arbitrum TO=avalance AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-arb-to-root:
-	@make send FROM=arbitrum TO=rootstock AMOUNT=$(if $(AMOUNT),$(AMOUNT),1.0) RECIPIENT=$(if $(TO),$(TO),$(WALLET_RECEIVER))
-
-
-# Predefined BSC to Sepolia peer setup
-p-bsc-to-sepolia:
-	@echo "Setting up BSC to Sepolia peers..."
-	@make set-peers \
-		network1=sepolia \
-		network2=bsc-testnet \
-		eid1=$(EID_SEPOLIA) \
-		eid2=$(EID_BSC) \
-		oapp1=$(ETH_CONTRACT) \
-		oapp2=$(BSC_CONTRACT)
-
-# Verification Contract
-.PHONY: verify-poly
-verify-poly:
-	@echo "Verifying contract on Polygon Amoy..."
-	npx hardhat verify:amoy --address $(POLY_CONTRACT) --network polygon
-	@echo "Verification complete!"
-
-.PHONY: verify-bsc
-verify-bsc:
-	@echo "Verifying contract on BSC Testnet..."
-	npx hardhat verify:bsc --address $(BSC_CONTRACT) --network bsc
-	@echo "Verification complete!"
-
-.PHONY: verify-eth
-verify-eth:
-	@echo "Verifying contract on Sepolia Testnet..."
-	npx hardhat verify:eth --address $(ETH_CONTRACT) --network ethereum
-	@echo "Verification complete!"
-
-.PHONY: verify-ava
-verify-ava:
-	@echo "Verifying contract on Fuji Avalance Testnet..."
-	npx hardhat verify:fuji --address $(AVA_CONTRACT) --network avalance 
-# 	--chain fuji-ava
-	@echo "Verification complete!"
-
-.PHONY: verify-root
-verify-root:
-	@echo "Verifying contract on Rootstock Testnet..."
-	npx hardhat verify:root --address $(ROOT_CONTRACT) --network rootstock
-	@echo "Verification complete!"
-
-.PHONY: verify-arb
-verify-arb:
-	@echo "Verifying contract on Arb Testnet..."
-	npx hardhat verify:arb --address $(ARB_CONTRACT) --network arbitrum
-	@echo "Verification complete!"
-
-#verify contact staking
-v-staking:
-	@if [ -z "$(STK_CONTRACT)" ] || [ -z "$(TOKEN)" ] || [ -z "$(CHANGEABLE)" ]; then \
-		echo "${RED}Error: Missing required parameters${NC}"; \
-		echo "Usage: make verify ADDRESS=0x... TOKEN=0x... CHANGEABLE=[true|false]"; \
-		exit 1; \
-	fi
-	@echo "${YELLOW}Starting verification...${NC}"
-	@echo "Contract: ${GREEN}$(ADDRESS)${NC}"
-	@echo "Token: ${GREEN}$(TOKEN)${NC}"
-	@echo "Changeable: ${GREEN}$(CHANGEABLE)${NC}"
-	@echo "Network: ${GREEN}$(NETWORK)${NC}"
-	@npx hardhat verify:staking \
-		--address $(STK_CONTRACT) \
-		--token $(TOKEN) \
-		--changeable $(CHANGEABLE) \
-		--network $(NETWORK)
-	@echo "${GREEN}✓ Verification completed${NC}"
-
-
-# Mint Token
-mint-bsc:
-	npx hardhat lz:oft:mint --contract $(BSC_CONTRACT) --network bsc --amount 10 --private-key $(PRIVATE_KEY)
-
-mint-eth:
-	npx hardhat lz:oft:mint --contract $(ETH_CONTRACT) --network arbitrum-testnet --amount 7 --private-key $(PRIVATE_KEY)
-
-mint-amoy:
-	npx hardhat lz:oft:mint --contract $(POLY_CONTRACT) --network polygon-testnet --amount 8 --private-key $(PRIVATE_KEY)
-
-
-# Dynamic OFT_ADDRESS selection based on network
-ifeq ($(NETWORK),bsc-testnet)
-OFT_ADDRESS := $(BSC_CONTRACT)
-else ifeq ($(NETWORK),polygon-amoy)
-OFT_ADDRESS := $(POLY_CONTRACT)
-else ifeq ($(NETWORK),sepolia-testnet)
-OFT_ADDRESS := $(ETH_CONTRACT)
-else ifeq ($(NETWORK),avalanche-fuji)
-OFT_ADDRESS := $(AVAX_CONTRACT)
-endif
-
-
-.PHONY: debug-env
-debug-env:
-	@echo "BSC_CONTRACT = $(BSC_CONTRACT)"
-	@echo "POLY_CONTRACT = $(POLY_CONTRACT)"
-
-
-# Helper targets
-.PHONY: list-eids
-list-eids:
-	@echo "BSC Testnet EID: $(EID_BSC_TESTNET)"
-	@echo "Polygon Amoy EID: $(EID_POLYGON_AMOY)"
-	@echo "Sepolia Testnet EID: $(EID_SEPOLIA_TESTNET)"
-
-.PHONY: check-config
-check-config:
-	@echo "BSC Contract: $(BSC_CONTRACT)"
-	@echo "Polygon Contract: $(POLY_CONTRACT)"
-	@echo "ETH Contract: $(ETH_CONTRACT)"
-	@echo "Receiver: $(WALLET_RECEIVER)"
-
-c-deploy:
-	cat deployments/bsc-testnet/MyOFTMock.json | jq '{address, abi}'
-
-g-peer-bsc:
-	@echo "Getting BSC peer to Amoy..."
-	npx hardhat lz:oapp:peer:get --network bsc --eid 40267 --contract $(BSC_CONTRACT)
-	@sleep 3
-	@echo "Getting BSC peer to sepolia..."
-	npx hardhat lz:oapp:peer:get --network bsc --eid 40161 --contract $(BSC_CONTRACT)
-
-g-peer-amoy:
-	@echo "Getting AMOY peer to BSC..."
-	npx hardhat lz:oapp:peer:get --network polygon --eid 40102 --contract $(POLY_CONTRACT)
-	@sleep 3
-	@echo "Getting AMOY peer to sepolia..."
-	npx hardhat lz:oapp:peer:get --network polygon --eid 40161 --contract $(POLY_CONTRACT)
-
-g-peer-sepolia:
-	@echo "Getting Sepolia peer to Amoy..."
-	npx hardhat lz:oapp:peer:get --network arbitrum --eid 40267 --contract $(ETH_CONTRACT)
-	@sleep 3
-	@echo "Getting Sepolia peer to BSC..."
-	npx hardhat lz:oapp:peer:get --network arbitrum --eid 40102 --contract $(ETH_CONTRACT)
-
-db-bsc:
-	@echo "Debugging BSC..."
-	npx hardhat debug:lz:config --network bsc --contract $(BSC_CONTRACT)
-
-db-amoy:
-	@echo "Debugging Amoy..."
-	npx hardhat debug:lz:config --network polygon --contract $(POLY_CONTRACT)
-
-db-sepolia:
-	@echo "Debugging BSC..."
-	npx hardhat debug:lz:config --network arbitrum --contract $(ETH_CONTRACT)
-
-mn-quote:
-	@echo "Quote for minting..."
-	npx hardhat test:manual-quote \
-    --network bsc \
-    --contract $(BSC_CONTRACT) \
-    --dst $(EID_AMOY)
-
-# DEV With Verification
-# bunx hardhat --network arbitrum deploy --tags MyOFTMock --reset
-
-list-net:
-	npx hardhat verify --list-networks
-
-# Peer management
+# ==============================================================================
+#  PEER MANAGEMENT
+# ==============================================================================
 peer-setup:
 	@if [ -z "$(FROM)" ] || [ -z "$(TO)" ]; then \
-		echo "❌ Missing parameters!"; \
-		echo "Usage: make peer-setup FROM=source_network TO=destination_network"; \
+		echo "$(RED)Error: Missing parameters!$(NC)"; \
+		echo "Usage: make peer-setup FROM=source TO=destination"; \
 		exit 1; \
 	fi
 	@npx hardhat --network $(FROM) lz:peer:set:auto --src $(FROM) --dst $(TO)
 
-
-# Example: make peer-check NETWORK=eth EID=101 CONTRACT=$ETH_CONTRACT
 peer-check:
 	@if [ -z "$(NETWORK)" ] || [ -z "$(EID)" ]; then \
-		echo "❌ Missing parameters!"; \
-		echo "Usage: make peer-check NETWORK=network_name EID=endpoint_id [CONTRACT=address]"; \
+		echo "$(RED)Error: Missing parameters!$(NC)"; \
+		echo "Usage: make peer-check NETWORK=bsc EID=40161"; \
 		exit 1; \
 	fi
-	@if [ -z "$(CONTRACT)" ]; then \
-		npx hardhat --network $(NETWORK) lz:oapp:peer:get --eid $(EID); \
-	else \
-		npx hardhat --network $(NETWORK) lz:oapp:peer:get --eid $(EID) --contract $(CONTRACT); \
-	fi
+	@npx hardhat --network $(NETWORK) lz:oapp:peer:get --eid $(EID)
 
-
-# Debug and testing
-debug-network:
+# ==============================================================================
+#  DEBUGGING & UTILS
+# ==============================================================================
+debug-config:
 	@if [ -z "$(NETWORK)" ]; then \
-		echo "Usage: make debug-network NETWORK=network_name"; \
+		echo "Usage: make debug-config NETWORK=bsc"; \
 		exit 1; \
 	fi
-	@npx hardhat --network $(NETWORK) debug:lz:config
+	@npx hardhat debug:lz:config --network $(NETWORK)
 
-# Test quote
-test-quote:
-	@if [ -z "$(NETWORK)" ] || [ -z "$(DST_EID)" ]; then \
-		echo "Usage: make test-quote NETWORK=network_name DST_EID=destination_eid"; \
+mint:
+	@if [ -z "$(NETWORK)" ] || [ -z "$(CONTRACT)" ]; then \
+		echo "$(RED)Usage: make mint NETWORK=bsc CONTRACT=0x... AMOUNT=10$(NC)"; \
 		exit 1; \
 	fi
-	@npx hardhat --network $(NETWORK) test:manual-quote --dst $(DST_EID)
+	@npx hardhat lz:oft:mint --contract $(CONTRACT) --network $(NETWORK) --amount $(if $(AMOUNT),$(AMOUNT),100) --private-key $(PRIVATE_KEY)
 
 
-# Set peer otomatis
-# Example: make set-peer FROM=avalance TO=arbitrum-sepolia
-set-peer:
-	@FROM=$$(if [ -n "$(FROM)" ]; then echo $(FROM); else echo bsc-testnet; fi); \
-	TO=$$(if [ -n "$(TO)" ]; then echo $(TO); else echo sepolia; fi); \
-	echo "Setting peer from $$FROM to $$TO"; \
-	$(MAKE) peer-setup FROM=$$FROM TO=$$TO
-
-get-env:
-	bunx hardhat lz:setup:env
-
-# task for staking contract
-stk-get-address:
-	@echo "contract: $(STK_CONTRACT)"
-	bunx hardhat --network bsc lz:stk:address  --contract $(STK_CONTRACT) 
-
-stk-app-contract:
-	@echo "OFT contract address: $(STK_CONTRACT)"
-	bunx hardhat --network bsc lz:oft:approve --spender $(STK_CONTRACT) 

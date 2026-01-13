@@ -1,51 +1,62 @@
 import assert from 'assert'
-
 import { ethers } from 'ethers'
 import { type DeployFunction } from 'hardhat-deploy/types'
-
-import { CI_BSC } from '../tasks'
-
-const contractName = 'WancashMock'
+import { config } from '../deploy-config'
 
 const deploy: DeployFunction = async (hre) => {
-    const { getNamedAccounts, deployments } = hre
+    // Only run if we are deploying WancashMock
+    if (config.contractName !== 'WancashMock') {
+        return;
+    }
 
+    const { getNamedAccounts, deployments } = hre
     const { deploy } = deployments
     const { deployer } = await getNamedAccounts()
-
-    const tokenConfig = {
-        name: 'Wancash',
-        symbol: 'WCH',
-        decimals: 18, // Standard ERC20 decimal
-        initialSupply: 2100, // Jumlah token dalam unit biasa (bukan wei)
-    }
 
     assert(deployer, 'Missing named deployer account')
 
     console.log(`Network: ${hre.network.name}`)
     console.log(`Deployer: ${deployer}`)
 
-    // Conver initial supply to wei
-    const initialSupplyWei = ethers.utils.parseUnits(tokenConfig.initialSupply.toString(), tokenConfig.decimals)
     const endpointV2Deployment = (await hre.deployments.get('EndpointV2')).address
 
-    const { address } = await deploy(contractName, {
+    // For Mock, we might want to mint everywhere or just defined logic.
+    // The original script passed mainChainID and supply. 
+    // Let's stick to simple defaults for Mock: 
+    // Passing 0 supply and 0 chainId makes it behave standard or flexible?
+    // Looking at WancashMock.sol, it takes same args as Wancash.
+
+    // Convert initial supply to wei
+    const initialSupplyWei = ethers.utils.parseUnits(config.token.initialSupply, config.token.decimals).toString();
+
+    // For Mocks, we often just want deployer to own it and mint freely. 
+    // We pass current chainId as mainChainId so it mints immediately?
+    // Or we pass 0 and rely on manual minting.
+    // Given WancashMock has `mint()` function exposed, we can mint later.
+    // Let's pass 0 supply in constructor to avoid "only mint on main chain" logic restriction if we want flexibility,
+    // or pass current chainID to force minting.
+
+    // Let's stick to original behavior:
+    const CI_BSC = 97; // hardcoded in original script import
+    const mainChainId = CI_BSC;
+
+    const { address } = await deploy(config.contractName, {
         from: deployer,
         args: [
-            tokenConfig.name,
-            tokenConfig.symbol,
+            config.token.name,
+            config.token.symbol,
             endpointV2Deployment,
             deployer,
-            CI_BSC, // main chain
-            initialSupplyWei, // Menggunakan nilai yang sudah dikonversi
+            mainChainId,
+            initialSupplyWei,
         ],
         log: true,
         skipIfAlreadyDeployed: false,
     })
 
-    console.log(`Deployed contract: ${contractName}, network: ${hre.network.name}, address: ${address}`)
+    console.log(`Deployed contract: ${config.contractName}, network: ${hre.network.name}, address: ${address}`)
 }
 
-deploy.tags = [contractName]
+deploy.tags = ['WancashMock']
 
 export default deploy

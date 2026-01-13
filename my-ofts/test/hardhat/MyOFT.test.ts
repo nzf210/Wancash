@@ -30,7 +30,7 @@ describe('MyOFT Test', function () {
         // Fetching the first three signers (accounts) from Hardhat's local Ethereum network
         const signers = await ethers.getSigners()
 
-        ;[ownerA, ownerB, endpointOwner] = signers
+            ;[ownerA, ownerB, endpointOwner] = signers
 
         // The EndpointV2Mock contract comes from @layerzerolabs/test-devtools-evm-hardhat package
         // and its artifacts are connected as external artifacts to this project
@@ -50,8 +50,9 @@ describe('MyOFT Test', function () {
         mockEndpointV2B = await EndpointV2Mock.deploy(eidB)
 
         // Deploying two instances of MyOFT contract with different identifiers and linking them to the mock LZEndpoint
-        myOFTA = await MyOFT.deploy('aOFT', 'aOFT', mockEndpointV2A.address, ownerA.address)
-        myOFTB = await MyOFT.deploy('bOFT', 'bOFT', mockEndpointV2B.address, ownerB.address)
+        // Providing dummy values for mainChainId (1) and initialSupply (0) as we mint manually
+        myOFTA = await MyOFT.deploy('aOFT', 'aOFT', mockEndpointV2A.address, ownerA.address, 1, 0)
+        myOFTB = await MyOFT.deploy('bOFT', 'bOFT', mockEndpointV2B.address, ownerB.address, 2, 0)
 
         // Setting destination endpoints in the LZEndpoint mock for each MyOFT instance
         await mockEndpointV2A.setDestLzEndpoint(myOFTB.address, mockEndpointV2B.address)
