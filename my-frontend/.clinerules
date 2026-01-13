@@ -286,14 +286,14 @@ Before making ANY code change:
 - **State**: Pinia stores + Composables
 - **Router**: Vue Router
 - **Wallet**: Wagmi + Web3Modal
-- **UI**: Custom components + Tailwind CSS
+- **UI**: Shadcn + Custom components + Tailwind CSS
 - **Build**: Vite + Bun
 - **Package Manager**: Bun
 
 ### Backend
 
 - **Platform**: Cloudflare Workers
-- **Database**: D1 (SQLite)
+- **Database**: Neon database
 - **Auth**: Cookie-based with JWT
 - **Runtime**: Cloudflare Workers Runtime
 

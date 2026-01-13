@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import {
   NavigationMenu,
@@ -57,7 +57,18 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
+  notificationStore.stopPolling()
 })
+
+// Watch for auth to fetch notifications
+watch(isAuthenticated, (val) => {
+  if (val) {
+    notificationStore.startPolling()
+  } else {
+    notificationStore.stopPolling()
+    notificationStore.clearAllNotifications()
+  }
+}, { immediate: true })
 </script>
 
 <template>
@@ -124,7 +135,7 @@ onUnmounted(() => {
         <WalletAuthButton :isMobile="false" />
 
         <!-- Show ProfileIcon and Notifications when authenticated -->
-        <div v-if="(isAuthenticated && notificationStore.hasNotifications)" class="flex flex-row">
+        <div v-if="isAuthenticated" class="flex flex-row">
           <!-- Notifications -->
           <NotificationView />
         </div>

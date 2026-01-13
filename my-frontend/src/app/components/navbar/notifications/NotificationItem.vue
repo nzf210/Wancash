@@ -20,7 +20,7 @@ const emit = defineEmits<{
 }>()
 
 const timeAgo = computed(() => {
-    const date = new Date(props.notification.createdAt)
+    const date = new Date(props.notification.created_at)
     const now = new Date()
     const seconds = Math.floor((now.getTime() - date.getTime()) / 1000)
 
@@ -33,7 +33,7 @@ const timeAgo = computed(() => {
 
 <template>
     <div class="flex flex-col gap-1 p-4 transition-colors hover:bg-muted/50 group"
-        :class="{ 'bg-muted/20': !notification.isRead }">
+        :class="{ 'bg-muted/20': !notification.is_read }">
         <div class="flex items-start justify-between gap-2">
             <div class="space-y-1">
                 <p class="text-sm font-medium leading-none">
@@ -53,7 +53,7 @@ const timeAgo = computed(() => {
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                    <DropdownMenuItem v-if="!notification.isRead" @click="emit('read', notification.id)">
+                    <DropdownMenuItem v-if="!notification.is_read" @click="emit('read', notification.id)">
                         <CheckCircle class="mr-2 h-4 w-4" />
                         <span>Mark as read</span>
                     </DropdownMenuItem>

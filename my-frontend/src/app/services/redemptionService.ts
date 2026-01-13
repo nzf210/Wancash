@@ -3,7 +3,7 @@
  * Handles all redemption-related API calls
  * This is a global service - all modules should use this instead of module-specific APIs
  */
-
+import { apiClient } from '@/utils/apiClient';
 export interface GoldProduct {
     id: string
     name: string
@@ -90,7 +90,7 @@ let globalConfig: RedemptionConfig = {
     shipping_cost_wch: 0            // 0 when disabled
 };
 
-const API_BASE = import.meta.env.VITE_API_URL || '';
+
 
 export interface GoldProduct {
     id: string
@@ -103,36 +103,12 @@ export interface GoldProduct {
     stock: number
 }
 
-// Helper to get auth headers consistently
-const getAuthHeaders = (additionalHeaders: Record<string, string> = {}) => {
-    const headers: Record<string, string> = { ...additionalHeaders };
-
-    // Get wallet address from localStorage (auth_state)
-    const savedAuth = localStorage.getItem('auth_state');
-    if (savedAuth) {
-        try {
-            const parsed = JSON.parse(savedAuth);
-            const { address, token } = parsed;
-            if (address) {
-                headers['X-Wallet-Address'] = address;
-            }
-            if (token) {
-                headers['Authorization'] = `Bearer ${token}`;
-            }
-        } catch (e) {
-            console.warn('Failed to parse auth_state:', e);
-        }
-    }
-
-    return headers;
-};
+// Helper removed - using apiClient
 
 export const redemptionService = {
     async getSettings(): Promise<RedemptionConfig> {
-        const response = await fetch(`${API_BASE}/api/redemption/config`, {
-            method: 'GET',
-            credentials: 'include',
-            headers: getAuthHeaders()
+        const response = await apiClient.fetch('/api/redemption/config', {
+            method: 'GET'
         });
 
         if (!response.ok) {
@@ -147,10 +123,8 @@ export const redemptionService = {
 
     // For Demo / Admin Simulation
     async updateSettings(newConfig: Partial<RedemptionConfig>) {
-        const response = await fetch(`${API_BASE}/api/redemption/admin/redemption/config`, {
+        const response = await apiClient.fetch('/api/redemption/admin/redemption/config', {
             method: 'PUT',
-            credentials: 'include',
-            headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
             body: JSON.stringify(newConfig)
         });
 
@@ -168,10 +142,8 @@ export const redemptionService = {
      * Create a new redemption request
      */
     async createRedemption(data: CreateRedemptionRequest): Promise<RedemptionRecord> {
-        const response = await fetch(`${API_BASE}/api/redemption`, {
+        const response = await apiClient.fetch('/api/redemption', {
             method: 'POST',
-            credentials: 'include',
-            headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
             body: JSON.stringify(data)
         });
 
@@ -189,12 +161,8 @@ export const redemptionService = {
      * Always uses the authenticated wallet address from auth_state
      */
     async getRedemptions(): Promise<RedemptionRecord[]> {
-        const headers = getAuthHeaders();
-
-        const response = await fetch(`${API_BASE}/api/redemption`, {
-            method: 'GET',
-            credentials: 'include',
-            headers
+        const response = await apiClient.fetch('/api/redemption', {
+            method: 'GET'
         });
 
         if (!response.ok) {
@@ -225,10 +193,8 @@ export const redemptionService = {
      */
     async getGoldProducts(): Promise<GoldProduct[]> {
         try {
-            const response = await fetch(`${API_BASE}/api/products`, {
-                method: 'GET',
-                credentials: 'include',
-                headers: getAuthHeaders()
+            const response = await apiClient.fetch('/api/products', {
+                method: 'GET'
             });
 
             if (!response.ok) {
@@ -289,10 +255,8 @@ export const redemptionService = {
      * Confirm payment after blockchain transaction
      */
     async payRedemption(id: string, transactionHash: string): Promise<void> {
-        const response = await fetch(`${API_BASE}/api/redemption/${id}/pay`, {
+        const response = await apiClient.fetch(`/api/redemption/${id}/pay`, {
             method: 'POST',
-            credentials: 'include',
-            headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
             body: JSON.stringify({ transaction_hash: transactionHash })
         });
 
@@ -317,10 +281,8 @@ export const redemptionService = {
         expected_recipient?: string
         transaction_hash?: string
     }> {
-        const response = await fetch(`${API_BASE}/api/redemption/${id}/reconciliation-status`, {
-            method: 'GET',
-            credentials: 'include',
-            headers: getAuthHeaders()
+        const response = await apiClient.fetch(`/api/redemption/${id}/reconciliation-status`, {
+            method: 'GET'
         });
 
         if (!response.ok) {
@@ -341,10 +303,8 @@ export const redemptionService = {
         error?: string
         data?: any
     }> {
-        const response = await fetch(`${API_BASE}/api/redemption/admin/${id}/reconcile`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: getAuthHeaders()
+        const response = await apiClient.fetch(`/api/redemption/admin/${id}/reconcile`, {
+            method: 'POST'
         });
 
         const result = await response.json();

@@ -4,6 +4,8 @@
  * Syncs with backend API and uses localStorage as cache/fallback
  */
 
+import { apiClient } from '@/utils/apiClient';
+
 export interface TransactionRecord {
     id: number | string;
     type: 'send' | 'bridge';
@@ -45,50 +47,9 @@ interface ApiTransactionRecord {
 
 const STORAGE_KEY = 'wancash_transactions';
 const MAX_RECORDS = 100;
-const API_BASE = import.meta.env.VITE_API_URL || '';
 
-// Helper to get auth headers consistently with X-Wallet-Address and Authorization
-const getAuthHeaders = (additionalHeaders: Record<string, string> = {}) => {
-    console.log('\n📦 [txHistory] ========== GET AUTH HEADERS ==========')
-    const headers: Record<string, string> = { ...additionalHeaders };
 
-    // Get wallet address and token from localStorage (auth_state)
-    const savedAuth = localStorage.getItem('auth_state');
-    console.log('📦 [txHistory] Saved auth from localStorage:', savedAuth ? 'FOUND' : 'NOT FOUND')
-
-    if (savedAuth) {
-        try {
-            const parsed = JSON.parse(savedAuth);
-            const { address, token } = parsed;
-
-            console.log('📦 [txHistory] Parsed auth state:', {
-                hasAddress: !!address,
-                hasToken: !!token,
-                address: address || 'N/A'
-            })
-
-            if (address) {
-                headers['X-Wallet-Address'] = address;
-                console.log('✅ [txHistory] Added X-Wallet-Address header:', address)
-            } else {
-                console.log('⚠️ [txHistory] No address in auth_state')
-            }
-            if (token) {
-                headers['Authorization'] = `Bearer ${token}`;
-                console.log('✅ [txHistory] Added Authorization header')
-            } else {
-                console.log('⚠️ [txHistory] No token in auth_state (this is expected - using cookies)')
-            }
-        } catch (e) {
-            console.warn('❌ [txHistory] Failed to parse auth_state:', e);
-        }
-    }
-
-    console.log('📦 [txHistory] Final headers:', headers)
-    console.log('📦 [txHistory] ========== END ==========\n')
-
-    return headers;
-};
+// Helper removed - using apiClient
 
 // Helper to convert API record to local format
 const mapApiToLocal = (apiTx: ApiTransactionRecord): TransactionRecord => ({
@@ -242,10 +203,8 @@ export const transactionHistoryService = {
         });
 
         try {
-            const response = await fetch(`${API_BASE}/api/transactions`, {
+            const response = await apiClient.fetch('/api/transactions', {
                 method: 'POST',
-                headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-                credentials: 'include',
                 body: JSON.stringify(tx),
             });
 
@@ -279,10 +238,8 @@ export const transactionHistoryService = {
         }
 
         try {
-            const response = await fetch(`${API_BASE}/api/transactions/${id}`, {
+            const response = await apiClient.fetch(`/api/transactions/${id}`, {
                 method: 'PATCH',
-                headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-                credentials: 'include',
                 body: JSON.stringify({ status: 'success', txHash }),
             });
 
@@ -304,10 +261,8 @@ export const transactionHistoryService = {
         }
 
         try {
-            const response = await fetch(`${API_BASE}/api/transactions/${id}`, {
+            const response = await apiClient.fetch(`/api/transactions/${id}`, {
                 method: 'PATCH',
-                headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-                credentials: 'include',
                 body: JSON.stringify({ status: 'failed' }),
             });
 
@@ -332,11 +287,10 @@ export const transactionHistoryService = {
             if (options?.status) params.set('status', options.status);
             if (options?.limit) params.set('limit', options.limit.toString());
 
-            const response = await fetch(
-                `${API_BASE}/api/transactions?${params.toString()}`,
+            const response = await apiClient.fetch(
+                `/api/transactions?${params.toString()}`,
                 {
-                    headers: getAuthHeaders(),
-                    credentials: 'include'
+                    method: 'GET'
                 }
             );
 
@@ -373,10 +327,8 @@ export const transactionHistoryService = {
         // If transaction already has hash (confirmed), sync to backend
         if (tx.hash && tx.status === 'success') {
             try {
-                await fetch(`${API_BASE}/api/transactions`, {
+                await apiClient.fetch('/api/transactions', {
                     method: 'POST',
-                    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-                    credentials: 'include',
                     body: JSON.stringify({
                         type: tx.type,
                         txHash: tx.hash,
@@ -397,10 +349,8 @@ export const transactionHistoryService = {
                         // Update local with backend ID
                         this.updateLocal(localTx.id, { id: data.data.id });
                         // Also update status to success in backend
-                        await fetch(`${API_BASE}/api/transactions/${data.data.id}`, {
+                        await apiClient.fetch(`/api/transactions/${data.data.id}`, {
                             method: 'PATCH',
-                            headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-                            credentials: 'include',
                             body: JSON.stringify({ status: 'success', txHash: tx.hash }),
                         });
                     }

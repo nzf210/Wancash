@@ -293,6 +293,34 @@
         title="Request Submitted"
         message="Your redemption request has been submitted. The admin will review it and calculate shipping costs. Check 'My Requests' for updates."
         buttonText="Go to My Requests" />
+
+      <!-- Confirmation Dialog -->
+      <Dialog :open="confirmDialog.isOpen" @update:open="confirmDialog.isOpen = $event">
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{{ confirmDialog.title }}</DialogTitle>
+            <DialogDescription>
+              {{ confirmDialog.description }}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" @click="confirmDialog.isOpen = false" :disabled="confirmDialog.isLoading">
+              Cancel
+            </Button>
+            <Button :variant="confirmDialog.variant || 'default'" @click="handleConfirm"
+              :disabled="confirmDialog.isLoading">
+              <svg v-if="confirmDialog.isLoading" class="animate-spin -ml-1 mr-2 h-4 w-4"
+                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                </path>
+              </svg>
+              {{ confirmDialog.confirmText || 'Confirm' }}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   </div>
 </template>
@@ -302,6 +330,14 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { useAccount, useChainId, useConfig } from '@wagmi/vue'
 import { readContract } from '@wagmi/core'
 import { storeToRefs } from 'pinia'
@@ -338,7 +374,49 @@ const agreeTerms = ref(false)
 const isLoading = ref(false)
 const showSuccess = ref(false)
 const isCheckout = ref(false)
+
 const adminSettings = ref<RedemptionConfig>({ shipping_enabled: false, shipping_cost_wch: 0 })
+
+// Confirmation Dialog State
+const confirmDialog = ref({
+  isOpen: false,
+  title: '',
+  description: '',
+  confirmText: 'Confirm',
+  variant: 'default' as 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link',
+  isLoading: false,
+  onConfirm: async () => { }
+})
+
+const openConfirmDialog = (options: {
+  title: string,
+  description: string,
+  confirmText?: string,
+  variant?: 'default' | 'destructive',
+  onConfirm: () => Promise<void>
+}) => {
+  confirmDialog.value = {
+    isOpen: true,
+    title: options.title,
+    description: options.description,
+    confirmText: options.confirmText || 'Confirm',
+    variant: options.variant || 'default',
+    isLoading: false,
+    onConfirm: options.onConfirm
+  }
+}
+
+const handleConfirm = async () => {
+  confirmDialog.value.isLoading = true
+  try {
+    await confirmDialog.value.onConfirm()
+    confirmDialog.value.isOpen = false
+  } catch (e) {
+    // Error handling
+  } finally {
+    confirmDialog.value.isLoading = false
+  }
+}
 
 // Cart State
 const cart = ref<Record<string, number>>({}) // product_id -> quantity
@@ -527,14 +605,19 @@ const connectWallet = async () => {
   toast.info('Please check your wallet extension to connect.')
 }
 
+
 const cancelRedemption = () => {
-  if (confirm('Are you sure you want to cancel?')) {
-    resetForm()
-    isCheckout.value = false
-    // Optionally clear cart?
-    // cart.value = {}
-    toast.info('Cancelled')
-  }
+  openConfirmDialog({
+    title: 'Cancel Redemption',
+    description: 'Are you sure you want to cancel the redemption process? Your progress will be lost.',
+    confirmText: 'Yes, Cancel',
+    variant: 'destructive',
+    onConfirm: async () => {
+      resetForm()
+      isCheckout.value = false
+      toast.info('Cancelled')
+    }
+  })
 }
 
 const isFormValid = computed(() => {

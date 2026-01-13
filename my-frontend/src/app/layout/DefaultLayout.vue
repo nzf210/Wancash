@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import DynamicNavbar from '@/app/components/navbar/NavbarView.vue'
 import FooterView from '@/app/components/FooterView.vue'
 import { useAuth } from '@/app/composables/useAuth'
-import { useNotificationStore } from '@/app/stores/notifications'
+import { useNotificationStore } from '@/stores/notificationStore'
 
 const router = useRouter()
 const { isAuthenticated, logout, user } = useAuth()
@@ -50,11 +50,9 @@ const handleNotificationClick = () => {
 <template>
 
   <div id="app" class="min-h-screen flex flex-col">
-    <!-- Dynamic Navbar with all props -->
-    <DynamicNavbar :user="isAuthenticated ? currentUser : undefined" :notification-count="notificationStore.unreadCount"
-      :is-authenticated="isAuthenticated" :show-wallet-connect="true" :show-theme-toggle="true" @login="handleLogin"
-      @logout="handleLogout" @profile-click="handleProfileClick" @settings-click="handleSettingsClick"
-      @notification-click="handleNotificationClick" />
+    <!-- Dynamic Navbar with fallback listeners -->
+    <DynamicNavbar @login="handleLogin" @logout="handleLogout" @profile-click="handleProfileClick"
+      @settings-click="handleSettingsClick" @notification-click="handleNotificationClick" />
     <!-- Main content -->
     <main class="container mx-auto p-4">
       <RouterView />

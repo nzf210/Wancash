@@ -29,7 +29,7 @@
                                 {{ getStatusLabel(req.status, req.payment_status) }}
                             </span>
                             <span class="text-sm text-gray-500 dark:text-gray-400">{{ formatDate(req.created_at)
-                                }}</span>
+                            }}</span>
                         </div>
 
                         <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">
@@ -153,13 +153,48 @@
         </div>
     </div>
 
-    <!-- Detail Dialog -->
-    <UserRedemptionDetailDialog v-model:open="showDetailDialog" :request="selectedRequest" />
+
+    <!-- Confirmation Dialog -->
+    <Dialog :open="confirmDialog.isOpen" @update:open="confirmDialog.isOpen = $event">
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>{{ confirmDialog.title }}</DialogTitle>
+                <DialogDescription>
+                    {{ confirmDialog.description }}
+                </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+                <Button variant="outline" @click="confirmDialog.isOpen = false" :disabled="confirmDialog.isLoading">
+                    Cancel
+                </Button>
+                <Button :variant="confirmDialog.variant || 'default'" @click="handleConfirm"
+                    :disabled="confirmDialog.isLoading">
+                    <svg v-if="confirmDialog.isLoading" class="animate-spin -ml-1 mr-2 h-4 w-4"
+                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75" fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
+                    </svg>
+                    {{ confirmDialog.confirmText || 'Confirm' }}
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { Button } from '@/components/ui/button'
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog'
 import { toast } from 'vue-sonner'
 import { redemptionService, type RedemptionRecord } from '@/app/services/redemptionService'
 import { useAccount, useConfig } from '@wagmi/vue'
@@ -178,6 +213,47 @@ const treasuryAddress = ref<string>('0x0000000000000000000000000000000000000000'
 const { address, chainId } = useAccount()
 const config = useConfig()
 
+// Confirmation Dialog State
+const confirmDialog = ref({
+    isOpen: false,
+    title: '',
+    description: '',
+    confirmText: 'Confirm',
+    variant: 'default' as 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link',
+    isLoading: false,
+    onConfirm: async () => { }
+})
+
+const openConfirmDialog = (options: {
+    title: string,
+    description: string,
+    confirmText?: string,
+    variant?: 'default' | 'destructive',
+    onConfirm: () => Promise<void>
+}) => {
+    confirmDialog.value = {
+        isOpen: true,
+        title: options.title,
+        description: options.description,
+        confirmText: options.confirmText || 'Confirm',
+        variant: options.variant || 'default',
+        isLoading: false,
+        onConfirm: options.onConfirm
+    }
+}
+
+const handleConfirm = async () => {
+    confirmDialog.value.isLoading = true
+    try {
+        await confirmDialog.value.onConfirm()
+        confirmDialog.value.isOpen = false
+    } catch (e) {
+        // Error handling should be done inside onConfirm or here if generic
+    } finally {
+        confirmDialog.value.isLoading = false
+    }
+}
+
 // Fetch treasury address from config
 const fetchConfig = async () => {
     try {
@@ -195,36 +271,38 @@ const viewDetails = (req: RedemptionRecord) => {
     showDetailDialog.value = true
 }
 
-const cancelRequest = async (req: RedemptionRecord) => {
-    if (!confirm(`Are you sure you want to cancel this redemption request?\n\nThis action cannot be undone.`)) {
-        return
-    }
+const cancelRequest = (req: RedemptionRecord) => {
+    openConfirmDialog({
+        title: 'Cancel Request',
+        description: 'Are you sure you want to cancel this redemption request? This action cannot be undone.',
+        confirmText: 'Yes, Cancel Request',
+        variant: 'destructive',
+        onConfirm: async () => {
+            isCanceling.value = req.id
+            try {
+                // Call backend to delete/cancel the request
+                const response = await fetch(`/api/redemption/${req.id}`, {
+                    method: 'DELETE',
+                    credentials: 'include',
+                    headers: {
+                        'X-Wallet-Address': address.value || ''
+                    }
+                })
 
-    isCanceling.value = req.id
-    try {
-        // Call backend to delete/cancel the request
-        const response = await fetch(`/api/redemption/${req.id}`, {
-            method: 'DELETE',
-            credentials: 'include',
-            headers: {
-                'X-Wallet-Address': address.value || ''
+                if (!response.ok) {
+                    throw new Error('Failed to cancel request')
+                }
+
+                toast.success('Redemption request canceled successfully')
+                await fetchRequests()
+            } catch (error: any) {
+                console.error('Cancel error:', error)
+                toast.error('Failed to cancel request: ' + (error.message || 'Unknown error'))
+            } finally {
+                isCanceling.value = null
             }
-        })
-
-        if (!response.ok) {
-            throw new Error('Failed to cancel request')
         }
-
-        toast.success('Redemption request canceled successfully')
-
-        // Refresh the list
-        await fetchRequests()
-    } catch (error: any) {
-        console.error('Cancel error:', error)
-        toast.error('Failed to cancel request: ' + (error.message || 'Unknown error'))
-    } finally {
-        isCanceling.value = null
-    }
+    })
 }
 
 const fetchRequests = async () => {
@@ -278,59 +356,59 @@ const formatNumber = (num: number) => {
     return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(num)
 }
 
-const handlePayment = async (req: RedemptionRecord) => {
-    if (!confirm(`Pay ${req.total_token_amount} WCH for this redemption?`)) return
+const handlePayment = (req: RedemptionRecord) => {
+    openConfirmDialog({
+        title: 'Confirm Payment',
+        description: `You are about to pay ${req.total_token_amount} WCH for this redemption. Proceed?`,
+        confirmText: 'Pay Now',
+        onConfirm: async () => {
+            isPaying.value = req.id
+            try {
+                // WCH Token Contract Address for current chain
+                const tokenAddress = wancashContractAddress[chainId.value || 0]
+                if (!tokenAddress) throw new Error('Token contract not found for this chain')
 
-    isPaying.value = req.id
-    try {
-        // WCH Token Contract Address for current chain
-        const tokenAddress = wancashContractAddress[chainId.value || 0]
-        if (!tokenAddress) throw new Error('Token contract not found for this chain')
+                // Send Transaction
+                // ABI for ERC20 transfer
+                const abi = parseAbi(['function transfer(address to, uint256 amount) returns (bool)'])
 
-        // Send Transaction
-        // ABI for ERC20 transfer
-        const abi = parseAbi(['function transfer(address to, uint256 amount) returns (bool)'])
+                const amountWei = BigInt(Math.floor(req.total_token_amount * 1e18))
 
-        // Amount in Wei (assume 18 decimals for WCH)
-        // If decimals vary, we need to fetch decimals. WCH is likely 18.
-        const amountWei = BigInt(Math.floor(req.total_token_amount * 1e18))
+                const hash = await writeContract(config, {
+                    address: tokenAddress as `0x${string}`,
+                    abi,
+                    functionName: 'transfer',
+                    args: [treasuryAddress.value as `0x${string}`, amountWei]
+                })
 
-        const hash = await writeContract(config, {
-            address: tokenAddress as `0x${string}`,
-            abi,
-            functionName: 'transfer',
-            args: [treasuryAddress.value as `0x${string}`, amountWei]
-        })
+                toast.info('Payment transaction sent. Waiting for confirmation...')
 
-        toast.info('Payment transaction sent. Waiting for confirmation...')
+                await waitForTransactionReceipt(config, { hash })
 
-        await waitForTransactionReceipt(config, { hash })
+                // Notify Backend
+                await redemptionService.payRedemption(req.id, hash)
 
-        // Notify Backend
-        await redemptionService.payRedemption(req.id, hash)
+                toast.success('Payment successful!')
 
-        toast.success('Payment successful!')
+                // Refresh requests
+                await fetchRequests()
 
-        // Refresh requests
-        await fetchRequests()
-
-    } catch (e: any) {
-        console.error(e)
-        // Mock success for unconfigured environment (if contract fails locally)
-        // toast.error('Payment failed: ' + (e.message || 'Unknown error'))
-
-        // DEV: Allow bypass if contract is not deployed
-        // @ts-ignore
-        if (import.meta.env.MODE === 'development' && confirm('Dev Mode: Simulate success?')) {
-            await redemptionService.payRedemption(req.id, '0xMOCKHASH')
-            toast.success('Dev Payment successful!')
-            await fetchRequests()
-        } else {
-            toast.error('Payment failed: ' + (e.message || 'Unknown error'))
+            } catch (e: any) {
+                console.error(e)
+                // DEV: Allow bypass if contract is not deployed
+                // @ts-ignore
+                if (import.meta.env.MODE === 'development' && confirm('Dev Mode: Simulate success?')) {
+                    await redemptionService.payRedemption(req.id, '0xMOCKHASH')
+                    toast.success('Dev Payment successful!')
+                    await fetchRequests()
+                } else {
+                    toast.error('Payment failed: ' + (e.message || 'Unknown error'))
+                }
+            } finally {
+                isPaying.value = null
+            }
         }
-    } finally {
-        isPaying.value = null
-    }
+    })
 }
 
 onMounted(() => {

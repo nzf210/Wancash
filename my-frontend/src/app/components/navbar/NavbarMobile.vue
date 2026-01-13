@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onUnmounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -85,16 +85,23 @@ watch([wagmiConnected, walletAddress, chainId], () => {
   refreshBalance()
 })
 
-// Watch for auth changes to fetch profile
+// Watch regarding auth
 watch([() => isAuthenticated.value, () => walletAddress.value], async ([auth, address]) => {
   if (auth && address) {
     await profileStore.fetchProfile(address)
+    notificationStore.startPolling()
     refreshBalance()
   } else {
     profileStore.reset()
+    notificationStore.stopPolling()
+    notificationStore.clearAllNotifications()
     balance.value = '0.00'
   }
 }, { immediate: true })
+
+onUnmounted(() => {
+  notificationStore.stopPolling()
+})
 
 const profileAuthStores = computed(() => ({
   walletAddress: walletAddress.value || null,
@@ -134,7 +141,7 @@ const closeMobileMenu = () => {
         <ThemeToggle v-if="props.showThemeToggle" />
 
         <!-- Mobile Notifications (Authenticated) -->
-        <NotificationView v-if="isAuthenticated && notificationStore.hasNotifications" :is-mobile="true" />
+        <NotificationView v-if="isAuthenticated" :is-mobile="true" />
 
         <!-- Mobile Menu Button -->
         <Button variant="ghost" size="icon" class="h-9 w-9" @click="isMobileMenuOpen = true">
