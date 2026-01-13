@@ -45,7 +45,10 @@ function syncEnv() {
         // Handle array of target keys (1 source -> N targets)
         const targets = Array.isArray(targetKeys) ? targetKeys : [targetKeys];
 
-        for (const targetKey of targets) {
+        for (const rawTargetKey of targets) {
+            // Requirement: Ensure VITE_ prefix for frontend variables
+            const targetKey = rawTargetKey.startsWith('VITE_') ? rawTargetKey : `VITE_${rawTargetKey}`;
+
             const regex = new RegExp(`^${targetKey}=.*`, 'm');
 
             if (regex.test(newFrontendEnvContent)) {
