@@ -14,6 +14,8 @@ import type { NavbarProps, NavbarEmits, ProfileAuthStores } from './types'
 import { navigationItems, productMenuItems } from './menuItem'
 import { useProfileStore } from '@/modules/profile/store/profileStore'
 import { wancashAbi, wancashContractAddress } from '@/app/services/contracts'
+import { useNotificationStore } from '@/stores/notificationStore'
+import NotificationView from './notifications/NotificationView.vue'
 
 // Composables
 const { address: walletAddress, chainId, isConnected: wagmiConnected } = useConnection()
@@ -35,8 +37,11 @@ const contractAddress = computed(() => {
   return wancashContractAddress[chainId.value] ?? '0x03A71968491d55603FFe1b11A9e23eF013f75bCF'
 })
 
+// Store
+const notificationStore = useNotificationStore()
+
 // Computed
-const hasNotifications = computed(() => props.notificationCount || 1 > 0)
+// const hasNotifications = computed(() => props.notificationCount || 1 > 0)
 
 const disconnectWallet = async () => {
   try {
@@ -105,10 +110,6 @@ const profileAuthStores = computed(() => ({
 
 
 // Methods
-const handleNotificationClick = () => {
-  emit('notificationClick')
-}
-
 const closeMobileMenu = () => {
   isMobileMenuOpen.value = false
 }
@@ -133,17 +134,7 @@ const closeMobileMenu = () => {
         <ThemeToggle v-if="props.showThemeToggle" />
 
         <!-- Mobile Notifications (Authenticated) -->
-        <Button v-if="false" variant="ghost" size="icon" class="relative h-9 w-9" @click="handleNotificationClick">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-            <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-          </svg>
-          <Badge v-if="hasNotifications" variant="destructive"
-            class="absolute -right-1 -top-1 h-4 w-4 rounded-full p-0 flex items-center justify-center text-xs">
-            {{ props.notificationCount || 0 > 9 ? '9+' : props.notificationCount }}
-          </Badge>
-        </Button>
+        <NotificationView v-if="isAuthenticated && notificationStore.hasNotifications" :is-mobile="true" />
 
         <!-- Mobile Menu Button -->
         <Button variant="ghost" size="icon" class="h-9 w-9" @click="isMobileMenuOpen = true">

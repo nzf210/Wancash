@@ -7,7 +7,7 @@ export interface ProfileAuthStores {
   userEmail?: string
   network?: string
   balance?: string
-  handleDisconnect:  () => Promise<void>
+  handleDisconnect: () => Promise<void>
 }
 
 export interface ProductMenuItem {
@@ -23,7 +23,6 @@ export interface NavigationItem {
 }
 
 export interface NavbarProps {
-  notificationCount?: number
   showWalletConnect?: boolean
   showThemeToggle?: boolean
 }

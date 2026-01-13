@@ -14,14 +14,16 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import ThemeToggle from '../ThemeToggle.vue'
 import WalletAuthButton from './WalletAuthButton.vue'
+import NotificationView from './notifications/NotificationView.vue'
 import { useConnection } from '@wagmi/vue'
 import { useAuth } from '@/app/composables/useAuth'
+import { useNotificationStore } from '@/stores/notificationStore'
 import type { NavbarProps, NavbarEmits } from './types'
 import { navigationItems, productMenuItems } from './menuItem'
 
 // Composables
 const { isConnected, address: walletAddress } = useConnection()
-const { checkSession } = useAuth()
+const { checkSession, isAuthenticated } = useAuth()
 
 
 // Props & Emits
@@ -31,9 +33,10 @@ const emit = defineEmits<NavbarEmits>()
 // State
 const route = useRoute()
 const isScrolled = ref(false)
+const notificationStore = useNotificationStore()
 
 // Computed
-const hasNotifications = computed(() => props.notificationCount || 1 > 0)
+// const hasNotifications = computed(() => props.notificationCount || 1 > 0)
 
 // Methods
 const handleScroll = () => {
@@ -121,20 +124,9 @@ onUnmounted(() => {
         <WalletAuthButton :isMobile="false" />
 
         <!-- Show ProfileIcon and Notifications when authenticated -->
-        <div v-if="(props.notificationCount || 0) >= 1" class="flex flex-row">
+        <div v-if="(isAuthenticated && notificationStore.hasNotifications)" class="flex flex-row">
           <!-- Notifications -->
-          <Button variant="ghost" size="icon" class="relative mr-4 mt-1" @click="handleNotificationClick">
-            <span class="sr-only">Notifikasi</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5">
-              <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-              <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-            </svg>
-            <Badge v-if="hasNotifications && props.notificationCount || 0 > 99" variant="destructive"
-              class="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
-              {{ props.notificationCount || 0 > 99 ? '99+' : props.notificationCount }}
-            </Badge>
-          </Button>
+          <NotificationView />
         </div>
       </div>
     </div>
