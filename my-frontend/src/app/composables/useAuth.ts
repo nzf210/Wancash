@@ -1,11 +1,10 @@
 // frontend/src/composables/useAuth.ts
-import { ref, onMounted, watch, onUnmounted, computed } from 'vue'
+import { ref, computed } from 'vue'
 import { watchAccount, getAccount, signTypedData } from '@wagmi/core'
 import { z } from 'zod'
 import { toast } from 'vue-sonner'
 import { isAddressEqual, type TypedDataDefinition } from 'viem'
 import { wagmiAdapter } from '@/app/components/config/appkit'
-import { debounce } from '@/utils/debounce'
 
 // Types
 type AuthStatus = 'IDLE' | 'CHECKING' | 'AUTHENTICATED' | 'UNAUTHENTICATED' | 'ERROR'
@@ -149,7 +148,10 @@ export const useAuth = () => {
         }
       }
 
-      return await signTypedData(wagmiAdapter.wagmiConfig, typedData)
+      return await signTypedData(wagmiAdapter.wagmiConfig, {
+        ...typedData,
+        account: address as `0x${string}`
+      })
     } catch (error) {
       console.error('Signing error:', error)
       throw error
@@ -317,6 +319,12 @@ export const useAuth = () => {
         console.log('🔍 [DEBUG] data.user:', data.user)
         console.log('🔍 [DEBUG] data.user?.role:', data.user?.role)
         console.log('🔍 [DEBUG] data.role:', data.role)
+
+        // Hydrate wallet address if missing (fix for race condition where session is valid but state is empty)
+        if (data.user?.address && !state.value.walletAddress) {
+          console.log('✅ [useAuth] Hydrating walletAddress from session:', data.user.address)
+          state.value.walletAddress = data.user.address
+        }
 
         state.value.status = 'AUTHENTICATED'
         state.value.lastChecked = now

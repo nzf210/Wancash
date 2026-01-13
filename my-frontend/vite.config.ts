@@ -46,50 +46,10 @@ export default defineConfig(({ mode }) => { // Ambil mode dari Vite (dev/build)
     envPrefix: 'VITE_',
     build: {
       minify: 'terser',
-      chunkSizeWarningLimit: 500,
+      chunkSizeWarningLimit: 2000,
       terserOptions: {
         maxWorkers: 4,
       },
-      rollupOptions: {
-        output: {
-          manualChunks(id) {
-            if (id.includes('node_modules')) {
-              // 1. Thirdweb (Massive)
-              if (id.includes('thirdweb')) {
-                return 'vendor-thirdweb';
-              }
-
-              // 2. Reown / AppKit / WalletConnect
-              if (id.includes('@reown') || id.includes('@walletconnect')) {
-                return 'vendor-reown';
-              }
-
-              // 3. PancakeSwap
-              if (id.includes('@pancakeswap')) {
-                return 'vendor-pancakeswap';
-              }
-
-              // 4. Web3 Core (Ethers, Viem, Wagmi)
-              if (id.includes('viem') || id.includes('wagmi') || id.includes('ethers') || id.includes('@layerzerolabs')) {
-                return 'vendor-web3-core';
-              }
-
-              // 5. Vue Ecosystem
-              if (id.includes('vue') || id.includes('pinia') || id.includes('router') || id.includes('@vueuse') || id.includes('@tanstack')) {
-                return 'vendor-vue';
-              }
-
-              // 6. UI Components
-              if (id.includes('headlessui') || id.includes('lucide') || id.includes('radix') || id.includes('class-variance-authority') || id.includes('clsx') || id.includes('tailwind-merge') || id.includes('phosphor')) {
-                return 'vendor-ui';
-              }
-
-              // 7. Remaining global vendor
-              return 'vendor';
-            }
-          }
-        }
-      }
     },
     server: {
       proxy: {

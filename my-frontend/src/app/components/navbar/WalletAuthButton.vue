@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useConnection, useDisconnect, useConfig } from '@wagmi/vue'
 import { readContract } from '@wagmi/core'
 import { useAuth } from '@/app/composables/useAuth'
