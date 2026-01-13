@@ -182,6 +182,9 @@
             </DialogFooter>
         </DialogContent>
     </Dialog>
+
+    <!-- Details Dialog -->
+    <UserRedemptionDetailDialog v-model:open="showDetailDialog" :request="selectedRequest" />
 </template>
 
 <script setup lang="ts">
@@ -359,7 +362,7 @@ const formatNumber = (num: number) => {
 const handlePayment = (req: RedemptionRecord) => {
     openConfirmDialog({
         title: 'Confirm Payment',
-        description: `You are about to pay ${req.total_token_amount} WCH for this redemption. Proceed?`,
+        description: `You are about to pay ${formatNumber(req.total_token_amount)} WCH for this redemption. Proceed?`,
         confirmText: 'Pay Now',
         onConfirm: async () => {
             isPaying.value = req.id

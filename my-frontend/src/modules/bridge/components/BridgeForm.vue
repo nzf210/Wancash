@@ -131,7 +131,7 @@
                                             'Select Token' }}
                                         </div>
                                         <div class="text-sm text-gray-500 dark:text-gray-400">{{ fromToken?.symbol || ''
-                                            }}
+                                        }}
                                         </div>
                                     </div>
                                 </div>
@@ -163,7 +163,7 @@
                                                         token.symbol }}</div>
                                                     <div class="text-xs text-gray-500 dark:text-gray-400 truncate">{{
                                                         token.name
-                                                        }}</div>
+                                                    }}</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -257,7 +257,7 @@
                                         </div>
                                         <div class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{{
                                             toChain?.type || 'Network'
-                                            }}</div>
+                                        }}</div>
                                     </div>
                                 </div>
                                 <ChevronDownIcon
@@ -351,7 +351,7 @@
                             <span>Estimated Time</span>
                         </div>
                         <span class="font-medium text-xs sm:text-sm text-gray-900 dark:text-white">{{ timeEstimate
-                            }}</span>
+                        }}</span>
                     </div>
                     <div class="flex justify-between items-center py-1">
                         <div class="flex items-center space-x-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
@@ -401,7 +401,9 @@
     <!-- Address Book Dialog -->
     <AddressBookDialog :open="showAddressBook" :address-book="addressBook" :address-book-search="addressBookSearch"
         @update:open="showAddressBook = $event" @update:address-book-search="addressBookSearch = $event"
-        @select-contact="selectContact" />
+        @select-contact="selectContact" @show-add-contact="showAddContact = true" />
+
+    <AddContactDialog :open="showAddContact" @update:open="showAddContact = $event" @save-contact="saveContact" />
 
     <!-- Bridge Confirmation Dialog -->
     <Dialog :open="showConfirmDialog" @update:open="showConfirmDialog = $event">
@@ -421,7 +423,7 @@
                         <div class="flex items-center gap-2">
                             <TokenIcon v-if="fromToken" :token="fromToken" class="w-6 h-6" />
                             <span class="font-medium text-gray-900 dark:text-white">{{ amount }} {{ fromToken?.symbol
-                            }}</span>
+                                }}</span>
                         </div>
                         <div class="flex items-center gap-1.5 text-sm text-gray-500">
                             <ChainIcon v-if="fromChain" :chain="fromChain" class="w-4 h-4" />
@@ -445,7 +447,7 @@
                             <TokenIcon v-if="toToken" :token="toToken" class="w-6 h-6" />
                             <span class="font-medium text-gray-900 dark:text-white">~{{
                                 formatTokenBalance(estimatedAmount)
-                            }} {{ toToken?.symbol }}</span>
+                                }} {{ toToken?.symbol }}</span>
                         </div>
                         <div class="flex items-center gap-1.5 text-sm text-gray-500">
                             <ChainIcon v-if="toChain" :chain="toChain" class="w-4 h-4" />
@@ -463,7 +465,7 @@
                     <div class="flex justify-between">
                         <span class="text-gray-500">Bridge Fee</span>
                         <span class="font-medium text-gray-900 dark:text-white">{{ bridgeFee }} {{ fromToken?.symbol
-                        }}</span>
+                            }}</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-gray-500">Estimated Time</span>
@@ -516,6 +518,7 @@ import {
 import ChainIcon from './ChainIcon.vue'
 import TokenIcon from './TokenIcon.vue'
 import AddressBookDialog from '@/modules/send/components/AddressBookDialog.vue'
+import AddContactDialog from '@/modules/send/components/AddContactDialog.vue'
 import {
     Dialog,
     DialogContent,
@@ -613,6 +616,7 @@ const fromTokenDropdownTrigger = ref<HTMLElement | null>(null)
 
 // Address book state
 const showAddressBook = ref(false)
+const showAddContact = ref(false)
 const addressBook = ref<Contact[]>([])
 const addressBookSearch = ref('')
 const destinationAddress = ref('')
@@ -650,6 +654,34 @@ watch(destinationAddress, (newAddr) => {
     const contact = addressBook.value.find(c => c.address.toLowerCase() === newAddr.toLowerCase())
     destinationName.value = contact?.name || ''
 })
+
+const saveContact = (newContactData: Contact) => {
+    if (newContactData.name.trim() && newContactData.address.trim()) {
+        if (!/^0x[a-fA-F0-9]{40}$/.test(newContactData.address.trim())) {
+            toast.error('Invalid wallet address format');
+            return
+        }
+
+        if (!walletAddress.value) {
+            toast.error('Please connect wallet first')
+            return;
+        }
+
+        // Call backend
+        addressBookService.addContact(walletAddress.value, {
+            label: newContactData.name,
+            wallet: newContactData.address,
+            chain_id: chainId.value || 0
+        }).then((newContact) => {
+            addressBook.value.push(newContact)
+            toast.success('Contact added successfully')
+            showAddContact.value = false
+        }).catch(err => {
+            console.error(err)
+            toast.error('Failed to save contact')
+        })
+    }
+}
 
 // Load address book on mount and set default destination to own address
 onMounted(async () => {

@@ -33,7 +33,7 @@ const timeAgo = computed(() => {
 
 <template>
     <div class="flex flex-col gap-1 p-4 transition-colors hover:bg-muted/50 group"
-        :class="{ 'bg-muted/20': !notification.is_read }">
+        :class="{ 'bg-blue-50 dark:bg-blue-950/50': !notification.is_read }">
         <div class="flex items-start justify-between gap-2">
             <div class="space-y-1">
                 <p class="text-sm font-medium leading-none">
