@@ -3,7 +3,7 @@ import type { NavigationItem, ProductMenuItem } from "./types"
 export const productMenuItems: ProductMenuItem[] = [
   {
     title: 'Redem',
-    description: 'Redem your token for gold',
+    description: 'Redem your token for gift',
     href: '/redem',
     icon: '💰'
   },

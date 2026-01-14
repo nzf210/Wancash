@@ -1,6 +1,6 @@
 <template>
     <div class="space-y-6">
-        <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Add Gold to Cart</h2>
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Add Prize to Cart</h2>
 
         <div v-if="isLoading" class="flex justify-center py-12">
             <svg class="animate-spin h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none"

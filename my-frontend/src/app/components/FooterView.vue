@@ -51,17 +51,18 @@
         </div>
 
         <!-- Subscribe Section -->
-        <div>
+        <div class="col-span-2 md:col-span-1">
           <h3 class="font-semibold dark:text-white mb-4 text-lg">Subscribe to our newsletter</h3>
           <p class="text-sm mb-4">The latest news, articles, and resources, sent to your inbox weekly.</p>
 
           <!-- Form Subscribe -->
-          <div class="flex gap-2">
-            <Input type="email" placeholder="Enter your email" class="bg-gray-800 border-gray-700 text-white" />
-            <Button class="bg-blue-600 hover:bg-blue-700">
-              Subscribe
+          <form @submit.prevent="handleSubscribe" class="flex flex-col sm:flex-row gap-2">
+            <Input type="email" placeholder="Enter your email" class="bg-gray-800 border-gray-700 text-white w-full"
+              v-model="email" :disabled="isLoading" required />
+            <Button type="submit" class="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto" :disabled="isLoading">
+              {{ isLoading ? 'Subscribing...' : 'Subscribe' }}
             </Button>
-          </div>
+          </form>
         </div>
       </div>
 
@@ -104,6 +105,27 @@
 <script lang="ts" setup>
 import Button from '@/components/ui/button/Button.vue';
 import { Input } from '@/components/ui/input';
+import { ref } from 'vue';
+import { newsletterApi } from '@/modules/contact/services/newsletterApi';
+import { toast } from 'vue-sonner';
+
+const email = ref('');
+const isLoading = ref(false);
+
+const handleSubscribe = async () => {
+  if (!email.value) return;
+
+  isLoading.value = true;
+  try {
+    await newsletterApi.subscribe(email.value);
+    email.value = ''; // Clear input on success
+  } catch (error) {
+    console.error('Newsletter subscription failed:', error);
+    toast.error('Failed to subscribe. Please try again.');
+  } finally {
+    isLoading.value = false;
+  }
+};
 </script>
 
 <style scoped>

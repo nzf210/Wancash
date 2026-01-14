@@ -12,13 +12,13 @@
                                 clip-rule="evenodd" />
                         </svg>
                     </div>
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Redemption Summary</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Reward Summary</h3>
                 </div>
 
                 <div class="space-y-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Gold to be shipped</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Prize to be shipped</p>
                             <p class="font-semibold text-gray-900 dark:text-white">5 grams (24 karat)</p>
                         </div>
                         <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
@@ -42,7 +42,7 @@
                             <span class="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">Total
                                 Tokens:</span>
                             <span class="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400">{{ totalToken
-                                }}
+                            }}
                                 Tokens</span>
                         </div>
                     </div>
@@ -57,7 +57,7 @@
                                 I agree to the applicable terms and conditions
                             </Label>
                             <p class="text-sm text-gray-600 dark:text-gray-400">
-                                By checking this, you agree to all terms and conditions for token redemption with gold.
+                                By checking this, you agree to all terms and conditions for prize claiming.
                             </p>
                         </div>
                     </div>

@@ -14,12 +14,12 @@
                 clip-rule="evenodd" />
             </svg>
           </div>
-          <h1 class="text-xl md:text-3xl font-bold text-gray-900 dark:text-white">Token Redemption with Gold</h1>
+          <h1 class="text-xl md:text-3xl font-bold text-gray-900 dark:text-white">Claim Reward</h1>
         </div>
         <p class="text-xs md:text-base text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-          Exchange your tokens for
+          Exchange your points for
           physical
-          gold that will
+          prizes that will
           be shipped to your address</p>
       </div>
 
@@ -36,7 +36,7 @@
                 ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
                 : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
             ]">
-              Start Redemption
+              Start Claim
             </button>
             <button @click="activeView = 'history'" :class="[
               'px-6 py-2 rounded-lg text-sm font-medium transition-all',
@@ -183,7 +183,7 @@
                   <!-- Summary -->
                   <div
                     class="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-800">
-                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Redemption Summary</h3>
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Reward Summary</h3>
 
                     <div class="space-y-3 mb-6">
                       <div class="flex justify-between text-sm">
@@ -191,7 +191,7 @@
                         <span class="font-medium text-gray-900 dark:text-white">{{ cartTotalWeight }}g</span>
                       </div>
                       <div class="flex justify-between text-sm">
-                        <span class="text-gray-600 dark:text-gray-400">Gold Price</span>
+                        <span class="text-gray-600 dark:text-gray-400">Reward Value</span>
                         <span class="font-medium text-gray-900 dark:text-white">{{
                           formatNumber(cartTotalPrice) }} WCH</span>
                       </div>
@@ -609,7 +609,7 @@ const connectWallet = async () => {
 const cancelRedemption = () => {
   openConfirmDialog({
     title: 'Cancel Redemption',
-    description: 'Are you sure you want to cancel the redemption process? Your progress will be lost.',
+    description: 'Are you sure you want to cancel the claim process? Your progress will be lost.',
     confirmText: 'Yes, Cancel',
     variant: 'destructive',
     onConfirm: async () => {

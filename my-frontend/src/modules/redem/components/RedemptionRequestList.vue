@@ -1,6 +1,6 @@
 <template>
     <div class="space-y-6">
-        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">My Redemption Requests</h2>
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">My Claim History</h2>
 
         <div v-if="isLoading" class="flex justify-center py-12">
             <svg class="animate-spin h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -29,7 +29,7 @@
                                 {{ getStatusLabel(req.status, req.payment_status) }}
                             </span>
                             <span class="text-sm text-gray-500 dark:text-gray-400">{{ formatDate(req.created_at)
-                            }}</span>
+                                }}</span>
                         </div>
 
                         <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">
@@ -44,7 +44,7 @@
                             </div>
                         </div>
                         <div v-else class="text-sm text-gray-700 dark:text-gray-300 mb-3">
-                            {{ req.gold_amount_grams }}g Gold Bar (Legacy)
+                            {{ req.gold_amount_grams }}g Prize Item (Legacy)
                         </div>
 
                         <p class="text-xs text-gray-500 dark:text-gray-400">
