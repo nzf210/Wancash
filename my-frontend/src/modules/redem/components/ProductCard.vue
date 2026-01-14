@@ -7,15 +7,51 @@
         ]">
         <!-- content -->
         <div class="flex flex-col items-center text-center space-y-4">
-            <!-- Image placeholder / Icon -->
-            <div
-                class="w-24 h-24 rounded-full bg-gradient-to-br from-yellow-200 to-yellow-500 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-500 relative">
-                <span class="text-2xl font-bold text-white shadow-sm">{{ product.weight_grams }}g</span>
+            <!-- Image Carousel or Placeholder -->
+            <div class="relative w-full pb-[100%] flex-shrink-0" @mouseenter="stopSlide" @mouseleave="startSlide">
+                <!-- Image Display -->
+                <div v-if="displayImages.length > 0"
+                    class="absolute inset-0 w-full h-full rounded-2xl overflow-hidden shadow-inner bg-white flex items-center justify-center p-2">
+                    <img :src="displayImages[currentImageIndex]" :alt="product.name"
+                        class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" />
+                </div>
 
-                <!-- Badge for quantity if > 0 -->
+                <!-- Fallback Gradient Placeholder -->
+                <div v-else
+                    class="absolute inset-0 w-full h-full rounded-2xl bg-gradient-to-br from-yellow-200 to-yellow-500 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-500">
+                    <span class="text-2xl font-bold text-white shadow-sm">{{ product.weight_grams }}g</span>
+                </div>
+
+
+                <!-- Quantity Badge -->
                 <div v-if="quantity > 0"
-                    class="absolute -top-1 -right-1 w-8 h-8 rounded-full bg-blue-600 border-2 border-white flex items-center justify-center text-white font-bold text-sm shadow-md animate-in zoom-in spin-in-12 duration-300">
+                    class="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-blue-600 border-2 border-white flex items-center justify-center text-white font-bold text-sm shadow-md z-10 animate-in zoom-in spin-in-12 duration-300">
                     {{ quantity }}
+                </div>
+
+                <!-- Carousel Controls -->
+                <div v-if="displayImages.length > 1"
+                    class="absolute inset-x-0 bottom-2 flex justify-center gap-1 z-10 transition-opacity duration-200">
+                    <button @click.stop="prevImage"
+                        class="p-1 rounded-full bg-black/40 text-white hover:bg-black/60 backdrop-blur-sm">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+                    <button @click.stop="nextImage"
+                        class="p-1 rounded-full bg-black/40 text-white hover:bg-black/60 backdrop-blur-sm">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Dots Indicator -->
+                <div v-if="displayImages.length > 1"
+                    class="absolute -bottom-4 left-0 right-0 flex justify-center gap-1">
+                    <span v-for="(_, idx) in displayImages" :key="idx"
+                        class="w-1.5 h-1.5 rounded-full transition-colors"
+                        :class="idx === currentImageIndex ? 'bg-blue-500' : 'bg-gray-300 dark:bg-gray-600'"></span>
                 </div>
             </div>
 
@@ -57,9 +93,10 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import type { GoldProduct } from '@/app/services/redemptionService'
 
-defineProps<{
+const props = defineProps<{
     product: GoldProduct
     quantity: number
 }>()
@@ -68,6 +105,65 @@ defineEmits<{
     'increase': [product: GoldProduct]
     'decrease': [product: GoldProduct]
 }>()
+
+const currentImageIndex = ref(0)
+const displayImages = computed(() => {
+    // Merge images array and legacy image_url, removing duplicates and empty strings
+    const images = props.product.images || []
+    const legacyUrl = props.product.image_url
+
+    // Start with array from `images`
+    let combined = [...images]
+
+    // Add legacy URL if not present
+    if (legacyUrl && !combined.includes(legacyUrl)) {
+        combined.unshift(legacyUrl)
+    }
+
+    return combined.filter(url => url && url.trim().length > 0)
+})
+
+const nextImage = () => {
+    if (displayImages.value.length > 0) {
+        currentImageIndex.value = (currentImageIndex.value + 1) % displayImages.value.length
+    }
+}
+
+const prevImage = () => {
+    if (displayImages.value.length > 0) {
+        currentImageIndex.value = (currentImageIndex.value - 1 + displayImages.value.length) % displayImages.value.length
+    }
+}
+
+// Auto-slide functionality
+const autoSlideInterval = ref<any>(null)
+
+const startSlide = () => {
+    // Stop any existing interval first
+    stopSlide()
+
+    // Only auto-slide if there are multiple images
+    if (displayImages.value.length > 1) {
+        autoSlideInterval.value = setInterval(() => {
+            nextImage()
+        }, 3000) // Change slide every 3 seconds
+    }
+}
+
+const stopSlide = () => {
+    if (autoSlideInterval.value) {
+        clearInterval(autoSlideInterval.value)
+        autoSlideInterval.value = null
+    }
+}
+
+onMounted(() => {
+    startSlide()
+})
+
+onUnmounted(() => {
+    stopSlide()
+})
 
 const formatNumber = (num: number) => {
     return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(num)

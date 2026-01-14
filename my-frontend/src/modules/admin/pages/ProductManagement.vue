@@ -15,12 +15,21 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div v-for="product in products" :key="product.id"
                 class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                <div
-                    class="aspect-square bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-900 dark:to-yellow-800 flex items-center justify-center">
-                    <div class="text-center">
-                        <p class="text-3xl font-bold text-yellow-900 dark:text-yellow-100">{{ product.weight_grams
-                        }}g</p>
-                        <p class="text-sm text-yellow-700 dark:text-yellow-300 mt-1">{{ product.purity }}</p>
+                <div class="aspect-square relative overflow-hidden bg-gray-100 dark:bg-gray-700">
+                    <img v-if="getProductImage(product)" :src="getProductImage(product)" :alt="product.name"
+                        class="w-full h-full object-cover" />
+                    <div v-else
+                        class="w-full h-full bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-900 dark:to-yellow-800 flex items-center justify-center">
+                        <div class="text-center">
+                            <p class="text-3xl font-bold text-yellow-900 dark:text-yellow-100">{{ product.weight_grams
+                            }}g</p>
+                            <p class="text-sm text-yellow-700 dark:text-yellow-300 mt-1">{{ product.purity }}</p>
+                        </div>
+                    </div>
+                    <!-- Image Count Badge if multiple -->
+                    <div v-if="getProductImageCount(product) > 1"
+                        class="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">
+                        {{ getProductImageCount(product) }} images
                     </div>
                 </div>
 
@@ -147,9 +156,30 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Image URL</label>
-                    <input v-model="form.image_url" type="text" placeholder="https://..."
-                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Product
+                        Images</label>
+                    <div class="space-y-2">
+                        <div v-for="(img, index) in form.images" :key="index" class="flex gap-2">
+                            <input v-model="form.images[index]" type="text" placeholder="https://..."
+                                class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                            <button type="button" @click="removeImage(index)"
+                                class="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                :disabled="form.images.length === 1 && index === 0" title="Remove Image">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </div>
+                        <button type="button" @click="addImage"
+                            class="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 4v16m8-8H4" />
+                            </svg>
+                            Add Another Image
+                        </button>
+                    </div>
                 </div>
 
                 <div class="flex gap-3 pt-4">
@@ -168,7 +198,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { toast } from 'vue-sonner'
 import { adminApi } from '../services/adminApi'
 
@@ -179,6 +209,7 @@ interface Product {
     purity: string
     price_wch: number
     image_url: string
+    images?: string[]
     stock: number
     is_active: boolean
     description: string
@@ -194,6 +225,7 @@ const form = ref({
     purity: '',
     price_wch: 0,
     image_url: '',
+    images: [] as string[],
     stock: 0,
     is_active: true,
     description: ''
@@ -216,6 +248,7 @@ const openAddModal = () => {
         purity: '99.9%',
         price_wch: 0,
         image_url: '',
+        images: [''], // Start with one empty field
         stock: 0,
         is_active: true,
         description: ''
@@ -225,7 +258,16 @@ const openAddModal = () => {
 
 const editProduct = (product: Product) => {
     editingProduct.value = product
-    form.value = { ...product }
+    // Ensure images array is populated, fallback to image_url if empty
+    const initialImages = (product.images && product.images.length > 0)
+        ? [...product.images]
+        : (product.image_url ? [product.image_url] : [''])
+
+    form.value = {
+        ...product,
+        image_url: product.image_url || '',
+        images: initialImages
+    }
     showModal.value = true
 }
 
@@ -234,8 +276,21 @@ const closeModal = () => {
     editingProduct.value = null
 }
 
+const addImage = () => {
+    form.value.images.push('')
+}
+
+const removeImage = (index: number) => {
+    form.value.images.splice(index, 1)
+}
+
 const saveProduct = async () => {
     try {
+        // Sync primary image_url with first image in array
+        const validImages = form.value.images.filter(img => img.trim() !== '')
+        form.value.images = validImages
+        form.value.image_url = validImages.length > 0 ? validImages[0] : ''
+
         if (editingProduct.value) {
             await adminApi.updateProduct(editingProduct.value.id, form.value)
             toast.success('Product updated successfully')
@@ -266,7 +321,42 @@ const formatNumber = (num: number) => {
     return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(num)
 }
 
+// Image Cycling Logic
+const slideTick = ref(0)
+let slideInterval: number | null = null
+
+const getProductImage = (product: Product): string | undefined => {
+    const images = (product.images || []).filter(img => img && img.trim() !== '')
+    const legacy = product.image_url
+
+    let allImages = [...images]
+    if (legacy && !allImages.includes(legacy)) {
+        allImages.unshift(legacy)
+    }
+
+    if (allImages.length === 0) return undefined
+
+    // Cycle based on global tick
+    return allImages[slideTick.value % allImages.length]
+}
+
+const getProductImageCount = (product: Product) => {
+    const images = (product.images || []).filter(img => img && img.trim() !== '')
+    const legacy = product.image_url
+    let count = images.length
+    if (legacy && !images.includes(legacy)) count++
+    return count
+}
+
 onMounted(() => {
     fetchProducts()
+    // Global auto-slide ticker
+    slideInterval = window.setInterval(() => {
+        slideTick.value++
+    }, 3000)
+})
+
+onUnmounted(() => {
+    if (slideInterval) clearInterval(slideInterval)
 })
 </script>

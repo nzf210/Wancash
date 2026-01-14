@@ -11,6 +11,7 @@ export interface GoldProduct {
     purity: string
     price_wch: number
     image_url: string
+    images?: string[] // Optional for backward compatibility
     stock: number
     description: string
 }
@@ -100,6 +101,7 @@ export interface GoldProduct {
     purity: string
     price_wch: number
     image_url: string
+    images?: string[]
     stock: number
 }
 
@@ -244,6 +246,7 @@ export const redemptionService = {
                     purity: '99.9%',
                     price_wch: 450,
                     image_url: 'https://via.placeholder.com/150?text=5g+Gold',
+                    images: ['https://via.placeholder.com/150?text=5g+Gold'],
                     stock: 10,
                     description: 'Fine Gold 999.9 - 5 Grams'
                 },

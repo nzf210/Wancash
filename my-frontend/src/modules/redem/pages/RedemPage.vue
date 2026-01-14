@@ -17,10 +17,8 @@
           <h1 class="text-xl md:text-3xl font-bold text-gray-900 dark:text-white">Claim Reward</h1>
         </div>
         <p class="text-xs md:text-base text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-          Exchange your points for
-          physical
-          prizes that will
-          be shipped to your address</p>
+          Exchange your points for a wide range of rewards, including both physical merchandise and digital products.
+        </p>
       </div>
 
       <!-- Wallet Connection Check -->
