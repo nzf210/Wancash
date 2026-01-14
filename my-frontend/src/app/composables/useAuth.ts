@@ -523,15 +523,50 @@ export const useAuth = () => {
 
     try {
       const parsed = JSON.parse(saved)
+      const now = Date.now()
 
-      // ⏰ CRITICAL: Wait for Wagmi to finish auto-reconnecting
-      // Wagmi auto-reconnects asynchronously, so we need to give it time
+      // ✅ 2.1 Optimistic Restoration (Immediate)
+      // Check timestamp validity (24 hours)
+      if (now - parsed.timestamp < 24 * 3600000) {
+        console.log('📦 [useAuth] Session found, restoring OPTIMISTICALLY...')
+        state.value = {
+          status: 'AUTHENTICATED',
+          user: parsed.user,
+          walletAddress: parsed.address,
+          chainId: parsed.chainId,
+          lastChecked: parsed.timestamp,
+          userRole: parsed.userRole || 'user'
+        }
+        // Mark as "restored" immediately so UI shows authenticated state
+        isRestoring.value = false
+
+        // Schedule verification in background
+        verifyRestoredSession(parsed)
+      } else {
+        console.log('⚠️ [useAuth] Saved session too old, clearing')
+        localStorage.removeItem('auth_state')
+        isRestoring.value = false
+      }
+
+    } catch (e) {
+      console.error('❌ [useAuth] Failed to restore session:', e)
+      localStorage.removeItem('auth_state')
+      isRestoring.value = false
+    }
+  }
+
+  // 2.2 Background Verification
+  const verifyRestoredSession = async (parsed: any) => {
+    console.log('🕵️ [useAuth] Starting background session verification...')
+
+    try {
+      // ⏰ Wait for Wagmi to finish auto-reconnecting
       console.log('⏰ [useAuth] Waiting for Wagmi auto-reconnection...')
 
       let account = getAccount(wagmiAdapter.wagmiConfig)
       let waitTime = 0
-      const maxWait = 2000 // Wait up to 2 seconds for reconnection
-      const checkInterval = 100 // Check every 100ms
+      const maxWait = 4000 // Increased wait time to 4s
+      const checkInterval = 100
 
       // Wait for Wagmi to reconnect if it's in the process
       while (!account.isConnected && waitTime < maxWait) {
@@ -552,75 +587,49 @@ export const useAuth = () => {
         waitedMs: waitTime
       })
 
-      // ✅ Check if wallet is actually connected
+      // ❌ Check 1: Wallet Connection Failed
       if (!account.isConnected) {
-        console.log('⚠️ [useAuth] Wallet not connected after waiting, clearing stale auth state')
-        // Clear backend cookies to sync state
-        try {
-          await fetch('/api/auth/logout', {
-            method: 'POST',
-            credentials: 'include'
-          })
-        } catch (e) {
-          console.warn('⚠️ [useAuth] Logout API call failed:', e)
-        }
-        localStorage.removeItem('auth_state')
-        isRestoring.value = false
+        console.log('⚠️ [useAuth] Wallet not connected after waiting, reverting optimistic state')
+        await handleRestorationFailure()
         return
       }
 
-      // ✅ Verify wallet address matches (user might have switched wallets)
+      // ❌ Check 2: Address Mismatch
       if (account.address && !isAddressEqual(account.address, parsed.address as `0x${string}`)) {
-        console.log('⚠️ [useAuth] Wallet address mismatch, clearing auth state')
-        try {
-          await fetch('/api/auth/logout', {
-            method: 'POST',
-            credentials: 'include'
-          })
-        } catch (e) {
-          console.warn('⚠️ [useAuth] Logout API call failed:', e)
-        }
-        localStorage.removeItem('auth_state')
-        isRestoring.value = false
+        console.log('⚠️ [useAuth] Wallet address mismatch, reverting optimistic state')
+        await handleRestorationFailure()
         return
       }
 
-      // ✅ Only restore if all checks pass
-      if (Date.now() - parsed.timestamp < 24 * 3600000) {
-        state.value = {
-          status: 'AUTHENTICATED',
-          user: parsed.user,
-          walletAddress: parsed.address,
-          chainId: parsed.chainId,
-          lastChecked: parsed.timestamp,
-          userRole: parsed.userRole || 'user'
-        }
-        console.log('✅ [useAuth] Session restored, wallet connected and verified')
-        console.log('📦 [useAuth] Address:', parsed.address, 'Role:', state.value.userRole)
+      console.log('✅ [useAuth] Session verification PASSED')
+      // Continue with server-side check
+      checkSession()
 
-        // Verify with backend that session is still valid
-        // ✅ Timer will be rescheduled by checkSession() based on /api/me response
-        checkSession()
-      } else {
-        console.log('⚠️ [useAuth] Saved session too old, clearing')
-        localStorage.removeItem('auth_state')
-      }
     } catch (e) {
-      console.error('❌ [useAuth] Failed to restore session:', e)
-      localStorage.removeItem('auth_state')
+      console.error('❌ [useAuth] Verification error:', e)
+      await handleRestorationFailure()
     }
+  }
 
-    isRestoring.value = false
+  // Helper to cleanup if verification fails
+  const handleRestorationFailure = async () => {
+    toast.error('Session invalid or wallet disconnected')
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      })
+    } catch (e) {
+      console.warn('⚠️ [useAuth] Logout API call failed:', e)
+    }
+    localStorage.removeItem('auth_state')
+    resetState()
   }
 
   // Bootstrap
   const init = () => {
     if (typeof window !== 'undefined' && isRestoring.value) {
       console.log('🚀 initializing auth composable')
-      const acc = getAccount(wagmiAdapter.wagmiConfig)
-      isConnected.value = acc.isConnected
-
-      // Start restoration immediately without waiting for onMounted
       restoreSession()
       initWagmiListener()
     }
