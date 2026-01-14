@@ -1,530 +1,127 @@
 # Wancash Staking Project - Development Rules
 
-## 🎯 Core Principles
+## 🎯 Core Architecture & Principles
 
-### 1. Variable & State Management
+The Wancash Staking project is a multi-layered decentralized application:
 
-- **ALWAYS** check and trace variable usage before making changes to global variables
-- Search for all references using `grep_search` or `find_by_name`
-- Document all affected components/files
-- Verify state management patterns (Pinia stores, composables, reactive refs)
+1.  **Frontend**: Vue 3 (Composition API) + Pinia + Tailwind CSS.
+2.  **Backend**: Cloudflare Workers (Hono/TypeScript) + Neon DB (PostgreSQL).
+3.  **Smart Contracts**: Hardhat/Solidity + LayerZero V2 for cross-chain bridging.
 
-**Example checklist:**
+### 1. Planning Before Execution (MANDATORY)
 
-```
-[**] Search for variable usage across codebase
-[**] Identify all consumers (components, composables, stores)
-[**] Check if variable is used in computed properties
-[**] Verify reactive dependencies
-[**] Update all references consistently
-```
-
-### 2. Backend API Endpoint Changes
-
-- **ALWAYS** identify all consumers before modifying any BE endpoint
-- Check both frontend and backend for endpoint usage
-- Verify request/response contract compatibility
-- Ensure synchronization between FE and BE
-
-**Required checks:**
-
-```
-[**] Search for endpoint usage in frontend (fetch, axios calls)
-[**] Check API route definitions in backend
-[**] Verify request payload structure
-[**] Verify response structure
-[**] Check error handling on both sides
-[**] Update TypeScript types if needed
-[**] Test all affected consumers
-```
-
-### 3. Planning Before Execution
-
-- **ALWAYS** create an implementation plan before making changes
-- Use `implementation_plan.md` artifact for complex changes
-- Get user approval before proceeding with implementation
-- Break down work into clear, reviewable steps
-
-**Planning template:**
-
-```markdown
-# [Feature/Fix Name]
-
-## Problem
-
-[Clear description of the issue or requirement]
-
-## Proposed Changes
-
-### Component 1
-
-- Change A
-- Change B
-
-### Component 2
-
-- Change C
-
-## Affected Areas
-
-- [**] Frontend components: [list]
-- [**] Backend endpoints: [list]
-- [**] Global state: [list]
-- [**] Types/Interfaces: [list]
-
-## Verification Plan
-
-- [**] Test case 1
-- [**] Test case 2
-```
-
-### 4. Services Layer Management
-
-- **ALWAYS** check API services before modifying endpoint calls
-- Verify service layer matches backend endpoints
-- Update service types if endpoint changes
-- Check all components using the service
-- after make new file or folder update to .clinerules
-
-**Service layer checklist:**
-
-```
-[**] Check src/app/services/ for API service functions
-[**] Verify service layer matches backend endpoints
-[**] Update service types if endpoint changes
-[**] Check all components using the service
-[**] Test service error handling
-[**] Cloudflare Workers (TypeScript/Hono)
-```
-
-### 5. Middleware & Auth Changes
-
-- **ALWAYS** check middleware when modifying authentication
-- Verify auth middleware logic in backend
-- Test protected endpoints after changes
-- Update route guards if needed
-
-**Middleware checklist:**
-
-```
-[**] Check cloude-flare-wancash/src/middleware.ts
-[**] Verify auth middleware logic
-[**] Test protected endpoints
-[**] Update route guards if needed
-[**] Check CORS configuration
-```
-
-### 6. Notifications & Alerts
-
-- **ALWAYS** check `wrangler.jsonc` and `generate-env-only.ts` when adding new notifications
-- **Telegram Configuration**:
-  - Bot Token: `TELEGRAM_BOT_TOKEN`
-  - Group IDs:
-    - `Wancash_Error` (Errors)
-    - `Wancash Redem` (Redemption)
-    - `Wancash Bridge` (Bridge)
-    - `Wancash Send Trx` (Send Transactions)
-- **Adding new notifications**:
-
-  1. Add Chat ID to Env types (`env.d.ts`)
-  2. Add to `generate-env-only.ts`
-  3. Add to `wrangler.jsonc`
-  4. Create helper in `telegram.ts`
-
-- **Explorer Configuration**:
-
-  - `EXPLORER_URL_SEPOLIA`: Explorer base URL for Sepolia
-  - `EXPLORER_URL_ARB_SEPOLIA`: Explorer base URL for Arbitrum Sepolia
-
-  - `EXPLORER_URL_FUJI`: Explorer base URL for Fuji
-
-  - `EXPLORER_URL_BSC`: Explorer base URL for BSC
-  - `LZ_SCAN_URL`: LayerZero Scan base URL
-
-### 7. Feature Documentation Protocol
-
-- **ALWAYS** update `.clinerules` when adding a new feature that impacts development workflow
-- **Documentation Requirements**:
-  - Add new section for the feature
-  - List key configuration files (e.g. `wrangler.jsonc`, `generate-env-only.ts`)
-  - Document testing procedures
-- **Feature Updates**:
-  - "If you change the feature, you MUST edit the rules"
-  - Keep documentation in sync with code
-- **Local Testing Scripts**:
-  - **ALWAYS** create a local test script (e.g. `scripts/test-feature.ts`) for backend features
-- Script should check for: `env` variables, credentials, and basic connectivity
-
-### 8. Testing Protocol (Cloudflare Workers)
-
-- **Framework**: Vitest with `@cloudflare/vitest-pool-workers`
-- **Location**: `my-frontend/cloude-flare-wancash/test/`
-- **Configuration**: `vitest.config.mts`
-- **Package Manager**: **ALWAYS use Bun** (`bun run test`)
-- **Guidelines**:
-  - Use `worker.fetch` for integration-style tests that run declared handlers.
-  - Use `SELF.fetch` for integration tests against the worker environment.
-  - Mock external dependencies (DB, APIs) using `vi.mock` or environment bindings.
-  - **Mocking Database**:
-    - Use `vi.mock('@neondatabase/serverless')` to mock the Client.
-    - Mock `connect()`, `query()`, and `end()` methods.
-    - Ensure `query()` returns expected structure: `{ rows: [...] }`.
-  - **Mocking Auth**:
-    - Generate valid JWTs using `jose` and a mocked `JWT_SECRET`.
-    - Ensure `X-Wallet-Address` header matches the token.
+- **ALWAYS** create an `implementation_plan.md` artifact for complex changes.
+- **ALWAYS** get user approval via `notify_user` before making code changes.
+- Break down work into clear, reviewable steps in `task.md`.
 
 ---
 
+## 💾 Data Structure & State Management
+
+### 1. Database Migrations (Neon DB)
+
+- **Baseline**: `migrations/000_baseline_schema.sql` contains the project's initial manual schema.
+- **Workflow**:
+  1. Create a new `.sql` file in `cloude-flare-wancash/migrations/` using incremental numbering (e.g., `013_new_feature.sql`).
+  2. Use `IF NOT EXISTS` for tables and `ADD COLUMN IF NOT EXISTS` for column additions.
+  3. **Application**: Use `bun run scripts/apply-migrations.ts` to apply ALL pending migrations. This script tracks applied migrations in the `_migrations` table.
+- **Mocking**: When testing, use `vi.mock('@neondatabase/serverless')`.
+
+### 2. State & Variable Management
+
+- **Global Variables**: **ALWAYS** trace usage using `grep_search` before modification.
+- **Frontend State**: Use Pinia stores for global app state and Composables for reusable logic.
+- **Consistency**: Ensure TypeScript interfaces match the backend database schema and API responses.
+
 ---
 
-## 📁 Project Structure
+## 🌍 Environment & Configuration
+
+### 1. Environment Synchronization
+
+- **Single Source of Truth**: The root `.env` file.
+- **Worker Env**: Use `my-frontend/cloude-flare-wancash/scripts/generate-env-only.ts` to sync `.env` to `.dev.vars` and generate `src/env.d.ts`.
+- **Command**: Run the sync script after adding any new environment variable.
+
+### 2. API & Network Configuration
+
+- **Wrangler**: Update `wrangler.jsonc` for new bindings (Rate limiters, KV, etc.).
+- **Vite**: Ensure frontend `.env` matches the backend RPC and contract addresses.
+
+---
+
+## 🚀 Feature Implementation Workflow (AI-TDD)
+
+Follow the **"Spec First, Test Second, Code Third"** principle:
+
+1.  **Spec-First**: Request or define TypeScript Interfaces/Types and list all test scenarios (Happy & Sad paths).
+2.  **Generate Tests (Red)**: Create `.spec.ts` in `test/` (e.g., `my-frontend/cloude-flare-wancash/test/`) before implementation.
+3.  **Implement (Green)**: Write the minimum code to pass the tests.
+4.  **Refactor**: Optimize once tests pass.
+5.  **Service Layer**: Update `src/app/services/` in the frontend to match new backend endpoints.
+
+---
+
+## 🔔 Notification & Error Systems
+
+### 1. Telegram Alert Mapping
+
+- `TELEGRAM_CHAT_ID_ERROR`: System errors and exceptions.
+- `TELEGRAM_CHAT_ID_REDEMPTION`: Redemption request updates (pending -> processing -> etc.).
+- `TELEGRAM_CHAT_ID_BRIDGE`: LayerZero bridge transaction events.
+- `TELEGRAM_CHAT_ID_SEND_TRX`: Send token transaction events.
+
+### 2. Explorer Links
+
+- Use chain-specific explorer URLs (`EXPLORER_URL_SEPOLIA`, `LZ_SCAN_URL`, etc.) in notification messages.
+
+---
+
+## 🧪 Testing Protocol
+
+### 1. Cloudflare Workers
+
+- **Framework**: Vitest + `@cloudflare/vitest-pool-workers`.
+- **Command**: `bun run test` (Always use Bun).
+- **Mocks**: Mock `Client` from `@neondatabase/serverless` and JWT verification using `jose`.
+
+### 2. Smart Contracts
+
+- **Framework**: Hardhat.
+- **Context**: Check `my-ofts/hardhat.config.ts` for network settings.
+- **Tooling**: Use LayerZero CLI for cross-chain testing.
+
+---
+
+## 📁 Folder Structure Enforcement
 
 ### Frontend (`my-frontend/src`)
 
-```
-src/
-├── app/
-│   ├── auth/              # Auth-related utilities
-│   ├── components/        # Shared app components (19 files)
-│   ├── composables/       # Vue composables (6 files)
-│   │   ├── useAuth.ts     # Main authentication logic
-│   │   ├── useWallet.ts   # Wallet connection
-│   │   └── ...
-│   ├── layout/            # Layout components
-│   ├── router/            # Vue Router config & guards
-│   │   └── index.ts       # Route definitions & auth guards
-│   ├── services/          # API services layer (8 files)
-│   │   ├── authService.ts
-│   │   ├── transactionService.ts
-│   │   └── ...
-│   └── stores/            # App-level Pinia stores (3 files)
-├── components/            # Main UI components (126 files)
-├── modules/               # Feature modules (146 files)
-│   ├── dashboard/
-│   ├── portfolio/
-│   ├── bridge/
-│   ├── redemption/
-│   └── admin/
-├── stores/                # Root Pinia store
-├── types/                 # TypeScript type definitions (4 files)
-├── utils/                 # Utility functions (6 files)
-├── shared/                # Shared utilities (4 files)
-└── lib/                   # External libraries config
-```
+- `app/components/`: Core shared components.
+- `app/composables/`: Reusable logic (e.g., `useAuth.ts`, `useWallet.ts`).
+- `app/services/`: API communication layer.
+- `modules/`: Feature-specific logic (e.g., `redemption/`, `bridge/`).
 
 ### Backend (`my-frontend/cloude-flare-wancash/src`)
 
-```
-src/
-├── index.ts              # Main router & CORS config
-├── auth.ts               # Authentication & authorization endpoints
-├── middleware.ts         # Auth middleware & request validation
-├── db.ts                 # D1 database configuration
-├── transactions.ts       # Transaction history endpoints
-├── redemption.ts         # Redemption management endpoints
-├── products.ts           # Product catalog endpoints
-├── profile.ts            # User profile management endpoints
-├── support.ts            # Support/help endpoints
-├── stats.ts              # Statistics & analytics endpoints
-└── addressBook.ts        # Address book management endpoints
-```
+- `index.ts`: Entry point & CORS.
+- `auth.ts`, `db.ts`, `metrics.ts`: Modular backend logic.
+- `migrations/`: SQL migration files.
 
-### Smart Contracts (`my-ofts`)
+### Contracts (`my-ofts/contracts`)
 
-```
-src/
-├── contracts/          # Solidity contracts
-├── deploy/             # Deployment scripts
-├── tasks/              # Hardhat tasks
-├── test/               # Tests
-├── hardhat.config.ts   # Hardhat configuration
-└── layerzero.config.ts # LayerZero configuration
-```
-
-### Testing (`my-frontend/cloude-flare-wancash/test`)
-
-```
-test/
-├── index.spec.ts       # Basic worker tests
-├── redemption.spec.ts  # Redemption flow tests (Planned)
-└── tsconfig.json       # Test TS config
-```
-
-### Backend API Endpoints
-
-```typescript
-// Authentication (auth.ts)
-POST   /api/auth/nonce          # Get nonce for signing
-POST   /api/auth/verify         # Verify signature & login
-GET    /api/auth/refresh        # Refresh access token
-POST   /api/auth/logout         # Logout & clear cookies
-GET    /api/me                  # Get current user info
-
-// Transactions (transactions.ts)
-GET    /api/transactions        # Get transaction history
-POST   /api/transactions        # Create new transaction
-
-// Redemption (redemption.ts)
-GET    /api/redemptions         # Get redemption history
-POST   /api/redemptions         # Create redemption request
-PATCH  /api/redemptions/:id     # Update redemption status (admin)
-
-// Products (products.ts)
-GET    /api/products            # Get product catalog
-
-// Profile (profile.ts)
-GET    /api/profile             # Get user profile
-PUT    /api/profile             # Update user profile
-
-// Support (support.ts)
-GET    /api/support             # Get support tickets
-POST   /api/support             # Create support ticket
-
-// Stats (stats.ts)
-GET    /api/stats               # Get platform statistics
-
-// Address Book (addressBook.ts)
-GET    /api/address-book        # Get saved addresses
-POST   /api/address-book        # Add new address
-```
+- Keep logic in `contracts/` and deployment scripts in `deploy/`.
 
 ---
 
-## 🔍 Pre-Change Checklist
+## ⚠️ Pre-Change Checklist
 
-Before making ANY code change:
-
-### For Variable Changes:
-
-1. ✅ Search for all usages: `grep_search` with variable name
-2. ✅ Check if it's a global state (Pinia store, composable)
-3. ✅ Identify all consumers (components, other composables)
-4. ✅ Verify reactive dependencies
-5. ✅ Plan updates for all affected files
-
-### For API Endpoint Changes:
-
-1. ✅ Search frontend for endpoint usage: `grep_search` with endpoint path
-2. ✅ Check backend route handler
-3. ✅ Check services layer (src/app/services/)
-4. ✅ Verify request/response types match
-5. ✅ Check error handling on both sides
-6. ✅ List all consumers that need updates
-7. ✅ Plan synchronization strategy
-
-### For Component Changes:
-
-1. ✅ Check if component is used in multiple places
-2. ✅ Verify props/emits contracts
-3. ✅ Check parent-child dependencies
-4. ✅ Test responsive design (mobile/desktop)
-
-### For Dependency Changes:
-
-1. ✅ Check existing dependencies for conflicts
-2. ✅ Verify version compatibility
-3. ✅ Test build after adding dependency
-4. ✅ Update package.json and lock file
+1. 🔍 **Search** all usages (Variable/Endpoint).
+2. 📋 **Plan** via `implementation_plan.md`.
+3. ✅ **Approve** via `notify_user`.
+4. 🛠️ **Implement** incrementally.
+5. ✨ **Verify** via tests and `walkthrough.md`.
 
 ---
 
-## 🚀 Development Workflow
-
-### Step 1: Analysis
-
-- Understand the requirement fully
-- Ask clarifying questions if needed
-- Identify all affected areas
-- Check existing dependencies to synchronize
-
-### Step 2: Planning
-
-- Create `implementation_plan.md`
-- List all files to be changed
-- Identify potential risks
-- Get user approval via `notify_user`
-
-### Step 3: Implementation
-
-- Make changes incrementally
-- Follow the plan
-- Update related files together
-- Keep changes atomic and focused
-
-### Step 4: Verification
-
-- Test all affected functionality
-- Verify no regressions
-- Check console for errors
-- Create `walkthrough.md` with results
-
----
-
-## 🛠️ Technology Stack
-
-### Frontend
-
-- **Framework**: Vue 3 (Composition API)
-- **State**: Pinia stores + Composables
-- **Router**: Vue Router
-- **Wallet**: Wagmi + Web3Modal
-- **UI**: Shadcn + Custom components + Tailwind CSS
-- **Build**: Vite + Bun
-- **Package Manager**: Bun
-
-### Backend
-
-- **Platform**: Cloudflare Workers
-- **Database**: Neon database
-- **Auth**: Cookie-based with JWT
-- **Platform**: Cloudflare Workers
-- **Database**: Neon database
-- **Auth**: Cookie-based with JWT
-- **Runtime**: Cloudflare Workers Runtime
-- **Config**: `wrangler.jsonc` (JSON with Comments)
-
-### Smart Contracts
-
-- **Framework**: Hardhat
-- **Language**: Solidity, TypeScript
-- **Protocol**: LayerZero V2
-- **Testing**: Hardhat / Foundry
-
----
-
-## ⚠️ Common Pitfalls to Avoid
-
-1. **Don't** modify global variables without checking all usages
-2. **Don't** change API contracts without updating all consumers
-3. **Don't** skip the planning phase for complex changes
-4. **Don't** make assumptions - always verify with grep/search
-5. **Don't** forget to check both FE and BE when changing endpoints
-6. **Don't** forget to check services layer when modifying API calls
-7. **Don't** modify middleware without testing protected routes
-
----
-
-## 📝 Code Style Guidelines
-
-### TypeScript
-
-- Use explicit types for function parameters and returns
-- Prefer `interface` over `type` for object shapes
-- Use `const` for immutable values
-- Use descriptive variable names
-- Always use Bun for package management
-
-### Vue Components
-
-- Use Composition API with `<script setup>`
-- Keep components focused and single-purpose
-- Extract reusable logic to composables
-- Use TypeScript for props and emits
-
-### Naming Conventions
-
-- Components: PascalCase (e.g., `UserProfile.vue`)
-- Composables: camelCase with `use` prefix (e.g., `useAuth.ts`)
-- Stores: camelCase with `Store` suffix (e.g., `userStore.ts`)
-- Constants: UPPER_SNAKE_CASE
-
----
-
-## 🔐 Authentication Flow
-
-Current implementation uses:
-
-- Wagmi for wallet connection
-- Cookie-based sessions (HttpOnly)
-- Access tokens (4 min) + Refresh tokens (7 days)
-- Proactive token refresh (1 min before expiry)
-- Role-based access (user/admin)
-
-**Key files:**
-
-- `/src/app/composables/useAuth.ts` - Main auth logic
-- `/src/app/router/index.ts` - Route guards
-- Backend: `/cloude-flare-wancash/src/auth.ts` - Auth endpoints
-- Backend: `/cloude-flare-wancash/src/middleware.ts` - Auth middleware
-
----
-
-## 📋 Example: Changing a Global Variable
-
-```typescript
-// ❌ WRONG - Direct change without checking
-const isConnected = ref(false); // Changed from true
-
-grep_search("isConnected", ["*.ts", "*.vue"]);
-```
-
----
-
-## 📋 Example: Changing an API Endpoint
-
-```typescript
-grep_search("/api/auth/verify", ["*.ts", "*.vue"]);
-```
-
----
-
-## 🎯 Remember
-
-> **"Plan first, code second, verify always"**
-
-Every change should follow this pattern:
-
-1. 🔍 **Search** - Find all affected code
-2. 📋 **Plan** - Document what will change
-3. ✅ **Approve** - Get user confirmation
-4. 🛠️ **Implement** - Make the changes
-5. ✨ **Verify** - Test everything works
-
----
-
-## 9. AI-Assisted Test Driven Development (AI-TDD) Workflow
-
-### Core Principle
-
-**"Spec First, Test Second, Code Third"**
-
-### Workflow Steps
-
-1. **Spec-First Rule**
-
-   - **Before Coding**: Always request an **Interface / Type Definition** and a list of **Test Scenarios**.
-   - **Do not** jump straight to implementation.
-   - **Requirement**: "Create a TypeScript Interface for inputs/outputs and list all necessary test cases (happy & sad paths)."
-
-2. **Generate Tests First (Red)**
-
-   - Create the `.spec.ts` file **before** the implementation file.
-   - Use **Dependency Injection** in your design to make mocking easy (e.g., pass `dbClient` as an argument).
-   - Ensure these tests fail (or won't compile) because the implementation doesn't exist yet.
-
-3. **Implement to Satisfy Tests (Green)**
-
-   - Write the minimum implementation code required to pass the tests.
-   - Do not add features "just in case" if they are not tested.
-
-4. **Refactor & Optimize**
-
-   - Once tests are green, refactor for performance/cleanliness.
-   - Ensure tests remain green after refactoring.
-
-5. **Edge Case Review**
-   - **Aggressively** test failure modes:
-     - Null / Undefined / Empty strings
-     - Network timeouts / failures
-     - Database connection errors
-     - Invalid inputs (negative numbers, wrong types)
-
-### Example Prompts for AI
-
-- _Phase 1_: "Create a TypeScript Interface for the `transferFunds` feature and list all test scenarios including edge cases."
-- _Phase 2_: "Create `transferFunds.spec.ts` based on these scenarios. Mock the database connection."
-- _Phase 3_: "Now implement `transferFunds` function to pass these tests."
-
----
-
-_Last updated: 2026-01-14_
+_Last updated: 2026-01-15 - Synchronized with Baseline Migration 000_
