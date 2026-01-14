@@ -114,6 +114,51 @@
 [**] Check CORS configuration
 ```
 
+### 6. Notifications & Alerts
+
+- **ALWAYS** check `wrangler.jsonc` and `generate-env-only.ts` when adding new notifications
+- **Telegram Configuration**:
+  - Bot Token: `TELEGRAM_BOT_TOKEN`
+  - Group IDs:
+    - `Wancash_Error` (Errors)
+    - `Wancash Redem` (Redemption)
+    - `Wancash Bridge` (Bridge)
+    - `Wancash Send Trx` (Send Transactions)
+- **Adding new notifications**:
+  1. Add Chat ID to Env types (`env.d.ts`)
+  2. Add to `generate-env-only.ts`
+  3. Add to `wrangler.jsonc`
+  4. Create helper in `telegram.ts`
+
+- **Explorer Configuration**:
+  - `EXPLORER_URL_SEPOLIA`: Explorer base URL for Sepolia
+  - `EXPLORER_URL_ARB_SEPOLIA`: Explorer base URL for Arbitrum Sepolia
+
+
+  - `EXPLORER_URL_FUJI`: Explorer base URL for Fuji
+
+  - `EXPLORER_URL_BSC`: Explorer base URL for BSC
+  - `LZ_SCAN_URL`: LayerZero Scan base URL
+
+
+### 7. Feature Documentation Protocol
+
+- **ALWAYS** update `.clinerules` when adding a new feature that impacts development workflow
+- **Documentation Requirements**:
+  - Add new section for the feature
+  - List key configuration files (e.g. `wrangler.jsonc`, `generate-env-only.ts`)
+  - Document testing procedures
+- **Feature Updates**:
+  - "If you change the feature, you MUST edit the rules"
+  - Keep documentation in sync with code
+- **Local Testing Scripts**:
+  - **ALWAYS** create a local test script (e.g. `scripts/test-feature.ts`) for backend features
+  - Script must allow verification without triggering full backend events
+  - Script should check for: `env` variables, credentials, and basic connectivity
+
+---
+
+
 ---
 
 ## 📁 Project Structure
@@ -307,7 +352,11 @@ Before making ANY code change:
 - **Platform**: Cloudflare Workers
 - **Database**: Neon database
 - **Auth**: Cookie-based with JWT
+- **Platform**: Cloudflare Workers
+- **Database**: Neon database
+- **Auth**: Cookie-based with JWT
 - **Runtime**: Cloudflare Workers Runtime
+- **Config**: `wrangler.jsonc` (JSON with Comments)
 
 ### Smart Contracts
 
