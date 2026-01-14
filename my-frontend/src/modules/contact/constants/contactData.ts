@@ -42,7 +42,7 @@ export const CONTACT_INFO = {
     phone: '+62 812-3456-7890',
     email: 'support@wancash.org',
     tokenSymbol: 'WCH',
-    tokenName: 'Staking Wancash Token'
+    tokenName: 'Wancash Token'
 }
 
 /**

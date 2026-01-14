@@ -125,21 +125,21 @@
     - `Wancash Bridge` (Bridge)
     - `Wancash Send Trx` (Send Transactions)
 - **Adding new notifications**:
+
   1. Add Chat ID to Env types (`env.d.ts`)
   2. Add to `generate-env-only.ts`
   3. Add to `wrangler.jsonc`
   4. Create helper in `telegram.ts`
 
 - **Explorer Configuration**:
+
   - `EXPLORER_URL_SEPOLIA`: Explorer base URL for Sepolia
   - `EXPLORER_URL_ARB_SEPOLIA`: Explorer base URL for Arbitrum Sepolia
-
 
   - `EXPLORER_URL_FUJI`: Explorer base URL for Fuji
 
   - `EXPLORER_URL_BSC`: Explorer base URL for BSC
   - `LZ_SCAN_URL`: LayerZero Scan base URL
-
 
 ### 7. Feature Documentation Protocol
 
@@ -153,11 +153,27 @@
   - Keep documentation in sync with code
 - **Local Testing Scripts**:
   - **ALWAYS** create a local test script (e.g. `scripts/test-feature.ts`) for backend features
-  - Script must allow verification without triggering full backend events
-  - Script should check for: `env` variables, credentials, and basic connectivity
+- Script should check for: `env` variables, credentials, and basic connectivity
+
+### 8. Testing Protocol (Cloudflare Workers)
+
+- **Framework**: Vitest with `@cloudflare/vitest-pool-workers`
+- **Location**: `my-frontend/cloude-flare-wancash/test/`
+- **Configuration**: `vitest.config.mts`
+- **Package Manager**: **ALWAYS use Bun** (`bun run test`)
+- **Guidelines**:
+  - Use `worker.fetch` for integration-style tests that run declared handlers.
+  - Use `SELF.fetch` for integration tests against the worker environment.
+  - Mock external dependencies (DB, APIs) using `vi.mock` or environment bindings.
+  - **Mocking Database**:
+    - Use `vi.mock('@neondatabase/serverless')` to mock the Client.
+    - Mock `connect()`, `query()`, and `end()` methods.
+    - Ensure `query()` returns expected structure: `{ rows: [...] }`.
+  - **Mocking Auth**:
+    - Generate valid JWTs using `jose` and a mocked `JWT_SECRET`.
+    - Ensure `X-Wallet-Address` header matches the token.
 
 ---
-
 
 ---
 
@@ -223,6 +239,15 @@ src/
 ├── test/               # Tests
 ├── hardhat.config.ts   # Hardhat configuration
 └── layerzero.config.ts # LayerZero configuration
+```
+
+### Testing (`my-frontend/cloude-flare-wancash/test`)
+
+```
+test/
+├── index.spec.ts       # Basic worker tests
+├── redemption.spec.ts  # Redemption flow tests (Planned)
+└── tsconfig.json       # Test TS config
 ```
 
 ### Backend API Endpoints
@@ -430,23 +455,7 @@ Current implementation uses:
 // ❌ WRONG - Direct change without checking
 const isConnected = ref(false); // Changed from true
 
-// ✅ CORRECT - Follow the process
-// 1. Search for all usages
 grep_search("isConnected", ["*.ts", "*.vue"]);
-
-// 2. Document findings
-// Found in:
-// - useAuth.ts (definition)
-// - Header.vue (displays connection status)
-// - WalletButton.vue (enables/disables button)
-
-// 3. Create plan
-// - Update useAuth.ts logic
-// - Verify Header.vue still works
-// - Verify WalletButton.vue still works
-// - Test connection flow
-
-// 4. Get approval, then implement
 ```
 
 ---
@@ -454,31 +463,7 @@ grep_search("isConnected", ["*.ts", "*.vue"]);
 ## 📋 Example: Changing an API Endpoint
 
 ```typescript
-// Changing: POST /api/auth/verify
-
-// ✅ CORRECT Process:
-// 1. Search frontend usage
 grep_search("/api/auth/verify", ["*.ts", "*.vue"]);
-// Found in: useAuth.ts line 186
-
-// 2. Check services layer
-// File: src/app/services/authService.ts
-
-// 3. Check backend handler
-// File: cloude-flare-wancash/src/auth.ts
-
-// 4. Document contract
-// Request: { address, signature, message, chainId }
-// Response: { user, expiresIn }
-
-// 5. Plan changes
-// - Update backend handler (auth.ts)
-// - Update service layer (authService.ts)
-// - Update frontend call in useAuth.ts
-// - Update TypeScript types
-// - Test login flow
-
-// 6. Get approval, implement, verify
 ```
 
 ---
@@ -497,4 +482,49 @@ Every change should follow this pattern:
 
 ---
 
-_Last updated: 2026-01-12_
+## 9. AI-Assisted Test Driven Development (AI-TDD) Workflow
+
+### Core Principle
+
+**"Spec First, Test Second, Code Third"**
+
+### Workflow Steps
+
+1. **Spec-First Rule**
+
+   - **Before Coding**: Always request an **Interface / Type Definition** and a list of **Test Scenarios**.
+   - **Do not** jump straight to implementation.
+   - **Requirement**: "Create a TypeScript Interface for inputs/outputs and list all necessary test cases (happy & sad paths)."
+
+2. **Generate Tests First (Red)**
+
+   - Create the `.spec.ts` file **before** the implementation file.
+   - Use **Dependency Injection** in your design to make mocking easy (e.g., pass `dbClient` as an argument).
+   - Ensure these tests fail (or won't compile) because the implementation doesn't exist yet.
+
+3. **Implement to Satisfy Tests (Green)**
+
+   - Write the minimum implementation code required to pass the tests.
+   - Do not add features "just in case" if they are not tested.
+
+4. **Refactor & Optimize**
+
+   - Once tests are green, refactor for performance/cleanliness.
+   - Ensure tests remain green after refactoring.
+
+5. **Edge Case Review**
+   - **Aggressively** test failure modes:
+     - Null / Undefined / Empty strings
+     - Network timeouts / failures
+     - Database connection errors
+     - Invalid inputs (negative numbers, wrong types)
+
+### Example Prompts for AI
+
+- _Phase 1_: "Create a TypeScript Interface for the `transferFunds` feature and list all test scenarios including edge cases."
+- _Phase 2_: "Create `transferFunds.spec.ts` based on these scenarios. Mock the database connection."
+- _Phase 3_: "Now implement `transferFunds` function to pass these tests."
+
+---
+
+_Last updated: 2026-01-14_

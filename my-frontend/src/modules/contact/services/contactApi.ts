@@ -1,4 +1,5 @@
 import type { ContactFormData, Attachment } from '../types/contact.types'
+import { useAuth } from '@/app/composables/useAuth'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8787'
 
@@ -37,11 +38,14 @@ export const submitContactForm = async (data: ContactSubmission): Promise<Submit
     console.log('📤 Submitting ticket:', requestBody)
     console.log('📍 API URL:', `${API_BASE_URL}/api/support`)
 
+    const { getAuthHeaders } = useAuth()
+
     try {
         const response = await fetch(`${API_BASE_URL}/api/support`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                ...getAuthHeaders()
             },
             credentials: 'include',
             body: JSON.stringify(requestBody)
@@ -65,9 +69,13 @@ export const submitContactForm = async (data: ContactSubmission): Promise<Submit
  * Get user's support tickets
  */
 export const getUserTickets = async () => {
+    const { getAuthHeaders } = useAuth()
     try {
         const response = await fetch(`${API_BASE_URL}/api/support`, {
             method: 'GET',
+            headers: {
+                ...getAuthHeaders()
+            },
             credentials: 'include'
         })
 
@@ -82,9 +90,13 @@ export const getUserTickets = async () => {
  * Get ticket details by ID
  */
 export const getTicketDetails = async (ticketId: string) => {
+    const { getAuthHeaders } = useAuth()
     try {
         const response = await fetch(`${API_BASE_URL}/api/support/${ticketId}`, {
             method: 'GET',
+            headers: {
+                ...getAuthHeaders()
+            },
             credentials: 'include'
         })
 

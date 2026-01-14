@@ -163,10 +163,58 @@
             </form>
         </CardContent>
     </Card>
+
+
+    <!-- Auth Dialog -->
+    <Dialog v-model:open="showAuthDialog">
+        <DialogContent class="sm:max-w-md">
+            <DialogHeader>
+                <DialogTitle>Authentication Required</DialogTitle>
+                <DialogDescription>
+                    Please connect your wallet and sign in to send a support message.
+                </DialogDescription>
+            </DialogHeader>
+            <DialogFooter class="sm:justify-end gap-2">
+                <Button variant="outline" @click="showAuthDialog = false">
+                    Cancel
+                </Button>
+                <Button @click="handleLogin" class="bg-blue-600 hover:bg-blue-700 text-white">
+                    Login
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+
+    <!-- Result Dialog -->
+    <Dialog v-model:open="showResultDialog">
+        <DialogContent class="sm:max-w-md">
+            <DialogHeader>
+                <DialogTitle :class="resultTitle === 'Success' ? 'text-green-600' : 'text-red-600'">
+                    {{ resultTitle }}
+                </DialogTitle>
+                <DialogDescription class="pt-2">
+                    {{ resultMessage }}
+                </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+                <Button @click="showResultDialog = false">
+                    Close
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
 </template>
 
 <script lang="ts" setup>
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -174,11 +222,54 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { useContactStore } from '../store/contactStore'
 import { CONTACT_TYPES, CONTACT_INFO } from '../constants/contactData'
 import { usePriceStore } from '@/stores/priceStore'
+import { useProfileStore } from '@/modules/profile/store/profileStore'
 import { storeToRefs } from 'pinia'
+import { useAuth } from '@/app/composables/useAuth'
+import { appkit } from '@/app/components/config/appkit'
+import { ref, watch } from 'vue'
 
 const store = useContactStore()
 const priceStore = usePriceStore()
+const profileStore = useProfileStore()
 const { formattedWchPrice } = storeToRefs(priceStore)
+const { isAuthenticated, walletAddress, user } = useAuth()
+const { profile } = storeToRefs(profileStore)
+
+// Auto-fill wallet address when connected
+watch(walletAddress, (newAddress) => {
+    if (newAddress) {
+        store.form.wallet = newAddress
+    }
+}, { immediate: true })
+
+// Auto-fill name and email from user profile
+watch(() => profileStore.profile, (newProfile) => {
+    if (newProfile) {
+        if (newProfile.display_name && !store.form.name) {
+            store.form.name = newProfile.display_name
+        } else if (newProfile.username && !store.form.name) {
+            store.form.name = newProfile.username
+        }
+
+        if (newProfile.email && !store.form.email) {
+            store.form.email = newProfile.email
+        }
+    }
+}, { immediate: true })
+
+const showAuthDialog = ref(false)
+const showResultDialog = ref(false)
+const resultTitle = ref('')
+const resultMessage = ref('')
+
+const handleLogin = async () => {
+    showAuthDialog.value = false
+    try {
+        await appkit.open()
+    } catch (e) {
+        console.error('Failed to open wallet modal:', e)
+    }
+}
 
 const handleFileUpload = (event: Event) => {
     const files = (event.target as HTMLInputElement).files
@@ -193,8 +284,15 @@ const handleFileUpload = (event: Event) => {
 }
 
 const handleSubmit = async () => {
+    if (!isAuthenticated.value) {
+        showAuthDialog.value = true
+        return
+    }
     const result = await store.submitForm()
-    alert(result.message)
+
+    resultTitle.value = result.success ? 'Success' : 'Error'
+    resultMessage.value = result.message
+    showResultDialog.value = true
 }
 </script>
 
