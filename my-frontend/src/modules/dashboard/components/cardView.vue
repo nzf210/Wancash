@@ -22,61 +22,160 @@
       </CardHeader>
 
       <CardContent class="space-y-4">
-        <!-- Price Section -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border dark:border-gray-700">
-          <div class="flex justify-between items-center mb-2">
-            <span class="text-sm text-gray-600 dark:text-gray-400">Current Price</span>
-            <span :class="priceChangeClass" class="text-[13px] md:text-sm font-medium">
-              {{ priceChange > 0 ? '+' : '' }}{{ priceChange.toFixed(2) }}%
-            </span>
+        <!-- Swap Mode Interface -->
+        <div v-if="swapMode" class="bg-white dark:bg-gray-800 rounded-lg p-4 border dark:border-gray-700 space-y-3">
+          <div class="flex justify-between items-center">
+            <h3 class="font-semibold text-gray-900 dark:text-white">
+              {{ isSellMode ? 'Sell WCH' : 'Buy Wancash' }}
+            </h3>
+            <Button variant="ghost" size="sm" @click="closeSwapMode" class="h-6 w-6 p-0">✕</Button>
           </div>
-          <div class="text-[13px] md:text-base font-bold text-gray-900 dark:text-white">
-            ${{ currentPrice.toLocaleString() }}
-          </div>
-        </div>
 
-        <!-- Stats Grid -->
-        <div class="grid grid-cols-2 gap-3">
-          <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border dark:border-gray-700">
-            <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Market Cap</div>
-            <div class="text-[13px] md:text-base font-semibold text-gray-900 dark:text-white">${{
-              marketCap.toLocaleString()
-            }}</div>
+          <!-- State 1: Not Connected -->
+          <div v-if="!isConnected" class="py-6 text-center space-y-3">
+            <div class="mx-auto w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+              <span class="text-2xl">🔗</span>
+            </div>
+            <div class="text-sm text-gray-600 dark:text-gray-300 px-2">
+              Please connect your wallet to continue
+            </div>
+            <Button @click="() => open()" class="w-full bg-blue-600 hover:bg-blue-700 text-white">
+              Connect Wallet
+            </Button>
           </div>
-          <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border dark:border-gray-700">
-            <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Volume 24h</div>
-            <div class="text-[13px] md:text-base font-semibold text-gray-900 dark:text-white">${{
-              volume24h.toLocaleString() }}</div>
-          </div>
-          <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border dark:border-gray-700">
-            <div class="text-xs sm:text-xs md:text-sm text-gray-500 dark:text-gray-400 mb-1">Total Supply</div>
-            <div class="text-[13px] md:text-base font-semibold text-gray-900 dark:text-white">
-              {{ totalSupply.toLocaleString() }}
+
+          <!-- State 2: Unsupported Chain -->
+          <div v-else-if="!isSupportedChain" class="py-6 text-center space-y-3">
+            <div class="mx-auto w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+              <span class="text-2xl">⚠️</span>
+            </div>
+            <div class="text-sm text-gray-600 dark:text-gray-300 px-2">
+              Not supported for now, just support in BSC, we will update soon for other chain
             </div>
           </div>
-          <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border dark:border-gray-700">
-            <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Circulating</div>
-            <div class="text-[13px] md:text-base font-semibold text-gray-900 dark:text-white">{{
-              circulatingSupply.toLocaleString() }}</div>
+
+          <!-- State 3: Active Swap Interface -->
+          <div v-else>
+            <div class="space-y-1">
+              <div class="flex justify-between">
+                <label class="text-xs text-gray-500">
+                  {{ isSellMode ? 'You Pay (WCH)' : 'You Pay' }}
+                </label>
+                <div class="flex space-x-2">
+                  <button @click="selectToken('BNB')"
+                    :class="['text-xs px-2 py-0.5 rounded cursor-pointer border', selectedToken === 'BNB' ? 'bg-purple-100 border-purple-300 text-purple-700 dark:bg-purple-900 dark:border-purple-700 dark:text-purple-300' : 'border-transparent text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700']">
+                    BNB
+                  </button>
+                  <button @click="selectToken('USDT')"
+                    :class="['text-xs px-2 py-0.5 rounded cursor-pointer border', selectedToken === 'USDT' ? 'bg-purple-100 border-purple-300 text-purple-700 dark:bg-purple-900 dark:border-purple-700 dark:text-purple-300' : 'border-transparent text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700']">
+                    USDT
+                  </button>
+                </div>
+              </div>
+
+              <div class="relative">
+                <input v-model="inputAmount" type="number" placeholder="0.0"
+                  class="w-full p-2 pr-16 rounded-md border dark:border-gray-600 bg-transparent" @input="handleInput" />
+                <span class="absolute right-3 top-2.5 text-sm font-medium text-gray-500">
+                  {{ isSellMode ? 'WCH' : selectedToken }}
+                </span>
+              </div>
+            </div>
+
+            <div class="flex justify-center text-purple-500 my-1">
+              ↓
+            </div>
+
+            <div class="space-y-1 mb-3">
+              <label class="text-xs text-gray-500">
+                You Receive ({{ isSellMode ? selectedToken : 'WCH' }})
+              </label>
+              <div class="p-2 rounded-md bg-gray-100 dark:bg-gray-900 min-h-[42px] flex items-center">
+                <span v-if="quoteLoading" class="text-xs text-gray-400">Fetching best price...</span>
+                <span v-else>{{ estimatedOutput }}</span>
+              </div>
+            </div>
+
+            <Button v-if="needsApproval" @click="handleApprove"
+              class="w-full bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700"
+              :disabled="approvalLoading">
+              <span v-if="approvalLoading" class="flex items-center">
+                <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Approving {{ approvalToken }}...
+              </span>
+              <span v-else>Approve {{ approvalToken }}</span>
+            </Button>
+
+            <Button v-else @click="executeSwap" class="w-full bg-gradient-to-r from-purple-500 to-blue-600"
+              :disabled="!quote || swapLoading">
+              <span v-if="swapLoading" class="flex items-center">
+                <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Swapping...
+              </span>
+              <span v-else>Swap Now</span>
+            </Button>
           </div>
         </div>
 
-        <!-- Action Buttons -->
-        <div class="flex space-x-2 pt-2">
-          <Button @click="handleBuy"
-            class="flex-1 bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700"
-            :disabled="loading">
-            <span v-if="!loading">Buy Wancash</span>
-            <span v-else class="flex items-center">
-              <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-              Processing...
-            </span>
-          </Button>
-          <Button @click="handleSell" variant="outline"
-            class="flex-1 border-purple-200 dark:border-gray-600 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-gray-800"
-            :disabled="loading">
-            Sell
-          </Button>
+        <!-- Standard View -->
+        <div v-else class="space-y-4">
+          <!-- Price Section -->
+          <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border dark:border-gray-700">
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-sm text-gray-600 dark:text-gray-400">Current Price</span>
+              <span :class="priceChangeClass" class="text-[13px] md:text-sm font-medium">
+                {{ priceChange > 0 ? '+' : '' }}{{ priceChange.toFixed(2) }}%
+              </span>
+            </div>
+            <div class="text-[13px] md:text-base font-bold text-gray-900 dark:text-white">
+              ${{ currentPrice.toLocaleString() }}
+            </div>
+
+            <!-- Chart Integration -->
+            <div class="mt-4 -mx-2 h-[220px]">
+              <TokenPriceChart />
+            </div>
+          </div>
+
+          <!-- Stats Grid -->
+          <div class="grid grid-cols-2 gap-3">
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border dark:border-gray-700">
+              <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Market Cap</div>
+              <div class="text-[13px] md:text-base font-semibold text-gray-900 dark:text-white">${{
+                marketCap.toLocaleString()
+              }}</div>
+            </div>
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border dark:border-gray-700">
+              <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Volume 24h</div>
+              <div class="text-[13px] md:text-base font-semibold text-gray-900 dark:text-white">${{
+                volume24h.toLocaleString() }}</div>
+            </div>
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border dark:border-gray-700">
+              <div class="text-xs sm:text-xs md:text-sm text-gray-500 dark:text-gray-400 mb-1">Total Supply</div>
+              <div class="text-[13px] md:text-base font-semibold text-gray-900 dark:text-white">
+                {{ totalSupply.toLocaleString() }}
+              </div>
+            </div>
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border dark:border-gray-700">
+              <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Circulating</div>
+              <div class="text-[13px] md:text-base font-semibold text-gray-900 dark:text-white">{{
+                circulatingSupply.toLocaleString() }}</div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex space-x-2 pt-2">
+            <Button @click="openSwapMode('BUY')"
+              class="flex-1 bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700"
+              :disabled="loading">
+              Buy Wancash
+            </Button>
+            <Button @click="openSwapMode('SELL')" variant="outline"
+              class="flex-1 border-purple-200 dark:border-gray-600 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-gray-800"
+              :disabled="loading">
+              Sell
+            </Button>
+          </div>
         </div>
 
         <!-- Quick Info -->
@@ -94,20 +193,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-
-// Interface untuk tipe data token
-// interface TokenData {
-//   currentPrice: number
-//   priceChange: number
-//   marketCap: number
-//   volume24h: number
-//   totalSupply: number
-//   circulatingSupply: number
-// }
+import { pancakeSwapService, type SwapQuote } from '../services/pancakeSwapService'
+import TokenPriceChart from './TokenPriceChart.vue'
+import { toast } from 'vue-sonner'
+import { useAccount } from '@wagmi/vue'
+import { useAppKit } from '@reown/appkit/vue'
+import { dexScreenerService } from '../services/dexScreenerService'
 
 // Reactive state
 const loading = ref<boolean>(false)
@@ -118,6 +213,146 @@ const volume24h = ref<number>(8750000)
 const totalSupply = ref<number>(21000000000)
 const circulatingSupply = ref<number>(750000000)
 const lastUpdated = ref<string>('')
+const pairAddress = ref<string | null>(null)
+
+// Swap State
+const swapMode = ref(false)
+const isSellMode = ref(false)
+const selectedToken = ref<'BNB' | 'USDT'>('BNB')
+const inputAmount = ref('')
+const quote = ref<SwapQuote | null>(null)
+const quoteLoading = ref(false)
+const swapLoading = ref(false)
+const needsApproval = ref(false)
+const approvalLoading = ref(false)
+let debounceTimer: any = null
+
+// Chain & Auth State
+const { chainId, isConnected } = useAccount()
+const { open } = useAppKit()
+
+const isSupportedChain = computed(() => {
+  return chainId.value === 56 || chainId.value === 97
+})
+
+// Reset generic when chain changes
+watch(chainId, () => {
+  if (swapMode.value) {
+    quote.value = null
+    inputAmount.value = ''
+    needsApproval.value = false
+  }
+})
+
+const estimatedOutput = computed(() => {
+  if (!quote.value) return '0.0'
+  return parseFloat(quote.value.amountOut).toFixed(6)
+})
+
+const approvalToken = computed(() => {
+  return isSellMode.value ? 'WCH' : selectedToken.value
+})
+
+const openSwapMode = (mode: 'BUY' | 'SELL') => {
+  // We open the modal regardless, but UI will show error if unsupported
+  isSellMode.value = mode === 'SELL'
+  swapMode.value = true
+  quote.value = null
+  inputAmount.value = ''
+  needsApproval.value = false
+}
+
+const closeSwapMode = () => {
+  swapMode.value = false
+  quote.value = null
+  inputAmount.value = ''
+}
+
+const selectToken = (token: 'BNB' | 'USDT') => {
+  selectedToken.value = token
+  quote.value = null
+  needsApproval.value = false
+  handleInput()
+}
+
+const handleInput = () => {
+  if (debounceTimer) clearTimeout(debounceTimer)
+  quote.value = null
+  needsApproval.value = false
+
+  if (!inputAmount.value || parseFloat(inputAmount.value) <= 0) return
+  if (!isSupportedChain.value) return
+
+  debounceTimer = setTimeout(async () => {
+    quoteLoading.value = true
+    try {
+      const tokenIn = isSellMode.value ? 'WCH' : selectedToken.value
+      const tokenOut = isSellMode.value ? selectedToken.value : 'WCH'
+
+      const currentChainId = chainId.value
+      if (!currentChainId) throw new Error("Chain ID not found")
+
+      // 1. Get Quote
+      quote.value = await pancakeSwapService.getQuote(currentChainId, inputAmount.value, tokenIn, tokenOut)
+
+      // 2. Check Allowance
+      const tokenToCheck = isSellMode.value ? 'WCH' : selectedToken.value
+
+      if (tokenToCheck !== 'BNB' && quote.value) {
+        const isApproved = await pancakeSwapService.checkAllowance(currentChainId, inputAmount.value, tokenToCheck)
+        needsApproval.value = !isApproved
+      }
+    } catch (e) {
+      console.error(e)
+      toast.error("Failed to fetch price")
+    } finally {
+      quoteLoading.value = false
+    }
+  }, 500)
+}
+
+const handleApprove = async () => {
+  if (!inputAmount.value) return
+  if (!isSupportedChain.value || !chainId.value) return
+
+  approvalLoading.value = true
+
+  // Determine which token to approve
+  const tokenToApprove = isSellMode.value ? 'WCH' : selectedToken.value
+
+  try {
+    const hash = await pancakeSwapService.approveToken(chainId.value, inputAmount.value, tokenToApprove)
+    toast.success("Approval sent!", { description: `Hash: ${hash}` })
+    needsApproval.value = false
+  } catch (e: any) {
+    console.error(e)
+    toast.error("Approval failed", { description: e.message })
+  } finally {
+    approvalLoading.value = false
+  }
+}
+
+const executeSwap = async () => {
+  if (!quote.value) return
+  if (!isSupportedChain.value || !chainId.value) return
+
+  swapLoading.value = true
+  try {
+    const hash = await pancakeSwapService.executeSwap(chainId.value, quote.value)
+    toast.success("Transaction sent!", {
+      description: `Hash: ${hash}`
+    })
+    closeSwapMode()
+  } catch (e: any) {
+    console.error(e)
+    toast.error("Swap failed", {
+      description: e.message
+    })
+  } finally {
+    swapLoading.value = false
+  }
+}
+
 
 // Computed properties
 const priceChangeClass = computed(() => {
@@ -127,34 +362,6 @@ const priceChangeClass = computed(() => {
 })
 
 // Methods
-const handleBuy = async (): Promise<void> => {
-  loading.value = true
-  try {
-    // Simulasi API call
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    console.log('Buy transaction initiated for Wancash token')
-    // Di sini bisa ditambahkan logic untuk membuka modal atau redirect ke exchange
-  } catch (error) {
-    console.error('Buy transaction failed:', error)
-  } finally {
-    loading.value = false
-  }
-}
-
-const handleSell = async (): Promise<void> => {
-  loading.value = true
-  try {
-    // Simulasi API call
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    console.log('Sell transaction initiated for Wancash token')
-    // Di sini bisa ditambahkan logic untuk membuka modal atau redirect ke exchange
-  } catch (error) {
-    console.error('Sell transaction failed:', error)
-  } finally {
-    loading.value = false
-  }
-}
-
 const updateLastUpdated = (): void => {
   const now = new Date()
   lastUpdated.value = now.toLocaleTimeString('en-US', {
@@ -166,21 +373,37 @@ const updateLastUpdated = (): void => {
 }
 
 const simulatePriceUpdate = (): void => {
-  // Simulasi update harga secara random
-  const randomChange = (Math.random() - 0.5) * 0.1
-  currentPrice.value += randomChange * currentPrice.value
-  priceChange.value = (Math.random() - 0.5) * 20
-  updateLastUpdated()
+  // Deprecated: using fetchRealData
+}
+
+// Fetch Real Data
+const fetchRealData = async () => {
+  try {
+    // Fetch from DexScreener (default returns WBNB data for now)
+    const data = await dexScreenerService.getTokenData()
+
+    if (data) {
+      pairAddress.value = data.pairAddress
+      currentPrice.value = parseFloat(data.priceUsd)
+      priceChange.value = data.priceChange.h24
+      volume24h.value = data.volume.h24
+      marketCap.value = data.marketCap
+    }
+  } catch (error) {
+    console.error("Failed to load real stats", error)
+  } finally {
+    updateLastUpdated()
+  }
 }
 
 // Lifecycle hooks
 onMounted(() => {
-  updateLastUpdated()
+  fetchRealData()
 
-  // Simulasi update data secara berkala
+  // Poll for updates every 30s
   const interval = setInterval(() => {
-    simulatePriceUpdate()
-  }, 5000)
+    fetchRealData()
+  }, 30000)
 
   // Cleanup interval saat component di-unmount
   return () => {

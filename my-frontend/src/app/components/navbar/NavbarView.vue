@@ -20,6 +20,6 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <NavbarDesktop v-if="!isMobile" />
-  <NavbarMobile v-else />
+  <NavbarDesktop v-if="!isMobile" :show-theme-toggle="true" />
+  <NavbarMobile v-else :show-theme-toggle="true" />
 </template>

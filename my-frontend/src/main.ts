@@ -8,6 +8,7 @@ import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import { LitElement } from 'lit'
 import router from '@/app/router/index'
 import type { Router } from 'vue-router'
+import VueApexCharts from 'vue3-apexcharts'
 
 import '../src/assets/style.css'
 
@@ -24,6 +25,7 @@ async function initializeApp() {
     app.use(pinia)  // Install Pinia first to establish the active context
     app.use(WagmiPlugin, { config: wagmiConfig, reconnectOnMount: true } as WagmiPluginOptions)  // Install Wagmi next
     app.use(router)  // Install router after Pinia and Wagmi
+    app.use(VueApexCharts)
     await router.isReady()
     initializeStores(router)
 
