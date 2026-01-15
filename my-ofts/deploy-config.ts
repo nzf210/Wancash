@@ -57,7 +57,8 @@ export const config = {
     // Environment variable mapping for synchronization
     // Source (my-ofts/.env) -> Target (my-frontend/.env)
     envMapping: {
-        BSC_CONTRACT: ['WCH_TOKEN_BSC', 'WCH_TOKEN_BSC_TEST'],
+        TEST_SC_BSC: ['WCH_TOKEN_BSC'],
+        BSC_CONTRACT: ['WCH_TOKEN_BSC_TEST'],
         POLY_CONTRACT: ['WCH_TOKEN_POLYGON', 'WCH_TOKEN_POLYGON_AMOY'],
         ETH_CONTRACT: ['WCH_TOKEN_ETHEREUM', 'WCH_TOKEN_ETHEREUM_SEPOLIA'],
         AVA_CONTRACT: ['WCH_TOKEN_AVALANCHE', 'WCH_TOKEN_AVALANCHE_FUJI'],

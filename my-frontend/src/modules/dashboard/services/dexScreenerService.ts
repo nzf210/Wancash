@@ -9,52 +9,48 @@ export interface DexTokenData {
     volume: {
         h24: number
     }
-    liquidity: {
+    liquidity?: {
         usd: number
     }
-    fdv: number
+    fdv?: number
     marketCap: number
 }
 
-// BNB Address (WBNB)
-const BNB_ADDRESS = '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c'
+// Fallback to localhost if env var is not set (it's currently commented out in .env)
+// const API_BASE_URL = import.meta.env.VITE_CLOUDE_WORKER || 'http://localhost:8787'
 
 export const dexScreenerService = {
     /**
-     * Fetch Token Data from DexScreener
-     * Prioritizes PancakeSwap USDT pairs
-     * @param tokenAddress The contract address of the token (defaults to WBNB for now)
+     * Fetch Token Data from Backend (Moralis Source)
      */
-    async getTokenData(tokenAddress: string = BNB_ADDRESS): Promise<DexTokenData | null> {
+    async getTokenData(): Promise<DexTokenData | null> {
         try {
-            const response = await axios.get(`https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`)
-            const pairs = response.data?.pairs || []
+            console.log(`Fetching price from Backend: /api/stats/token-price`)
+            const response = await axios.get(`/api/stats/token-price`)
 
-            if (pairs.length === 0) return null
-
-            // Filter for PancakeSwap and USDT quote, or fall back to the most liquid pair
-            const bestPair = pairs.find((p: any) =>
-                p.dexId === 'pancakeswap' &&
-                p.quoteToken.symbol === 'USDT'
-            ) || pairs[0]
-
-            return {
-                pairAddress: bestPair.pairAddress,
-                priceUsd: bestPair.priceUsd,
-                priceChange: {
-                    h24: bestPair.priceChange.h24
-                },
-                volume: {
-                    h24: bestPair.volume.h24
-                },
-                liquidity: {
-                    usd: bestPair.liquidity.usd
-                },
-                fdv: bestPair.fdv,
-                marketCap: bestPair.fdv
+            if (response.data && !response.data.error) {
+                // Ensure optional fields are handled if backend doesn't send them
+                const data = response.data
+                return {
+                    pairAddress: data.pairAddress,
+                    priceUsd: data.priceUsd,
+                    priceChange: {
+                        h24: data.priceChange?.h24 || 0
+                    },
+                    volume: {
+                        h24: data.volume?.h24 || 0
+                    },
+                    marketCap: data.marketCap || 0,
+                    // Optional based on Moralis response capabilities
+                    liquidity: { usd: 0 },
+                    fdv: 0
+                }
             }
+
+            console.warn("Backend returned error or empty data", response.data)
+            return null
         } catch (error) {
-            console.error('DexScreener API Error:', error)
+            console.error('Failed to fetch token data from backend:', error)
             return null
         }
     }

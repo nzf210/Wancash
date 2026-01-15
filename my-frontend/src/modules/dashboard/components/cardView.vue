@@ -128,65 +128,64 @@
               </span>
             </div>
             <div class="text-[13px] md:text-base font-bold text-gray-900 dark:text-white">
-              ${{ currentPrice.toLocaleString() }}
+              ${{ currentPrice < 0.01 ? currentPrice.toFixed(8) : currentPrice.toLocaleString() }} </div>
+
+                <!-- Chart Integration -->
+                <div class="mt-4 -mx-2 h-[220px]">
+                  <TokenPriceChart />
+                </div>
             </div>
 
-            <!-- Chart Integration -->
-            <div class="mt-4 -mx-2 h-[220px]">
-              <TokenPriceChart />
-            </div>
-          </div>
-
-          <!-- Stats Grid -->
-          <div class="grid grid-cols-2 gap-3">
-            <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border dark:border-gray-700">
-              <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Market Cap</div>
-              <div class="text-[13px] md:text-base font-semibold text-gray-900 dark:text-white">${{
-                marketCap.toLocaleString()
-              }}</div>
-            </div>
-            <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border dark:border-gray-700">
-              <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Volume 24h</div>
-              <div class="text-[13px] md:text-base font-semibold text-gray-900 dark:text-white">${{
-                volume24h.toLocaleString() }}</div>
-            </div>
-            <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border dark:border-gray-700">
-              <div class="text-xs sm:text-xs md:text-sm text-gray-500 dark:text-gray-400 mb-1">Total Supply</div>
-              <div class="text-[13px] md:text-base font-semibold text-gray-900 dark:text-white">
-                {{ totalSupply.toLocaleString() }}
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-2 gap-3">
+              <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border dark:border-gray-700">
+                <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Market Cap</div>
+                <div class="text-[13px] md:text-base font-semibold text-gray-900 dark:text-white">${{
+                  (currentPrice * circulatingSupply).toLocaleString(undefined, { maximumFractionDigits: 0 })
+                  }}</div>
+              </div>
+              <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border dark:border-gray-700">
+                <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Volume 24h</div>
+                <div class="text-[13px] md:text-base font-semibold text-gray-900 dark:text-white">${{
+                  volume24h.toLocaleString() }}</div>
+              </div>
+              <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border dark:border-gray-700">
+                <div class="text-xs sm:text-xs md:text-sm text-gray-500 dark:text-gray-400 mb-1">Total Supply</div>
+                <div class="text-[13px] md:text-base font-semibold text-gray-900 dark:text-white">
+                  {{ totalSupply.toLocaleString() }}
+                </div>
+              </div>
+              <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border dark:border-gray-700">
+                <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Circulating</div>
+                <div class="text-[13px] md:text-base font-semibold text-gray-900 dark:text-white">{{
+                  circulatingSupply.toLocaleString() }}</div>
               </div>
             </div>
-            <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border dark:border-gray-700">
-              <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Circulating</div>
-              <div class="text-[13px] md:text-base font-semibold text-gray-900 dark:text-white">{{
-                circulatingSupply.toLocaleString() }}</div>
+
+            <!-- Action Buttons -->
+            <div class="flex space-x-2 pt-2">
+              <Button @click="openSwapMode('BUY')"
+                class="flex-1 bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700"
+                :disabled="loading">
+                Buy Wancash
+              </Button>
+              <Button @click="openSwapMode('SELL')" variant="outline"
+                class="flex-1 border-purple-200 dark:border-gray-600 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-gray-800"
+                :disabled="loading">
+                Sell
+              </Button>
             </div>
           </div>
 
-          <!-- Action Buttons -->
-          <div class="flex space-x-2 pt-2">
-            <Button @click="openSwapMode('BUY')"
-              class="flex-1 bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700"
-              :disabled="loading">
-              Buy Wancash
-            </Button>
-            <Button @click="openSwapMode('SELL')" variant="outline"
-              class="flex-1 border-purple-200 dark:border-gray-600 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-gray-800"
-              :disabled="loading">
-              Sell
-            </Button>
+          <!-- Quick Info -->
+          <div
+            class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 pt-2 border-t dark:border-gray-700">
+            <span>Last updated: {{ lastUpdated }}</span>
+            <span class="flex items-center">
+              <div class="w-2 h-2 bg-green-400 rounded-full mr-1 animate-pulse"></div>
+              Live
+            </span>
           </div>
-        </div>
-
-        <!-- Quick Info -->
-        <div
-          class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 pt-2 border-t dark:border-gray-700">
-          <span>Last updated: {{ lastUpdated }}</span>
-          <span class="flex items-center">
-            <div class="w-2 h-2 bg-green-400 rounded-full mr-1 animate-pulse"></div>
-            Live
-          </span>
-        </div>
       </CardContent>
     </Card>
   </div>
