@@ -82,5 +82,6 @@ export const config = {
         EXPLORER_URL_FUJI: ['EXPLORER_URL_FUJI'],
         EXPLORER_URL_BSC: ['EXPLORER_URL_BSC'],
         LZ_SCAN_URL: ['LZ_SCAN_URL'],
+        MORALIS_API_KEY: ['MORALIS_API_KEY'],
     }
 }
