@@ -81,7 +81,7 @@
                         <div class="flex justify-between text-sm">
                             <span class="text-gray-600 dark:text-gray-400">Total Weight</span>
                             <span class="font-medium text-gray-900 dark:text-white">{{ request.gold_amount_grams
-                            }}g</span>
+                                }}g</span>
                         </div>
 
                         <!-- Shipping Cost Editor -->
@@ -116,7 +116,7 @@
                             class="flex justify-between text-base font-bold pt-2 border-t border-gray-200 dark:border-gray-700">
                             <span class="text-gray-900 dark:text-white">Total Amount</span>
                             <span class="text-blue-600 dark:text-blue-400">{{ formatNumber(request.total_token_amount)
-                            }} WCH</span>
+                                }} WCH</span>
                         </div>
                     </div>
                 </div>

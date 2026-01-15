@@ -132,6 +132,79 @@
                         <p>🧹 New Orphans Found: {{ scanResult.newOrphans }}</p>
                     </div>
                 </div>
+
+                <!-- Global Token Scan (New) -->
+                <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-2xl">🌍</span>
+                            <h3 class="font-medium text-gray-900 dark:text-white">Global WCH Scan</h3>
+                        </div>
+                        <span v-if="globalScanStatus" :class="{
+                            'bg-green-100 text-green-800': globalScanStatus === 'success',
+                            'bg-red-100 text-red-800': globalScanStatus === 'error',
+                            'bg-blue-100 text-blue-800': globalScanStatus === 'running'
+                        }" class="px-2 py-1 rounded-full text-xs font-semibold">
+                            {{ globalScanStatus.toUpperCase() }}
+                        </span>
+                    </div>
+                    <p class="text-sm text-gray-500 mb-4">
+                        Scans ALL WCH token transfers on-chain. Auto-imports missing transactions.
+                    </p>
+                    <div class="mb-4">
+                        <select v-model="selectedGlobalInternalChainId"
+                            class="w-full bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5">
+                            <option :value="null">All Chains (Bulk Scan)</option>
+                            <option :value="1">Ethereum (1)</option>
+                            <option :value="56">BSC (56)</option>
+                            <option :value="137">Polygon (137)</option>
+                            <option :value="43114">Avalanche (43114)</option>
+                            <option :value="42161">Arbitrum (42161)</option>
+                            <option :value="11155111">Sepolia (11155111)</option>
+                            <option :value="97">BSC Testnet (97)</option>
+                            <option :value="80002">Amoy (80002)</option>
+                            <option :value="43113">Fuji (43113)</option>
+                            <option :value="421614">Arb Sepolia (421614)</option>
+                        </select>
+                    </div>
+                    <button @click="runGlobalScan" :disabled="globalScanStatus === 'running'"
+                        class="w-full px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center">
+                        <svg v-if="globalScanStatus === 'running'" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                            </circle>
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                            </path>
+                        </svg>
+                        {{ globalScanStatus === 'running' ? 'Scanning...' : 'Run Global Scan' }}
+                    </button>
+                    <div v-if="globalScanResult" class="mt-4 text-sm bg-gray-50 dark:bg-gray-900 p-3 rounded space-y-1">
+                        <p class="font-medium text-gray-900 dark:text-white">🔎 Scan Results:</p>
+                        <div class="grid grid-cols-2 gap-2 mt-2">
+                            <div class="bg-blue-50 dark:bg-blue-900/20 p-2 rounded">
+                                <span class="block text-xs text-blue-600 dark:text-blue-400">Found</span>
+                                <span class="text-lg font-bold text-blue-800 dark:text-blue-200">{{
+                                    globalScanResult.totalFound }}</span>
+                            </div>
+                            <div class="bg-green-50 dark:bg-green-900/20 p-2 rounded">
+                                <span class="block text-xs text-green-600 dark:text-green-400">Matched</span>
+                                <span class="text-lg font-bold text-green-800 dark:text-green-200">{{
+                                    globalScanResult.matched }}</span>
+                            </div>
+                            <div class="bg-yellow-50 dark:bg-yellow-900/20 p-2 rounded">
+                                <span class="block text-xs text-yellow-600 dark:text-yellow-400">Orphans</span>
+                                <span class="text-lg font-bold text-yellow-800 dark:text-yellow-200">{{
+                                    globalScanResult.orphans }}</span>
+                            </div>
+                            <div class="bg-purple-50 dark:bg-purple-900/20 p-2 rounded">
+                                <span class="block text-xs text-purple-600 dark:text-purple-400">Imported</span>
+                                <span class="text-lg font-bold text-purple-800 dark:text-purple-200">{{
+                                    globalScanResult.imported }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Orphans List -->
@@ -207,14 +280,13 @@
         <!-- Flex Container for Centering -->
         <div class="flex min-h-screen items-center justify-center p-4 text-center sm:p-0">
 
-            <!-- Overlay (Transparent as requested) -->
-            <div class="fixed inset-0 transition-opacity" aria-hidden="true" @click="closeMergeModal"></div>
+            <!-- Overlay -->
+            <div class="fixed inset-0 transition-opacity" aria-hidden="true" @click="closeResolveModal"></div>
 
             <!-- Modal Panel -->
             <div
                 class="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-800 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg border border-gray-200 dark:border-gray-700">
 
-                <!-- Body -->
                 <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                     <div class="sm:flex sm:items-start">
                         <div
@@ -223,22 +295,83 @@
                         </div>
                         <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
                             <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white" id="modal-title">
-                                Merge Orphaned Payment
+                                Resolve Orphaned Payment
                             </h3>
                             <div class="mt-2">
-                                <p class="text-sm text-gray-500 dark:text-gray-400">
-                                    Link this payment ({{ selectedOrphan?.amount }} WCH) to a Redemption Request.
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                                    Payment Amount: <strong class="text-gray-900 dark:text-white">{{
+                                        selectedOrphan?.amount }} WCH</strong><br>
+                                    Sender: <span class="font-mono text-xs">{{ selectedOrphan?.sender_address
+                                        }}</span>
                                 </p>
 
-                                <div class="mt-4">
+                                <!-- Action Type Selection -->
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Action Type
+                                    </label>
+                                    <div class="flex space-x-2">
+                                        <button v-for="type in resolveTypes" :key="type.id"
+                                            @click="resolveType = type.id" :class="[
+                                                resolveType === type.id
+                                                    ? 'bg-blue-600 text-white border-blue-600'
+                                                    : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600',
+                                                'flex-1 py-2 px-2 border rounded-md text-xs font-medium focus:outline-none transition-colors'
+                                            ]">
+                                            {{ type.label }}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Dynamic Form -->
+                                <div v-if="resolveType === 'merge_redemption'" class="mt-4">
                                     <label for="requestId"
                                         class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        Target Request UUID
+                                        Target Redemption ID (UUID)
                                     </label>
-                                    <input type="text" v-model="mergeTargetRequestId" id="requestId"
+                                    <input type="text" v-model="targetId" id="requestId"
                                         class="block w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 text-gray-900 dark:text-white dark:bg-gray-700 focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm shadow-sm"
-                                        placeholder="Paste UUID (e.g. 1234abcd-...)" />
+                                        placeholder="Enter Redemption Request ID..." />
                                 </div>
+
+                                <div v-if="resolveType === 'merge_history'" class="mt-4">
+                                    <label for="historyId"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Target Transaction ID (UUID)
+                                    </label>
+                                    <input type="text" v-model="targetId" id="historyId"
+                                        class="block w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 text-gray-900 dark:text-white dark:bg-gray-700 focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm shadow-sm"
+                                        placeholder="Enter Transaction History ID..." />
+                                    <p class="mt-1 text-xs text-gray-500">
+                                        This will update the existing 'Pending' transaction with this hash and mark it
+                                        as
+                                        Completed.
+                                    </p>
+                                </div>
+
+                                <div v-if="resolveType === 'create_history'" class="mt-4">
+                                    <div
+                                        class="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-md p-3">
+                                        <div class="flex">
+                                            <div class="flex-shrink-0">
+                                                <span class="text-yellow-400">⚠️</span>
+                                            </div>
+                                            <div class="ml-3">
+                                                <h3 class="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                                                    Create New History Record
+                                                </h3>
+                                                <div class="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
+                                                    <p> This will create a new "Send" transaction for user <strong>{{
+                                                        selectedOrphan?.sender_address }}</strong>.</p>
+                                                    <p class="mt-1">If the user doesn't exist, a new User account will
+                                                        be
+                                                        created automatically.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                             </div>
                         </div>
                     </div>
@@ -246,11 +379,11 @@
 
                 <!-- Footer -->
                 <div class="bg-gray-50 dark:bg-gray-700/50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-                    <button type="button" @click="submitMerge" :disabled="isMerging || !mergeTargetRequestId"
+                    <button type="button" @click="submitResolve" :disabled="isMerging || !canSubmit"
                         class="inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed sm:ml-3 sm:w-auto">
-                        {{ isMerging ? 'Processing...' : 'Merge' }}
+                        {{ isMerging ? 'Processing...' : 'Confirm Resolution' }}
                     </button>
-                    <button type="button" @click="closeMergeModal"
+                    <button type="button" @click="closeResolveModal"
                         class="mt-3 inline-flex w-full justify-center rounded-md bg-white dark:bg-gray-800 px-3 py-2 text-sm font-semibold text-gray-900 dark:text-gray-300 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 sm:mt-0 sm:w-auto">
                         Cancel
                     </button>
@@ -261,7 +394,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { toast } from 'vue-sonner';
 import { apiClient } from '@/utils/apiClient';
 
@@ -371,55 +504,98 @@ const runTreasuryScan = async () => {
 // Fetch orphans on mount
 fetchOrphans();
 
-// Merge Logic
+const globalScanStatus = ref<'idle' | 'running' | 'success' | 'error'>('idle');
+const globalScanResult = ref<any>(null);
+const selectedGlobalInternalChainId = ref<number | null>(null); // Distinct from treasury scan selection
+
+const runGlobalScan = async () => {
+    globalScanStatus.value = 'running';
+    const body = selectedGlobalInternalChainId.value ? JSON.stringify({ chainId: selectedGlobalInternalChainId.value }) : undefined;
+    try {
+        const response = await apiClient.fetch('/api/reconcile/global-scan', {
+            method: 'POST',
+            body
+        });
+
+        if (!response.ok) {
+            const text = await response.text();
+            throw new Error(`Request failed (${response.status}): ${text}`);
+        }
+
+        const data = await response.json();
+        globalScanResult.value = data.result;
+        globalScanStatus.value = 'success';
+        toast.success(`Global Scan Complete: Found ${globalScanResult.value.totalFound} transfers.`);
+    } catch (error: any) {
+        console.error('Global Scan Error:', error);
+        globalScanStatus.value = 'error';
+        toast.error(error.message || 'Scan Failed');
+    } finally {
+        if (globalScanStatus.value === 'running') globalScanStatus.value = 'idle';
+    }
+};
+
+// Resolve/Merge Logic
 const showMergeModal = ref(false);
 const selectedOrphan = ref<any>(null);
-const mergeTargetRequestId = ref('');
+const targetId = ref('');
 const isMerging = ref(false);
+
+const resolveTypes = [
+    { id: 'merge_redemption', label: 'Merge to Redemption' },
+    { id: 'merge_history', label: 'Merge to History' },
+    { id: 'create_history', label: 'Create New History' }
+];
+const resolveType = ref('merge_redemption');
 
 const openMergeModal = (orphan: any) => {
     selectedOrphan.value = orphan;
-    mergeTargetRequestId.value = '';
+    targetId.value = '';
+    resolveType.value = 'merge_redemption'; // Default
     showMergeModal.value = true;
 };
 
-const closeMergeModal = () => {
+const closeResolveModal = () => {
     showMergeModal.value = false;
     selectedOrphan.value = null;
-    mergeTargetRequestId.value = '';
+    targetId.value = '';
 };
 
-const submitMerge = async () => {
-    if (!selectedOrphan.value || !mergeTargetRequestId.value) return;
+const canSubmit = computed(() => {
+    if (resolveType.value === 'create_history') return true;
+    return targetId.value.trim().length > 0;
+});
 
-    const cleanRequestId = mergeTargetRequestId.value.trim();
-    // Removed strict regex check to debugging
-    console.log('Submitting Merge for Request ID:', cleanRequestId);
+const submitResolve = async () => {
+    if (!selectedOrphan.value) return;
+    if (resolveType.value !== 'create_history' && !targetId.value) return;
 
     isMerging.value = true;
     try {
-        const response = await apiClient.fetch('/api/reconcile/merge', {
+        const response = await apiClient.fetch('/api/reconcile/resolve-orphan', {
             method: 'POST',
             body: JSON.stringify({
                 orphanId: selectedOrphan.value.id,
-                requestId: cleanRequestId
+                action: resolveType.value,
+                targetId: targetId.value.trim()
             })
         });
 
         if (!response.ok) {
             const data = await response.json();
-            throw new Error(data.error || 'Merge failed');
+            throw new Error(data.error || 'Resolution failed');
         }
 
-        toast.success('Successfully merged orphan to request');
-        closeMergeModal();
-        fetchOrphans(); // Refresh list to see orphan removed
+        toast.success('Successfully resolved orphaned payment');
+        closeResolveModal();
+        fetchOrphans(); // Refresh list
     } catch (e: any) {
         console.error(e);
-        toast.error(e.message || 'Failed to merge');
+        toast.error(e.message || 'Resolution Failed');
     } finally {
         isMerging.value = false;
     }
 };
+
 
 </script>

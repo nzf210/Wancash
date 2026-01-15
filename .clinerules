@@ -25,6 +25,7 @@ The Wancash Staking project is a multi-layered decentralized application:
   1. Create a new `.sql` file in `cloude-flare-wancash/migrations/` using incremental numbering (e.g., `013_new_feature.sql`).
   2. Use `IF NOT EXISTS` for tables and `ADD COLUMN IF NOT EXISTS` for column additions.
   3. **Application**: Use `bun run scripts/apply-migrations.ts` to apply ALL pending migrations. This script tracks applied migrations in the `_migrations` table.
+  4. **IMPORTANT**: If you create a new migration manually, ensure you add it to `migrations/` and running the script.
 - **Mocking**: When testing, use `vi.mock('@neondatabase/serverless')`.
 
 ### 2. State & Variable Management
