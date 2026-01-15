@@ -1,6 +1,17 @@
 <template>
     <div class="space-y-6">
-        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">My Claim History</h2>
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-white">My Claim History</h2>
+            <Button variant="outline" size="sm" @click="fetchRequests" :disabled="isLoading"
+                class="flex items-center gap-2">
+                <svg :class="{ 'animate-spin': isLoading }" class="w-4 h-4" xmlns="http://www.w3.org/2000/svg"
+                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Reload
+            </Button>
+        </div>
 
         <div v-if="isLoading" class="flex justify-center py-12">
             <svg class="animate-spin h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -29,7 +40,7 @@
                                 {{ getStatusLabel(req.status, req.payment_status) }}
                             </span>
                             <span class="text-sm text-gray-500 dark:text-gray-400">{{ formatDate(req.created_at)
-                            }}</span>
+                                }}</span>
                         </div>
 
                         <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">

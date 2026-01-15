@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+    <div class="min-h-screen bg-gray-50 dark:bg-gray-900 p-3 sm:p-6">
         <div class="max-w-7xl mx-auto">
             <!-- Header -->
             <div class="mb-8">
@@ -10,7 +10,7 @@
             <!-- Tabs -->
             <Tabs v-model="activeTab" class="w-full">
                 <TabsList
-                    class="grid w-full grid-cols-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-1">
+                    class="grid w-full grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 h-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-1">
                     <TabsTrigger value="redemption"
                         class="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

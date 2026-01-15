@@ -141,7 +141,7 @@ const closeMobileMenu = () => {
         <ThemeToggle v-if="props.showThemeToggle" />
 
         <!-- Mobile Notifications (Authenticated) -->
-        <NotificationView v-if="isAuthenticated" :is-mobile="true" />
+        <NotificationView v-if="isAuthenticated && notificationStore.hasAnyNotifications" :is-mobile="true" />
 
         <!-- Mobile Menu Button -->
         <Button variant="ghost" size="icon" class="h-9 w-9" @click="isMobileMenuOpen = true">

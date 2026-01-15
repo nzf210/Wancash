@@ -22,10 +22,13 @@ The Wancash Staking project is a multi-layered decentralized application:
 
 - **Baseline**: `migrations/000_baseline_schema.sql` contains the project's initial manual schema.
 - **Workflow**:
-  1. Create a new `.sql` file in `cloude-flare-wancash/migrations/` using incremental numbering (e.g., `013_new_feature.sql`).
-  2. Use `IF NOT EXISTS` for tables and `ADD COLUMN IF NOT EXISTS` for column additions.
+  1. **Drafting**: Create a new `.sql` file in `cloude-flare-wancash/migrations/` using incremental numbering (e.g., `013_new_feature.sql`).
+  2. **Verification (CRITICAL)**:
+     - **Double-Check**: Review existing `migrations/` to ensure you aren't duplicating work or conflicting with previous changes.
+     - **Idempotency**: **ALWAYS** use `IF NOT EXISTS` for tables and `ADD COLUMN IF NOT EXISTS` for columns.
+     - **Safety**: Avoid destructive operations (`DROP TABLE`/`DROP COLUMN`) unless explicitly authorized and planned for data loss/backup.
   3. **Application**: Use `bun run scripts/apply-migrations.ts` to apply ALL pending migrations. This script tracks applied migrations in the `_migrations` table.
-  4. **IMPORTANT**: If you create a new migration manually, ensure you add it to `migrations/` and running the script.
+  4. **Post-Check**: Verify the migration was successful and the schema is as expected.
 - **Mocking**: When testing, use `vi.mock('@neondatabase/serverless')`.
 
 ### 2. State & Variable Management
@@ -48,6 +51,51 @@ The Wancash Staking project is a multi-layered decentralized application:
 
 - **Wrangler**: Update `wrangler.jsonc` for new bindings (Rate limiters, KV, etc.).
 - **Vite**: Ensure frontend `.env` matches the backend RPC and contract addresses.
+
+---
+
+---
+
+## 🔧 Backend Architecture (Cloudflare Workers + Hono)
+
+### 1. Middleware & Context
+- **Pattern**: Must use `createMiddleware` from `hono/factory`.
+- **Context Injection**: Database client (`client`) is injected via `dbMiddleware`.
+  - **Rule**: ALWAYS retrieve via `c.get('db')`.
+  - **Type Safety**: Ensure `AppEnv` in `src/index.ts` correctly types `Variables.db`.
+
+### 2. Routing & Logic
+- **Routing**: New feature routes must be defined in a dedicated file (e.g., `src/features.ts`) and mounted in `src/index.ts`.
+- **Logic placement**: Keep verify/business logic in service classes or standalone functions, not inside the route handler if complex.
+
+### 3. Logging Standards
+- **Use Emojis**:
+  - 🔐 `Auth`: Login, JWT verification, Token issues.
+  - ❌ `Error`: Exceptions, 4xx/5xx responses.
+  - ✅ `Success`: Critical operations completed.
+  - ⚠️ `Warning`: Non-critical issues or missing configs.
+
+---
+
+## 🎨 Frontend Architecture (Vue 3 + Modules)
+
+### 1. Modular Design
+- **Location**: Feature-specific logic MUST go into `src/modules/{module_name}/`.
+  - `components/`: Module-specific UI.
+  - `stores/`: Module-specific state (Pinia).
+  - `composables/`: Module-specific logic reuse.
+
+### 2. Global Configuration
+- **Entry Point**: `src/main.ts` is the SINGLE point of entry for plugins (Pinia, Wagmi, Router).
+- **Rule**: Do not bootstrap plugins elsewhere to avoid "Active Pinia" errors.
+
+---
+
+## 🚫 Critical "No-Go" Zones
+
+1. **Baseline Schema**: Do NOT modify `migrations/000_baseline_schema.sql`.
+2. **Hardcoded Chains**: Do NOT hardcode Chain IDs (e.g., `1`, `56`). Use `c.env` or constants (e.g., `CHAIN_ID_BSC`).
+3. **secrets in code**: Do NOT commit secrets. Use `.dev.vars` and `wrangler.jsonc` bindings.
 
 ---
 

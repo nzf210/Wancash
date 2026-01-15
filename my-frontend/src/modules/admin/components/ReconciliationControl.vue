@@ -205,6 +205,85 @@
                         </div>
                     </div>
                 </div>
+                <!-- Missing Hash Audit (New) -->
+                <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-2xl">🕵️</span>
+                            <h3 class="font-medium text-gray-900 dark:text-white">Missing Hash Audit</h3>
+                        </div>
+                        <span v-if="auditStatus" :class="{
+                            'bg-green-100 text-green-800': auditStatus === 'success',
+                            'bg-red-100 text-red-800': auditStatus === 'error',
+                            'bg-blue-100 text-blue-800': auditStatus === 'running'
+                        }" class="px-2 py-1 rounded-full text-xs font-semibold">
+                            {{ auditStatus.toUpperCase() }}
+                        </span>
+                    </div>
+                    <p class="text-sm text-gray-500 mb-4">
+                        Identify records missing transaction hashes.
+                    </p>
+                    <button @click="runHashAudit" :disabled="auditStatus === 'running'"
+                        class="w-full px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center">
+                        <svg v-if="auditStatus === 'running'" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                            </circle>
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                            </path>
+                        </svg>
+                        {{ auditStatus === 'running' ? 'Scanning...' : 'Run Audit' }}
+                    </button>
+                    <div v-if="auditResult"
+                        class="mt-4 text-xs bg-gray-50 dark:bg-gray-900 p-3 rounded max-h-60 overflow-y-auto space-y-3">
+
+                        <!-- History Audit Results -->
+                        <div v-if="Object.keys(auditResult.history || {}).length > 0">
+                            <p class="font-bold text-gray-800 dark:text-gray-200 mb-1">Transaction History (Missing
+                                Hash)</p>
+                            <div v-for="(rows, chainId) in auditResult.history" :key="'hist-' + chainId" class="mb-2">
+                                <span class="text-orange-600 dark:text-orange-400 font-semibold">Chain {{ chainId }}:
+                                    {{ rows.length }} records</span>
+                                <div class="pl-2 mt-1 space-y-0.5">
+                                    <div v-for="row in rows.slice(0, 5)" :key="row.id"
+                                        class="text-gray-500 dark:text-gray-400 truncate">
+                                        ID: <span class="font-mono">{{ row.id }}</span>
+                                    </div>
+                                    <div v-if="rows.length > 5" class="text-gray-400 italic">
+                                        ...and {{ rows.length - 5 }} more
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-else class="text-green-600 dark:text-green-400">
+                            ✓ No missing hashes in Transaction History
+                        </div>
+
+                        <!-- Redemption Audit Results -->
+                        <div v-if="Object.keys(auditResult.redemptions || {}).length > 0">
+                            <p class="font-bold text-gray-800 dark:text-gray-200 mt-3 mb-1">Redemptions (Missing
+                                Hash)</p>
+                            <div v-for="(rows, chainId) in auditResult.redemptions" :key="'redem-' + chainId"
+                                class="mb-2">
+                                <span class="text-orange-600 dark:text-orange-400 font-semibold">Chain {{ chainId }}:
+                                    {{ rows.length }} records</span>
+                                <div class="pl-2 mt-1 space-y-0.5">
+                                    <div v-for="row in rows.slice(0, 5)" :key="row.id"
+                                        class="text-gray-500 dark:text-gray-400 truncate">
+                                        ID: <span class="font-mono">{{ row.id }}</span> ({{ row.status }})
+                                    </div>
+                                    <div v-if="rows.length > 5" class="text-gray-400 italic">
+                                        ...and {{ rows.length - 5 }} more
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-else class="text-green-600 dark:text-green-400 mt-3">
+                            ✓ No missing hashes in Redemptions
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Orphans List -->
@@ -532,6 +611,39 @@ const runGlobalScan = async () => {
         toast.error(error.message || 'Scan Failed');
     } finally {
         if (globalScanStatus.value === 'running') globalScanStatus.value = 'idle';
+    }
+};
+
+// Scan Logic
+// ... (Previous logic)
+
+// Audit Logic (Missing Hashes)
+const auditStatus = ref<'idle' | 'running' | 'success' | 'error'>('idle');
+const auditResult = ref<any>(null);
+
+const runHashAudit = async () => {
+    auditStatus.value = 'running';
+    auditResult.value = null;
+    try {
+        const response = await apiClient.fetch('/api/reconcile/check-missing-hashes', {
+            method: 'POST'
+        });
+
+        if (!response.ok) {
+            const text = await response.text();
+            throw new Error(`Request failed (${response.status}): ${text}`);
+        }
+
+        const data = await response.json();
+        auditResult.value = data.data;
+        auditStatus.value = 'success';
+        toast.success(`Audit Complete`);
+    } catch (error: any) {
+        console.error('Audit Error:', error);
+        auditStatus.value = 'error';
+        toast.error(error.message || 'Audit Failed');
+    } finally {
+        if (auditStatus.value === 'running') auditStatus.value = 'idle';
     }
 };
 

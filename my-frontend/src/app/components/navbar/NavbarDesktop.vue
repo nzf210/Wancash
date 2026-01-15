@@ -137,7 +137,7 @@ watch(isAuthenticated, (val) => {
         <!-- Show ProfileIcon and Notifications when authenticated -->
         <div v-if="isAuthenticated" class="flex flex-row">
           <!-- Notifications -->
-          <NotificationView />
+          <NotificationView v-if="notificationStore.hasAnyNotifications" />
         </div>
       </div>
     </div>

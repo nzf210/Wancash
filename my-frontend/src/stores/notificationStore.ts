@@ -71,6 +71,9 @@ export const useNotificationStore = defineStore('notification', () => {
 
     const hasNotifications = computed(() => unreadCount.value > 0)
 
+    // Check if there are ANY notifications (read or unread)
+    const hasAnyNotifications = computed(() => notifications.value.length > 0)
+
     const markAsRead = async (id: string) => {
         // Optimistic update
         const notification = notifications.value.find(n => n.id === id)
@@ -135,6 +138,7 @@ export const useNotificationStore = defineStore('notification', () => {
         error,
         unreadCount,
         hasNotifications,
+        hasAnyNotifications,
         fetchNotifications,
         startPolling,
         stopPolling,

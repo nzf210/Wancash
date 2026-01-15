@@ -1,5 +1,5 @@
 <template>
-    <div class="p-2 sm:p-4 md:p-6 lg:p-8 max-w-4xl mx-auto">
+    <div class="p-2 sm:p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
         <div class="grid lg:grid-cols-2 gap-4 md:gap-6 lg:gap-8">
             <!-- From Section -->
             <div
@@ -131,7 +131,7 @@
                                             'Select Token' }}
                                         </div>
                                         <div class="text-sm text-gray-500 dark:text-gray-400">{{ fromToken?.symbol || ''
-                                        }}
+                                            }}
                                         </div>
                                     </div>
                                 </div>
@@ -163,7 +163,7 @@
                                                         token.symbol }}</div>
                                                     <div class="text-xs text-gray-500 dark:text-gray-400 truncate">{{
                                                         token.name
-                                                    }}</div>
+                                                        }}</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -257,7 +257,7 @@
                                         </div>
                                         <div class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{{
                                             toChain?.type || 'Network'
-                                        }}</div>
+                                            }}</div>
                                     </div>
                                 </div>
                                 <ChevronDownIcon
@@ -351,7 +351,7 @@
                             <span>Estimated Time</span>
                         </div>
                         <span class="font-medium text-xs sm:text-sm text-gray-900 dark:text-white">{{ timeEstimate
-                        }}</span>
+                            }}</span>
                     </div>
                     <div class="flex justify-between items-center py-1">
                         <div class="flex items-center space-x-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
@@ -423,7 +423,7 @@
                         <div class="flex items-center gap-2">
                             <TokenIcon v-if="fromToken" :token="fromToken" class="w-6 h-6" />
                             <span class="font-medium text-gray-900 dark:text-white">{{ amount }} {{ fromToken?.symbol
-                                }}</span>
+                            }}</span>
                         </div>
                         <div class="flex items-center gap-1.5 text-sm text-gray-500">
                             <ChainIcon v-if="fromChain" :chain="fromChain" class="w-4 h-4" />
@@ -447,7 +447,7 @@
                             <TokenIcon v-if="toToken" :token="toToken" class="w-6 h-6" />
                             <span class="font-medium text-gray-900 dark:text-white">~{{
                                 formatTokenBalance(estimatedAmount)
-                                }} {{ toToken?.symbol }}</span>
+                            }} {{ toToken?.symbol }}</span>
                         </div>
                         <div class="flex items-center gap-1.5 text-sm text-gray-500">
                             <ChainIcon v-if="toChain" :chain="toChain" class="w-4 h-4" />
@@ -465,7 +465,7 @@
                     <div class="flex justify-between">
                         <span class="text-gray-500">Bridge Fee</span>
                         <span class="font-medium text-gray-900 dark:text-white">{{ bridgeFee }} {{ fromToken?.symbol
-                            }}</span>
+                        }}</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-gray-500">Estimated Time</span>

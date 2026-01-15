@@ -1,6 +1,6 @@
 <template>
   <div class="container mx-auto px-1 md:px-4 py-8">
-    <div class="max-w-6xl mx-auto">
+    <div class="max-w-7xl mx-auto">
       <BridgeHeader />
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-6">
