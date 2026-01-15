@@ -29,7 +29,7 @@
                                 {{ getStatusLabel(req.status, req.payment_status) }}
                             </span>
                             <span class="text-sm text-gray-500 dark:text-gray-400">{{ formatDate(req.created_at)
-                                }}</span>
+                            }}</span>
                         </div>
 
                         <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">
@@ -389,7 +389,7 @@ const handlePayment = (req: RedemptionRecord) => {
                 await waitForTransactionReceipt(config, { hash })
 
                 // Notify Backend
-                await redemptionService.payRedemption(req.id, hash)
+                await redemptionService.payRedemption(req.id, hash, chainId.value)
 
                 toast.success('Payment successful!')
 
@@ -401,7 +401,7 @@ const handlePayment = (req: RedemptionRecord) => {
                 // DEV: Allow bypass if contract is not deployed
                 // @ts-ignore
                 if (import.meta.env.MODE === 'development' && confirm('Dev Mode: Simulate success?')) {
-                    await redemptionService.payRedemption(req.id, '0xMOCKHASH')
+                    await redemptionService.payRedemption(req.id, '0xMOCKHASH', chainId.value)
                     toast.success('Dev Payment successful!')
                     await fetchRequests()
                 } else {

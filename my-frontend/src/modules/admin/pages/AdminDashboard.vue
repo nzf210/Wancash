@@ -10,7 +10,7 @@
             <!-- Tabs -->
             <Tabs v-model="activeTab" class="w-full">
                 <TabsList
-                    class="grid w-full grid-cols-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-1">
+                    class="grid w-full grid-cols-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-1">
                     <TabsTrigger value="redemption"
                         class="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -36,6 +36,14 @@
                         </svg>
                         Configuration
                     </TabsTrigger>
+                    <TabsTrigger value="reconciliation"
+                        class="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        Reconciliation
+                    </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="redemption" class="mt-6">
@@ -48,6 +56,10 @@
 
                 <TabsContent value="config" class="mt-6">
                     <ConfigSettings />
+                </TabsContent>
+
+                <TabsContent value="reconciliation" class="mt-6">
+                    <ReconciliationControl />
                 </TabsContent>
             </Tabs>
         </div>
@@ -63,6 +75,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import RedemptionDashboard from './RedemptionDashboard.vue'
 import ProductManagement from './ProductManagement.vue'
 import ConfigSettings from './ConfigSettings.vue'
+import ReconciliationControl from '../components/ReconciliationControl.vue'
 
 const route = useRoute()
 const router = useRouter()

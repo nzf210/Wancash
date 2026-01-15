@@ -257,10 +257,13 @@ export const redemptionService = {
     /**
      * Confirm payment after blockchain transaction
      */
-    async payRedemption(id: string, transactionHash: string): Promise<void> {
+    async payRedemption(id: string, transactionHash: string, chainId?: number): Promise<void> {
         const response = await apiClient.fetch(`/api/redemption/${id}/pay`, {
             method: 'POST',
-            body: JSON.stringify({ transaction_hash: transactionHash })
+            body: JSON.stringify({
+                transaction_hash: transactionHash,
+                chain_id: chainId
+            })
         });
 
         if (!response.ok) {

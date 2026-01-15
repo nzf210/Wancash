@@ -225,7 +225,7 @@
                         </Button>
 
                         <!-- Already Verified Message -->
-                        <div v-else-if="request.payment_status === 'confirmed' && request.reconciliation_status === 'verified'"
+                        <div v-else-if="(request.payment_status === 'confirmed' || request.payment_status === 'paid') && (request.reconciliation_status === 'verified' || request.reconciliation_status === 'manually_merged')"
                             class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded p-3 text-center">
                             <svg class="w-6 h-6 text-green-600 dark:text-green-400 mx-auto mb-1" fill="none"
                                 stroke="currentColor" viewBox="0 0 24 24">
@@ -366,10 +366,15 @@ const allowedNextStatuses = computed(() => {
             { value: 'rejected', label: 'Rejected' }
         ],
         'waiting_payment': [
-            // Only allow processing if payment is reconciled
-            ...(props.request.reconciliation_status === 'verified'
-                ? [{ value: 'processing', label: 'Processing' }]
-                : []),
+            { value: 'processing', label: 'Processing' },
+            { value: 'rejected', label: 'Rejected' }
+        ],
+        'waiting_payment_review': [
+            { value: 'processing', label: 'Processing' },
+            { value: 'rejected', label: 'Rejected' }
+        ],
+        'manually_merged': [
+            { value: 'processing', label: 'Processing' },
             { value: 'rejected', label: 'Rejected' }
         ],
         'processing': [
@@ -537,6 +542,7 @@ const getPaymentStatusClass = (status: string) => {
         case 'pending':
             return classes + 'bg-yellow-100 text-yellow-800 dark:bg-yellow-500/20 dark:text-yellow-300'
         case 'confirmed':
+        case 'paid':
             return classes + 'bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-300'
         case 'failed':
             return classes + 'bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-300'
@@ -551,8 +557,10 @@ const getReconciliationStatusClass = (status: string) => {
         case 'pending':
             return classes + 'bg-yellow-100 text-yellow-800 dark:bg-yellow-500/20 dark:text-yellow-300'
         case 'verified':
+        case 'manually_merged':
             return classes + 'bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-300'
         case 'failed':
+        case 'mismatch':
             return classes + 'bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-300'
         case 'manual_review':
             return classes + 'bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300'

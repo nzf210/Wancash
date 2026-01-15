@@ -28,8 +28,8 @@ export interface AdminRedemptionRequest {
     }[]
 
     // Reconciliation fields
-    payment_status?: 'unpaid' | 'pending' | 'confirmed' | 'failed'
-    reconciliation_status?: 'pending' | 'verified' | 'failed' | 'manual_review'
+    payment_status?: 'unpaid' | 'pending' | 'confirmed' | 'failed' | 'paid'
+    reconciliation_status?: 'pending' | 'verified' | 'failed' | 'manual_review' | 'manually_merged' | 'mismatch'
     reconciliation_verified_at?: string
     reconciliation_error?: string
     expected_amount?: number
