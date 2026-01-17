@@ -1,5 +1,20 @@
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, ref } from 'vue'
+import { onMounted, onBeforeUnmount, ref, computed, watch } from 'vue'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { pancakeSwapService, type SwapQuote } from '../services/pancakeSwapService'
+import TokenPriceChart from './TokenPriceChart.vue'
+import { toast } from 'vue-sonner'
+import { useChainId, useConfig } from '@wagmi/vue'
+import { usePriceStore } from '@/stores/priceStore'
+import { storeToRefs } from 'pinia'
+import WancashIcon from '@/components/icons/WancashIcon.vue'
+import UsdtIcon from '@/components/icons/UsdtIcon.vue'
+import ChainIcon from '@/modules/bridge/components/ChainIcon.vue'
+import { networks } from '@/app/components/config/wagmi'
+import { wancashContractAddress } from '@/app/services/contracts'
+import { SUPPORTED_CHAINS } from '@/app/composables/useChain'
 
 // Blob element
 const follower = ref<HTMLElement>()
@@ -46,6 +61,379 @@ onBeforeUnmount(() => {
   globalThis.window.removeEventListener('mousemove', handleMouseMove)
 })
 
+// Price Store
+const priceStore = usePriceStore()
+const {
+  wchPrice: currentPrice,
+  marketCap,
+  volume24h,
+  pairAddress,
+  wchChange1h,
+  wchChange24h
+} = storeToRefs(priceStore)
+
+// Reactive state
+const loading = ref<boolean>(false)
+const selectedTimeframe = ref('1d')
+
+const priceChange = computed(() => {
+  const tf = selectedTimeframe.value
+  if (tf === '1m' || tf === '5m' || tf === '1h') return wchChange1h.value
+  return wchChange24h.value
+})
+
+const totalSupply = ref<number>(21000000000)
+const circulatingSupply = ref<number>(750000000)
+const lastUpdated = ref<string>('')
+
+// Swap State
+const swapMode = ref(false)
+const isSellMode = ref(false)
+const selectedToken = ref<'BNB' | 'USDT'>('BNB')
+const inputAmount = ref('')
+const quote = ref<SwapQuote | null>(null)
+const quoteLoading = ref(false)
+const swapLoading = ref(false)
+const needsApproval = ref(false)
+const approvalLoading = ref(false)
+let debounceTimer: any = null
+const sliderPercentage = ref(0) // 0-100
+const slippageTolerance = ref(0.5) // Default 0.5%
+
+// Balance computed for percentage calcs
+const maxBalance = computed(() => {
+  if (isSellMode.value) {
+    // Sell WCH: use WCH balance
+    return wchBalance.value ? parseFloat(wchBalance.value.formatted) : 0
+  } else {
+    // Buy WCH: use selected token balance
+    if (selectedToken.value === 'BNB') {
+      return nativeBalance.value ? parseFloat(nativeBalance.value.formatted) : 0
+    }
+    return usdtBalance.value ? parseFloat(usdtBalance.value.formatted) : 0
+  }
+})
+
+const setPercentage = (percent: number) => {
+  sliderPercentage.value = percent
+  if (maxBalance.value > 0) {
+    const amount = (maxBalance.value * percent) / 100
+    // BN for precise calculation is ideal, but using float for UI helper
+    // If Native (BNB), leave some for gas? Usually standard practice, but user asked for % value.
+    // Let's us 4 decimals for Native/WCH generally or standard format logic
+    // We'll use 6 decimals for precision in input
+    inputAmount.value = amount.toFixed(6)
+    // Remove trailing zeros
+    inputAmount.value = parseFloat(inputAmount.value).toString()
+    handleInput()
+  }
+}
+
+
+// Chain & Auth State
+const accountData = useAppKitAccount()
+const address = computed(() => accountData.value.address as `0x${string}` | undefined)
+const isConnected = computed(() => accountData.value.isConnected)
+const chainIdRef = useChainId()
+const chainId = computed(() => chainIdRef.value)
+
+const { open } = useAppKit()
+
+const isSupportedChain = computed(() => {
+  return chainId.value === 56 || chainId.value === 97
+})
+
+const activeChainForIcon = computed(() => {
+  if (!chainId.value) return null
+  const network = networks.find(n => n.id === chainId.value)
+  return network ? {
+    id: network.id,
+    name: network.name,
+    network: network.name.toLowerCase(),
+    symbol: network.nativeCurrency?.symbol || '',
+    currency: network.nativeCurrency?.symbol || '',
+    type: 'evm',
+    fee: 0,
+    eid: 0
+  } as any : null
+})
+
+// Format helpers
+const formatBalance = (bal: any, type: 'NATIVE' | 'TOKEN' = 'NATIVE') => {
+  if (!bal || !bal.formatted) return '0.00'
+  const num = parseFloat(bal.formatted)
+
+  if (type === 'TOKEN') {
+    return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  }
+  // Native: 4 decimals, keep as is (user said it's ok)
+  return num.toFixed(4)
+}
+
+// Balance State
+const nativeBalance = ref<any>(null) // Object with formatted, symbol, etc
+const wchBalance = ref<any>(null)
+const usdtBalance = ref<any>(null)
+const config = useConfig()
+
+// Helpers
+import { getBalance } from '@wagmi/core'
+import { useAppKit, useAppKitAccount } from '@reown/appkit/vue'
+
+
+const fetchNativeBalance = async () => {
+  if (!address.value || !chainId.value) return
+  try {
+    const bal = await getBalance(config, {
+      address: address.value,
+      chainId: chainId.value
+    })
+    nativeBalance.value = bal
+  } catch (e) {
+    console.error('Fetch Native Balance Error:', e)
+    nativeBalance.value = null
+  }
+}
+
+const fetchTokenBalance = async (tokenSymbol: 'WCH' | 'USDT') => {
+  if (!address.value || !chainId.value) return
+  const tokenAddress = pancakeSwapService.getTokenAddress(chainId.value, tokenSymbol)
+  try {
+    if (!tokenAddress) throw new Error(`${tokenSymbol} address not found`)
+
+    // For WCH we can use wancashAbi if standard ERC20, or a generic ERC20 ABI
+    // Using generic readContract for decimals and balance
+    // Simplified: assuming 18 decimals for now or fetching it
+
+    // Use wagmi's getBalance for tokens too is easier if supported
+    const bal = await getBalance(config, {
+      address: address.value,
+      token: tokenAddress as `0x${string}`,
+      chainId: chainId.value
+    })
+    if (tokenSymbol === 'WCH') wchBalance.value = bal
+    if (tokenSymbol === 'USDT') usdtBalance.value = bal
+
+  } catch (e) {
+    console.error(`Fetch ${tokenSymbol} Balance Error:`, e)
+    if (tokenSymbol === 'WCH') wchBalance.value = null
+    if (tokenSymbol === 'USDT') usdtBalance.value = null
+  }
+}
+
+const refreshBalances = () => {
+  fetchNativeBalance()
+  fetchTokenBalance('WCH')
+  fetchTokenBalance('USDT')
+}
+
+// Initial fetch and watch for chain/address changes
+watch([address, chainId], () => {
+  refreshBalances()
+}, { immediate: true })
+
+// Polling
+onMounted(() => {
+  const interval = setInterval(refreshBalances, 10000)
+  return () => clearInterval(interval)
+})
+
+// Reset generic when chain changes
+watch(chainId, () => {
+  if (swapMode.value) {
+    quote.value = null
+    inputAmount.value = ''
+    needsApproval.value = false
+  }
+})
+
+const estimatedOutput = computed(() => {
+  if (!quote.value) return '0.0'
+  return parseFloat(quote.value.amountOut).toFixed(6)
+})
+
+const approvalToken = computed(() => {
+  return isSellMode.value ? 'WCH' : selectedToken.value
+})
+
+const openSwapMode = (mode: 'BUY' | 'SELL') => {
+  // We open the modal regardless, but UI will show error if unsupported
+  isSellMode.value = mode === 'SELL'
+  swapMode.value = true
+  quote.value = null
+  inputAmount.value = ''
+  needsApproval.value = false
+}
+
+const closeSwapMode = () => {
+  swapMode.value = false
+  quote.value = null
+  inputAmount.value = ''
+}
+
+const selectToken = (token: 'BNB' | 'USDT') => {
+  selectedToken.value = token
+  quote.value = null
+  needsApproval.value = false
+  handleInput()
+}
+
+const handleInput = () => {
+  if (debounceTimer) clearTimeout(debounceTimer)
+  quote.value = null
+  needsApproval.value = false
+
+  if (!inputAmount.value || parseFloat(inputAmount.value) <= 0) return
+  if (!isSupportedChain.value) return
+
+  debounceTimer = setTimeout(async () => {
+    quoteLoading.value = true
+    try {
+      const tokenIn = isSellMode.value ? 'WCH' : selectedToken.value
+      const tokenOut = isSellMode.value ? selectedToken.value : 'WCH'
+
+      const currentChainId = chainId.value
+      if (!currentChainId) throw new Error("Chain ID not found")
+
+      // 1. Get Quote
+      quote.value = await pancakeSwapService.getQuote(currentChainId, inputAmount.value, tokenIn, tokenOut)
+
+      // 2. Check Allowance
+      const tokenToCheck = isSellMode.value ? 'WCH' : selectedToken.value
+
+      if (tokenToCheck !== 'BNB' && quote.value) {
+        const isApproved = await pancakeSwapService.checkAllowance(currentChainId, inputAmount.value, tokenToCheck)
+        needsApproval.value = !isApproved
+      }
+    } catch (e) {
+      console.error(e)
+      toast.error("Failed to fetch price")
+    } finally {
+      quoteLoading.value = false
+    }
+  }, 500)
+}
+
+const handleApprove = async () => {
+  if (!inputAmount.value) return
+  if (!isSupportedChain.value || !chainId.value) return
+
+  approvalLoading.value = true
+
+  // Determine which token to approve
+  const tokenToApprove = isSellMode.value ? 'WCH' : selectedToken.value
+
+  try {
+    const hash = await pancakeSwapService.approveToken(chainId.value, inputAmount.value, tokenToApprove)
+    toast.success("Approval sent!", { description: `Hash: ${hash}` })
+    needsApproval.value = false
+  } catch (e: any) {
+    console.error(e)
+    toast.error("Approval failed", { description: e.message })
+  } finally {
+    approvalLoading.value = false
+  }
+}
+
+const executeSwap = async () => {
+  if (!quote.value) return
+  if (!isSupportedChain.value || !chainId.value) return
+
+  swapLoading.value = true
+  try {
+    const hash = await pancakeSwapService.executeSwap(chainId.value, quote.value, slippageTolerance.value)
+    toast.success("Transaction sent!", {
+      description: `Hash: ${hash}`
+    })
+    closeSwapMode()
+  } catch (e: any) {
+    console.error(e)
+    toast.error("Swap failed", {
+      description: e.message
+    })
+  } finally {
+    swapLoading.value = false
+  }
+}
+
+
+// Computed properties
+const priceChangeClass = computed(() => {
+  return priceChange.value >= 0
+    ? 'text-green-600'
+    : 'text-red-600'
+})
+
+// Methods
+const updateLastUpdated = (): void => {
+  const now = new Date()
+  lastUpdated.value = now.toLocaleTimeString('en-US', {
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  })
+}
+
+// Fetch Real Data
+const fetchRealData = async () => {
+  try {
+    // Fetch from Backend using central price store
+    await priceStore.fetchPrices()
+
+    // Calculate implied supply based on Market Cap / Price if needed
+    if (currentPrice.value > 0) {
+      circulatingSupply.value = marketCap.value / currentPrice.value
+    }
+  } catch (error) {
+    console.error("Failed to load real stats", error)
+  } finally {
+    updateLastUpdated()
+  }
+}
+
+const handleTimeframeChange = (tf: string) => {
+  selectedTimeframe.value = tf
+}
+
+const copyToClipboard = (text: string) => {
+  navigator.clipboard.writeText(text)
+  toast.success('Address copied to clipboard', {
+    duration: 2000
+  })
+}
+
+// Computed for displaying addresses
+const chainContractAddresses = computed(() => {
+  const addresses: { chain: any, address: string }[] = []
+
+  SUPPORTED_CHAINS.forEach(chain => {
+    const address = wancashContractAddress[chain.id]
+    if (address) {
+      addresses.push({
+        chain,
+        address
+      })
+    }
+  })
+
+  return addresses
+})
+
+// Lifecycle hooks
+onMounted(() => {
+  fetchRealData()
+
+  // Poll for updates every 30s
+  const interval = setInterval(() => {
+    fetchRealData()
+  }, 30000)
+
+  // Cleanup interval saat component di-unmount
+  return () => {
+    clearInterval(interval)
+  }
+})
 </script>
 
 <template>
@@ -69,7 +457,7 @@ onBeforeUnmount(() => {
                      dark:from-purple-400 dark:to-blue-300 bg-clip-text text-transparent">
             Wancash Token
           </h1>
-          <p class="text-gray-600 dark:text-gray-400 text-sm">The Future of Community Finance</p>
+          <p class="text-gray-600 dark:text-gray-400 text-sm">Building the Future of Decentralized Finance</p>
         </div>
       </div>
 
@@ -80,19 +468,58 @@ onBeforeUnmount(() => {
           "Decentralizing finance, empowering communities — one token at a time."
         </blockquote>
         <p class="mt-4 text-gray-700 dark:text-gray-300 leading-relaxed">
-          Wancash is more than a token; it's a movement toward true financial inclusivity
-          and community-driven growth.
+          Experience the power of community-driven growth with Wancash. Secure, scalable, and designed for you.
         </p>
+      </div>
+
+      <!-- Contract Addresses Section -->
+      <div class="mb-8 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700">
+        <h3 class="flex items-center text-sm font-semibold text-gray-900 dark:text-white mb-3">
+          <span class="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse"></span>
+          Official Contract Addresses
+        </h3>
+        <div class="space-y-3">
+          <div v-for="item in chainContractAddresses" :key="item.chain.id"
+            class="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 hover:border-purple-200 dark:hover:border-purple-800 transition-colors">
+            <div class="flex items-center gap-3">
+              <div class="w-6 h-6 rounded-full overflow-hidden">
+                <ChainIcon :chain="item.chain" />
+              </div>
+              <div class="flex flex-col">
+                <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ item.chain.name }}</span>
+                <span class="text-xs font-mono text-gray-700 dark:text-gray-200 hidden md:block">{{ item.address
+                  }}</span>
+                <span class="text-xs font-mono text-gray-700 dark:text-gray-200 md:hidden">{{ item.address.slice(0, 6)
+                  }}...{{ item.address.slice(-4) }}</span>
+              </div>
+            </div>
+            <Button variant="ghost" size="sm" class="h-8 w-8 p-0 ml-2" @click="copyToClipboard(item.address)">
+              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+            </Button>
+          </div>
+        </div>
       </div>
 
       <!-- Profil Singkat -->
       <div class="mb-8">
         <h2 class="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-4">About Wancash</h2>
         <p class="text-gray-700 dark:text-gray-300 leading-relaxed">
-          Wancash is a decentralized utility token designed to facilitate fast, low-cost
-          transactions while providing sustainable rewards through staking. Built on a secure
-          and scalable blockchain, Wancash aims to bridge the gap between traditional finance
-          and the future of digital assets.
+          Wancash is more than just a digital asset; it's the gateway to a decentralized future.
+          Built for speed and low-cost transactions, we empower users with sustainable staking rewards
+          and true governance. Join us in bridging the gap between traditional finance and the limitless
+          potential of blockchain technology.
+          <router-link to="/about"
+            class="inline-flex items-center font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors ml-1">
+            Read more ...
+            <svg class="w-4 h-4 ml-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </router-link>
         </p>
       </div>
 
@@ -102,19 +529,19 @@ onBeforeUnmount(() => {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="flex items-start p-3 bg-gray-100 dark:bg-gray-800/50 rounded-lg">
             <span class="text-green-600 dark:text-green-400 mr-3">✓</span>
-            <span class="text-gray-800 dark:text-gray-300">Community-First Governance</span>
+            <span class="text-gray-800 dark:text-gray-300">Seamless Cross-Chain Swaps</span>
           </div>
           <div class="flex items-start p-3 bg-gray-100 dark:bg-gray-800/50 rounded-lg">
             <span class="text-green-600 dark:text-green-400 mr-3">✓</span>
-            <span class="text-gray-800 dark:text-gray-300">Eco-Friendly Staking</span>
+            <span class="text-gray-800 dark:text-gray-300">High-Yield Staking Rewards</span>
           </div>
           <div class="flex items-start p-3 bg-gray-100 dark:bg-gray-800/50 rounded-lg">
             <span class="text-green-600 dark:text-green-400 mr-3">✓</span>
-            <span class="text-gray-800 dark:text-gray-300">Transparent & Audited</span>
+            <span class="text-gray-800 dark:text-gray-300">Community-Led Governance</span>
           </div>
           <div class="flex items-start p-3 bg-gray-100 dark:bg-gray-800/50 rounded-lg">
             <span class="text-green-600 dark:text-green-400 mr-3">✓</span>
-            <span class="text-gray-800 dark:text-gray-300">Real-World Utility</span>
+            <span class="text-gray-800 dark:text-gray-300">Enterprise-Grade Security</span>
           </div>
         </div>
       </div>
@@ -126,15 +553,15 @@ onBeforeUnmount(() => {
           <ul class="space-y-2">
             <li class="flex items-center text-gray-700 dark:text-gray-300">
               <div class="w-2 h-2 bg-purple-500 rounded-full mr-3"></div>
-              Q4 2026: CEX Listings & Wallet
+              Q4 2026: CEX Listings & Mobile App
             </li>
             <li class="flex items-center text-gray-700 dark:text-gray-300">
               <div class="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
-              Q1 2027: Staking Platform Launch
+              Q1 2027: Staking & Lending Platform
             </li>
             <li class="flex items-center text-gray-700 dark:text-gray-300">
               <div class="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-              Q2 2028: Merchant Adoption
+              Q2 2028: Global Merchant Adoption
             </li>
           </ul>
         </div>
@@ -142,20 +569,30 @@ onBeforeUnmount(() => {
         <div>
           <h3 class="md:text-xl font-bold text-gray-900 dark:text-white mb-3">Join Community</h3>
           <div class="flex space-x-4">
-            <a href="https://t.me/wancash" class="w-10 h-10 bg-blue-100 hover:bg-blue-200 dark:bg-blue-500/20
+            <a target="_blank" href="https://t.me/wancash_token" class="w-10 h-10 bg-blue-100 hover:bg-blue-200 dark:bg-blue-500/20
                      dark:hover:bg-blue-500/40 rounded-lg flex items-center justify-center
                      transition-colors cursor-pointer" title="Telegram">
-              <span class="text-blue-600 dark:text-blue-400 font-medium">TG</span>
+              <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 24 24">
+                <path
+                  d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.461-1.901-.903-1.056-.693-1.653-1.124-2.678-1.8-1.185-.781-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.139-5.062 3.345-.479.329-.913.489-1.302.481-.428-.009-1.252-.242-1.865-.442-.752-.244-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.831-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635.099-.002.321.023.465.141.121.099.155.232.171.326.016.093.036.305.02.47z" />
+              </svg>
             </a>
-            <a href="https://twitter.com/WancashToken" class="w-10 h-10 bg-sky-100 hover:bg-sky-200 dark:bg-sky-500/20
+            <a target="_blank" href="https://twitter.com/Wancash_token" class="w-10 h-10 bg-sky-100 hover:bg-sky-200 dark:bg-sky-500/20
                      dark:hover:bg-sky-500/40 rounded-lg flex items-center justify-center
                      transition-colors cursor-pointer" title="Twitter">
-              <span class="text-sky-600 dark:text-sky-400 font-medium">TW</span>
+              <svg class="w-5 h-5 text-sky-600 dark:text-sky-400" fill="currentColor" viewBox="0 0 24 24">
+                <path
+                  d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" />
+              </svg>
             </a>
             <a href="https://wancash.org" class="w-10 h-10 bg-purple-100 hover:bg-purple-200 dark:bg-purple-500/20
                      dark:hover:bg-purple-500/40 rounded-lg flex items-center justify-center
                      transition-colors cursor-pointer" title="Website">
-              <span class="text-purple-600 dark:text-purple-400 font-medium">WEB</span>
+              <svg class="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+              </svg>
             </a>
           </div>
         </div>
