@@ -28,6 +28,7 @@ export interface BridgeHistory {
   amount: string;
   timestamp: number;
   status: 'pending' | 'completed' | 'failed';
+  toAddress?: string;
   txHash?: string;
 }
 

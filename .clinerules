@@ -163,6 +163,18 @@ Follow the **"Spec First, Test Second, Code Third"** principle:
 
 ---
 
+## 🧹 Safe Removal Protocol
+
+1. **Mandatory Dependency Check**: 
+   - Before removing ANY variable, function, or file, you **MUST** use `grep_search` to find all relations and usages.
+   - **Rule**: If you find NO usages, double-check for dynamic references or implicit dependencies (e.g., database columns used in API responses).
+
+2. **The "Don't Know" Rule**:
+   - If you are unsure if something is safe to remove, or if you "don't know" its purpose/relations: **DO NOT REMOVE IT**.
+   - **Action**: Ask the user for clarification or perform a deep-dive investigation first.
+
+---
+
 ## ⚠️ Pre-Change Checklist
 
 1. 🔍 **Search** all usages (Variable/Endpoint).

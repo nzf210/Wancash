@@ -111,6 +111,7 @@ export const useBridgeStore = defineStore('bridge', {
         amount: tx.amount,
         timestamp: tx.timestamp,
         status: tx.status === 'success' ? 'completed' as const : tx.status === 'failed' ? 'failed' as const : 'pending' as const,
+        toAddress: tx.to,
         txHash: tx.hash
       }))
     },

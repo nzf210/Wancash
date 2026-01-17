@@ -43,6 +43,9 @@
                     <div class="text-sm font-medium text-gray-900 dark:text-white mb-1">
                         {{ formatNumber(bridge.amount) }} {{ bridge.token }}
                     </div>
+                    <div v-if="bridge.toAddress" class="text-xs text-gray-500 dark:text-gray-400 mb-2 font-mono">
+                        To: {{ shortenHash(bridge.toAddress) }}
+                    </div>
                     <div class="text-xs text-gray-500 dark:text-gray-400 flex items-center">
                         <ClockIcon class="w-3 h-3 mr-1" />
                         {{ formatTime(bridge.timestamp) }}
@@ -79,8 +82,9 @@
                 <div class="col-span-3">Route</div>
                 <div class="col-span-2">Token</div>
                 <div class="col-span-2 text-right">Amount</div>
+                <div class="col-span-2">To Address</div>
                 <div class="col-span-2">Status</div>
-                <div class="col-span-2">Time</div>
+                <div class="col-span-1">Time</div>
                 <div class="col-span-1">Tx</div>
             </div>
 
@@ -129,8 +133,10 @@
 
                         <div class="flex items-center justify-between">
                             <div class="flex flex-col">
-                                <span class="text-sm font-bold text-gray-900 dark:text-white">{{ formatNumber(tx.amount)
-                                    }} {{ tx.token }}</span>
+                                <span class="text-sm font-bold text-gray-900 dark:text-white">{{ formatNumber(tx.amount) }} {{ tx.token }}</span>
+                                <span class="text-xs text-gray-500 dark:text-gray-400 mt-1" v-if="tx.toAddress">
+                                    To: {{ shortenHash(tx.toAddress) }}
+                                </span>
                             </div>
                             <StatusBadge :status="tx.status" />
                         </div>
@@ -172,8 +178,13 @@
 
                         <!-- Amount -->
                         <div class="col-span-2 text-right">
-                            <span class="font-semibold text-gray-900 dark:text-white">{{ formatNumber(tx.amount)
-                                }}</span>
+                            <span class="font-semibold text-gray-900 dark:text-white">{{ formatNumber(tx.amount) }}</span>
+                        </div>
+
+                        <!-- To Address -->
+                        <div class="col-span-2 font-mono text-xs text-gray-600 dark:text-gray-400">
+                            <span v-if="tx.toAddress" :title="tx.toAddress">{{ shortenHash(tx.toAddress) }}</span>
+                            <span v-else>-</span>
                         </div>
 
                         <!-- Status -->
@@ -182,7 +193,7 @@
                         </div>
 
                         <!-- Time -->
-                        <div class="col-span-2 text-sm text-gray-500 dark:text-gray-400">
+                        <div class="col-span-1 text-sm text-gray-500 dark:text-gray-400">
                             {{ formatTime(tx.timestamp) }}
                         </div>
 
