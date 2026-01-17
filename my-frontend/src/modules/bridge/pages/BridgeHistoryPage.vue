@@ -54,22 +54,40 @@
             </div>
         </div>
 
-        <!-- Filter Tabs -->
-        <div class="flex flex-col md:flex-row md:items-center justify-between mb-4 gap-4 md:gap-0">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">All Transactions</h3>
-            <div class="flex flex-wrap items-center gap-2 md:space-x-2">
-                <button v-for="filter in filters" :key="filter.value" @click="activeFilter = filter.value" :class="[
-                    'px-3 py-1.5 rounded-lg font-medium text-xs transition-colors',
-                    activeFilter === filter.value
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+        <!-- Direction & Status Filters -->
+        <div class="flex flex-col space-y-4 mb-6">
+            <!-- Direction Tabs -->
+            <div class="flex p-1 bg-gray-100 dark:bg-gray-800 rounded-lg w-fit">
+                <button v-for="dir in directions" :key="dir.value" @click="activeDirection = dir.value" :class="[
+                    'px-4 py-2 rounded-md text-sm font-medium transition-all',
+                    activeDirection === dir.value
+                        ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                 ]">
-                    {{ filter.label }}
-                    <span v-if="getFilterCount(filter.value) > 0"
-                        class="ml-1 px-1.5 py-0.5 rounded-full text-xs bg-white/20">
-                        {{ getFilterCount(filter.value) }}
-                    </span>
+                    {{ dir.label }}
                 </button>
+            </div>
+
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                    {{ activeDirection === 'incoming' ? 'Incoming' : activeDirection === 'outgoing' ? 'Outgoing' : 'All'
+                    }}
+                    Transactions
+                </h3>
+                <div class="flex flex-wrap items-center gap-2 md:space-x-2">
+                    <button v-for="filter in filters" :key="filter.value" @click="activeFilter = filter.value" :class="[
+                        'px-3 py-1.5 rounded-lg font-medium text-xs transition-colors',
+                        activeFilter === filter.value
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                    ]">
+                        {{ filter.label }}
+                        <span v-if="getFilterCount(filter.value) > 0"
+                            class="ml-1 px-1.5 py-0.5 rounded-full text-xs bg-white/20">
+                            {{ getFilterCount(filter.value) }}
+                        </span>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -133,7 +151,8 @@
 
                         <div class="flex items-center justify-between">
                             <div class="flex flex-col">
-                                <span class="text-sm font-bold text-gray-900 dark:text-white">{{ formatNumber(tx.amount) }} {{ tx.token }}</span>
+                                <span class="text-sm font-bold text-gray-900 dark:text-white">{{ formatNumber(tx.amount)
+                                    }} {{ tx.token }}</span>
                                 <span class="text-xs text-gray-500 dark:text-gray-400 mt-1" v-if="tx.toAddress">
                                     To: {{ shortenHash(tx.toAddress) }}
                                 </span>
@@ -178,7 +197,8 @@
 
                         <!-- Amount -->
                         <div class="col-span-2 text-right">
-                            <span class="font-semibold text-gray-900 dark:text-white">{{ formatNumber(tx.amount) }}</span>
+                            <span class="font-semibold text-gray-900 dark:text-white">{{ formatNumber(tx.amount)
+                                }}</span>
                         </div>
 
                         <!-- To Address -->
@@ -234,6 +254,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useBridgeStore } from '@/modules/bridge/store/bridgeStore'
+import { useAuth } from '@/app/composables/useAuth'
 import { SUPPORTED_CHAINS } from '@/app/composables/useChain'
 import StatusBadge from '@/modules/bridge/components/StatusBadge.vue'
 import ChainIcon from '@/modules/bridge/components/ChainIcon.vue'
@@ -248,6 +269,7 @@ import {
 const router = useRouter()
 const bridgeStore = useBridgeStore()
 const { history } = storeToRefs(bridgeStore)
+const { walletAddress } = useAuth()
 
 // Load persisted history on mount
 onMounted(() => {
@@ -256,26 +278,64 @@ onMounted(() => {
 
 // Filter state
 const activeFilter = ref<'all' | 'pending' | 'completed' | 'failed'>('all')
+const activeDirection = ref<'all' | 'incoming' | 'outgoing'>('all')
+
 const filters = [
-    { label: 'All', value: 'all' as const },
+    { label: 'All Status', value: 'all' as const },
     { label: 'Pending', value: 'pending' as const },
     { label: 'Completed', value: 'completed' as const },
     { label: 'Failed', value: 'failed' as const }
 ]
 
+const directions = [
+    { label: 'All', value: 'all' as const },
+    { label: 'Outgoing', value: 'outgoing' as const },
+    { label: 'Incoming', value: 'incoming' as const }
+]
+
 // Computed
 const recentThree = computed(() => {
-    return history.value.slice(0, 3)
+    // Only show OUTGOING or ALL in recent cards? Or simpler: just match the active direction logic
+    // Usually "Recent Activities" on top implies user actions, but let's respect the filter if possible,
+    // or just show everything sorted by time.
+    // Let's show filtered history top 3 to be consistent with what user is looking at.
+    return filteredHistory.value.slice(0, 3)
 })
 
 const filteredHistory = computed(() => {
-    if (activeFilter.value === 'all') return history.value
-    return history.value.filter(tx => tx.status === activeFilter.value)
+    let filtered = history.value
+
+    // 1. Filter by Direction
+    if (activeDirection.value !== 'all' && walletAddress.value) {
+        const userAddr = walletAddress.value.toLowerCase()
+        filtered = filtered.filter(tx => {
+            const isIncoming = tx.toAddress?.toLowerCase() === userAddr
+            return activeDirection.value === 'incoming' ? isIncoming : !isIncoming
+        })
+    }
+
+    // 2. Filter by Status
+    if (activeFilter.value !== 'all') {
+        filtered = filtered.filter(tx => tx.status === activeFilter.value)
+    }
+
+    return filtered
 })
 
-const getFilterCount = (filter: string) => {
-    if (filter === 'all') return history.value.length
-    return history.value.filter(tx => tx.status === filter).length
+const getFilterCount = (status: string) => {
+    // Count should reflect the current Direction filter
+    let baseList = history.value
+
+    if (activeDirection.value !== 'all' && walletAddress.value) {
+        const userAddr = walletAddress.value.toLowerCase()
+        baseList = baseList.filter(tx => {
+            const isIncoming = tx.toAddress?.toLowerCase() === userAddr
+            return activeDirection.value === 'incoming' ? isIncoming : !isIncoming
+        })
+    }
+
+    if (status === 'all') return baseList.length
+    return baseList.filter(tx => tx.status === status).length
 }
 
 // Methods

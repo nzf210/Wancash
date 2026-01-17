@@ -3,14 +3,16 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Header from '../components/SendHeader.vue'
 import { useChain } from '@/app/composables/useChain'
+import { useAuth } from '@/app/composables/useAuth'
 import { transactionHistoryService, type TransactionRecord } from '@/app/services/transactionHistoryService'
 
 const { getExplorerTxUrl, currentChain } = useChain()
+const { walletAddress } = useAuth()
 
 const router = useRouter()
 const transactions = ref<TransactionRecord[]>([])
 const loading = ref(true)
-const activeFilter = ref<'all' | 'send' | 'bridge'>('all')
+const activeFilter = ref<'all' | 'incoming' | 'outgoing' | 'bridge'>('all')
 
 let refreshInterval: ReturnType<typeof setInterval> | null = null
 
@@ -27,11 +29,23 @@ const loadHistory = async () => {
     }
 }
 
+const isIncoming = (tx: TransactionRecord) => {
+    if (!walletAddress.value) return false
+    const current = walletAddress.value.toLowerCase()
+    return tx.to?.toLowerCase() === current && tx.from?.toLowerCase() !== current
+}
+
 const filteredTransactions = computed(() => {
     if (activeFilter.value === 'all') {
         return transactions.value
     }
-    return transactions.value.filter(tx => tx.type === activeFilter.value)
+
+    return transactions.value.filter(tx => {
+        if (activeFilter.value === 'incoming') return isIncoming(tx)
+        if (activeFilter.value === 'outgoing') return !isIncoming(tx)
+        if (activeFilter.value === 'bridge') return tx.type === 'bridge'
+        return true
+    })
 })
 
 const formatDate = (timestamp: number) => {
@@ -89,6 +103,11 @@ const getChainDisplay = (tx: TransactionRecord) => {
     return tx.fromChainName || 'Unknown'
 }
 
+const getCounterparty = (tx: TransactionRecord) => {
+    if (isIncoming(tx)) return tx.from
+    return tx.to
+}
+
 const goToPortfolio = () => router.push('/portfolio')
 
 onMounted(() => {
@@ -121,7 +140,7 @@ onUnmounted(() => {
                     </div>
 
                     <!-- Filter Tabs -->
-                    <div class="flex gap-2">
+                    <div class="flex gap-2 flex-wrap">
                         <button @click="activeFilter = 'all'" :class="[
                             'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
                             activeFilter === 'all'
@@ -130,13 +149,21 @@ onUnmounted(() => {
                         ]">
                             All
                         </button>
-                        <button @click="activeFilter = 'send'" :class="[
+                        <button @click="activeFilter = 'incoming'" :class="[
                             'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
-                            activeFilter === 'send'
+                            activeFilter === 'incoming'
+                                ? 'bg-green-600 text-white'
+                                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                        ]">
+                            Incoming
+                        </button>
+                        <button @click="activeFilter = 'outgoing'" :class="[
+                            'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                            activeFilter === 'outgoing'
                                 ? 'bg-blue-600 text-white'
                                 : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                         ]">
-                            Send
+                            Outgoing
                         </button>
                         <button @click="activeFilter = 'bridge'" :class="[
                             'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
@@ -177,7 +204,7 @@ onUnmounted(() => {
                                     Chain</th>
                                 <th
                                     class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    To</th>
+                                    From/To</th>
                                 <th
                                     class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Amount</th>
@@ -193,10 +220,25 @@ onUnmounted(() => {
                             <tr v-for="tx in filteredTransactions" :key="tx.id"
                                 class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                                 <td class="px-6 py-4 text-sm">
-                                    <span class="px-2 py-1 rounded-full text-xs font-medium capitalize"
-                                        :class="getTypeColor(tx.type)">
-                                        {{ tx.type }}
-                                    </span>
+                                    <div class="flex items-center gap-2">
+                                        <div class="p-1.5 rounded-full"
+                                            :class="isIncoming(tx) ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'">
+                                            <svg v-if="isIncoming(tx)" class="w-4 h-4 transform rotate-180" fill="none"
+                                                stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                                            </svg>
+                                            <svg v-else class="w-4 h-4" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                                            </svg>
+                                        </div>
+                                        <span class="px-2 py-1 rounded-full text-xs font-medium capitalize"
+                                            :class="getTypeColor(tx.type)">
+                                            {{ tx.type }}
+                                        </span>
+                                    </div>
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-900 dark:text-white whitespace-nowrap">
                                     {{ formatDate(tx.timestamp) }}
@@ -205,10 +247,14 @@ onUnmounted(() => {
                                     {{ getChainDisplay(tx) }}
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300 font-mono">
-                                    {{ shortenAddress(tx.to) }}
+                                    <div class="flex flex-col">
+                                        <span class="text-xs text-gray-400">{{ isIncoming(tx) ? 'From' : 'To' }}</span>
+                                        <span>{{ shortenAddress(getCounterparty(tx)) }}</span>
+                                    </div>
                                 </td>
-                                <td class="px-6 py-4 text-sm text-gray-900 dark:text-white font-medium">
-                                    {{ formatAmount(tx.amount) }} {{ tx.tokenSymbol }}
+                                <td class="px-6 py-4 text-sm font-medium"
+                                    :class="isIncoming(tx) ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-white'">
+                                    {{ isIncoming(tx) ? '+' : '-' }}{{ formatAmount(tx.amount) }} {{ tx.tokenSymbol }}
                                 </td>
                                 <td class="px-6 py-4 text-sm">
                                     <span class="px-2 py-1 rounded-full text-xs font-medium capitalize"
