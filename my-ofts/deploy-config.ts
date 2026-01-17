@@ -86,7 +86,8 @@ export const config = {
         LZ_SCAN_URL: ['LZ_SCAN_URL'],
         MORALIS_API_KEY: ['MORALIS_API_KEY'],
         MORALIS_URL: ['MORALIS_URL'],
-        PANCAKESWAP_ROUTER: ['PANCAKESWAP_ROUTER']
+        PANCAKESWAP_ROUTER: ['PANCAKESWAP_ROUTER'],
+        WHITEPAPER_URL: ['WHITEPAPER_URL'],
 
     }
 }

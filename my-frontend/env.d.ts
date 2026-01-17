@@ -1,6 +1,7 @@
 interface ImportMetaEnv {
   readonly VITE_NODE_ENV: string;
   readonly VITE_API_URL?: string;
+  readonly VITE_WHITEPAPER_URL?: string;
   // Add more env variables as needed
 }
 
