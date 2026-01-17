@@ -35,4 +35,13 @@ import ContactInfo from '../components/ContactInfo.vue'
 import QuickFAQ from '../components/QuickFAQ.vue'
 import HelpBanner from '../components/HelpBanner.vue'
 import TokenPriceCard from '../components/TokenPriceCard.vue'
+import { useSEO } from '@/utils/useSEO'
+
+// SEO Configuration
+useSEO({
+  title: 'Contact Us - Wancash Support',
+  description: 'Get in touch with Wancash support team. Have questions about cross-chain bridging, staking, or redemptions? We\'re here to help 24/7.',
+  keywords: ['wancash support', 'contact wancash', 'crypto support', 'defi help', 'customer service'],
+  url: typeof window !== 'undefined' ? `${window.location.origin}/contact` : 'https://wancash.org/contact'
+})
 </script>

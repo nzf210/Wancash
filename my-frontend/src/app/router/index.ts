@@ -91,14 +91,14 @@ const authGuard = async (
   }
 };
 
-const titleGuard = (to: RouteLocationNormalized) => {
-  const defaultTitle = 'Wancash';
-  const pageTitle = to.meta?.title as string | undefined;
+// const titleGuard = (to: RouteLocationNormalized) => {
+//   const defaultTitle = 'Wancash';
+//   const pageTitle = to.meta?.title as string | undefined;
 
-  nextTick(() => {
-    document.title = pageTitle ? `${pageTitle} | ${defaultTitle}` : defaultTitle;
-  });
-};
+//   nextTick(() => {
+//     document.title = pageTitle ? `${pageTitle} | ${defaultTitle}` : defaultTitle;
+//   });
+// };
 
 const router = createRouter({
   history: createWebHistory(),
@@ -106,6 +106,6 @@ const router = createRouter({
 });
 
 router.beforeEach(authGuard);
-router.afterEach(titleGuard);
+// router.afterEach(titleGuard); // Disabled to allow Unhead to manage title
 
 export default router;

@@ -43,9 +43,9 @@ const fetchChartData = async (tf: Timeframe) => {
 
     try {
         const pointsMap: Record<Timeframe, number> = {
-            '1m': 60,   // Last hour
-            '5m': 60,   // Last 5 hours
-            '1h': 72,   // Last 3 days
+            '1m': 180,  // Last 3 hours
+            '5m': 120,  // Last 10 hours
+            '1h': 120,  // Last 5 days
             '1d': 30,   // Last 30 days
             '1w': 24,   // Last 6 months (weeks)
             '1M': 12    // Last year (months)

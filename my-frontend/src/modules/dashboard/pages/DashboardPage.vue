@@ -2,6 +2,16 @@
 import CardView from '../components/cardView.vue';
 import MainView from '../components/mainView.vue';
 import { onMounted, onBeforeUnmount, ref } from 'vue'
+import { useSEO, useOrganizationSchema } from '@/utils/useSEO'
+
+// SEO Configuration
+useSEO({
+  title: 'Wancash - Decentralized Cross-Chain Token Bridge',
+  description: 'Bridge your WCH tokens seamlessly across BSC, Polygon, Arbitrum, and more blockchains. Fast, secure, and decentralized token transfers with real-time price charts.',
+  keywords: ['wancash', 'wch token', 'cross-chain bridge', 'defi', 'cryptocurrency', 'token bridge', 'bsc', 'polygon', 'arbitrum']
+})
+useOrganizationSchema()
+
 
 // Blob element
 const follower = ref<HTMLElement>()

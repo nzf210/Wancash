@@ -182,5 +182,13 @@
 </template>
 
 <script lang="ts" setup>
-// No reactive state needed for this static page
+import { useSEO } from '@/utils/useSEO'
+
+// SEO Configuration
+useSEO({
+    title: 'About Wancash - Our Vision & Mission',
+    description: 'Learn about Wancash\'s mission to provide accessible, transparent, and secure DeFi solutions that bridge multiple blockchain networks. Built on LayerZero V2 for seamless cross-chain transfers.',
+    keywords: ['about wancash', 'defi platform', 'cross-chain technology', 'layerzero', 'blockchain', 'crypto staking'],
+    url: typeof window !== 'undefined' ? `${window.location.origin}/about` : 'https://wancash.org/about'
+})
 </script>

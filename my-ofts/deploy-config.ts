@@ -88,6 +88,7 @@ export const config = {
         MORALIS_URL: ['MORALIS_URL'],
         PANCAKESWAP_ROUTER: ['PANCAKESWAP_ROUTER'],
         WHITEPAPER_URL: ['WHITEPAPER_URL'],
+        APP_URL: ['APP_URL'],
 
     }
 }

@@ -42,6 +42,8 @@
     "@reown/appkit-adapter-wagmi": "^1.8.15",
     "@tailwindcss/vite": "^4.1.11",
     "@tanstack/vue-query": "^5.92.1",
+    "@unhead/dom": "^2.1.2",
+    "@unhead/vue": "^2.1.2",
     "@vueuse/core": "^14.1.0",
     "@wagmi/core": "^2.22.1",
     "@wagmi/vue": "^0.4.8",

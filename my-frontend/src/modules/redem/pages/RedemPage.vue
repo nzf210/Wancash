@@ -521,14 +521,7 @@ const userProfile = computed(() => {
 
 // Wallet & Chain Data
 const walletAddress = computed(() => address.value || '')
-const chainInfo = computed(() => {
-  const info = getChainInfo(chainId.value)
-  if (!info) return undefined
-  return {
-    name: info.name,
-    icon: info.icon
-  }
-})
+const chainInfo = computed(() => getChainInfo(chainId.value) ?? undefined)
 
 // Fetch logic ... (keeping same)
 watch(address, async (newAddress) => {

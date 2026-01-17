@@ -270,9 +270,9 @@ onMounted(async () => {
     if (isConnected.value && walletAddress.value) {
         await Promise.all([
             fetchPortfolioData(walletAddress.value),
-            fetchSendTransactions(walletAddress.value),
-            fetchBridgeTransactions(walletAddress.value),
-            fetchRedeemTransactions(walletAddress.value),
+            fetchSendTransactions(),
+            fetchBridgeTransactions(),
+            fetchRedeemTransactions(),
         ])
     }
 })

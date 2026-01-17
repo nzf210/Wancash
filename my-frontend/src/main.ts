@@ -9,6 +9,7 @@ import { LitElement } from 'lit'
 import router from '@/app/router/index'
 import type { Router } from 'vue-router'
 import VueApexCharts from 'vue3-apexcharts'
+import { createHead } from '@unhead/vue/client'
 
 import '../src/assets/style.css'
 
@@ -22,6 +23,9 @@ async function initializeApp() {
   try {
 
     const app = createApp(App)
+    const head = createHead()
+    app.use(head)
+
     app.use(pinia)  // Install Pinia first to establish the active context
     app.use(WagmiPlugin, { config: wagmiConfig, reconnectOnMount: true } as WagmiPluginOptions)  // Install Wagmi next
     app.use(router)  // Install router after Pinia and Wagmi
@@ -32,7 +36,8 @@ async function initializeApp() {
     const queryClient = new QueryClient()
 
     await new Promise(resolve => {
-      if (document.readyState === 'complete') {
+      // If document is already interactive or complete, we can proceed
+      if (document.readyState !== 'loading') {
         resolve(void 0)
       } else {
         document.addEventListener('DOMContentLoaded', () => resolve(void 0))
@@ -54,9 +59,6 @@ async function initializeApp() {
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     console.error('💥 Application initialization failed:', error);
-
-    // Normalize error for display
-    const errorDetails = JSON.stringify(error, Object.getOwnPropertyNames(error), 2);
 
     document.body.innerHTML = `
       <div style="
