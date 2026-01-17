@@ -23,7 +23,7 @@ const CHAIN_CONFIGS: Record<number, ChainConfig> = {
         chain: bsc,
         rpc: 'https://bsc-dataseed.binance.org',
         routerAddress: '0x13f4EA83D0bd40E75C8222255bc855a974568Dd4',
-        usdtAddress: '0x55d398326f99059fF775485246999027B3197955',
+        usdtAddress: import.meta.env.VITE_USDT_TOKEN_BSC || '0x55d398326f99059fF775485246999027B3197955',
         wchAddress: wancashContractAddress[56]
     },
     97: {
@@ -31,7 +31,7 @@ const CHAIN_CONFIGS: Record<number, ChainConfig> = {
         chain: bscTestnet,
         rpc: 'https://data-seed-prebsc-1-s1.binance.org:8545',
         routerAddress: '0x9a489505a00cE272eAa5e07Dba6491314CaE3796', // PancakeSwap V3 Testnet Router
-        usdtAddress: '0x337610d27c682E347C9cD60BD4b3b107C9d34dDd',
+        usdtAddress: import.meta.env.VITE_USDT_TOKEN_BSC_TEST || '0x337610d27c682E347C9cD60BD4b3b107C9d34dDd',
         wchAddress: wancashContractAddress[97]
     }
 }
@@ -204,7 +204,7 @@ export const pancakeSwapService = {
      * Execute the swap
      * @param quote The quote received from getQuote
      */
-    async executeSwap(chainId: number, quote: SwapQuote) {
+    async executeSwap(chainId: number, quote: SwapQuote, slippagePercent: number = 0.5) {
         const account = getAccount(wagmiConfig)
         if (!account.address) throw new Error('Wallet not connected')
 
@@ -213,10 +213,17 @@ export const pancakeSwapService = {
 
         const { route } = quote
 
+        // Percent takes numerator and denominator. 
+        // 0.5% = 50 / 10000 
+        // 1% = 100 / 10000
+        // input slippagePercent is like 0.5, 1, 5
+        const numerator = Math.floor(slippagePercent * 100)
+        const denominator = 10000
+
         // Call the smart router swap call parameters
         const { calldata, value } = SwapRouter.swapCallParameters(route, {
             recipient: account.address,
-            slippageTolerance: new Percent(50, 10000), // 0.5%
+            slippageTolerance: new Percent(numerator, denominator),
             deadlineOrPreviousBlockhash: Math.floor(Date.now() / 1000) + 1200, // 20 minutes
         })
 

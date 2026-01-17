@@ -336,7 +336,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { useAccount, useChainId, useConfig } from '@wagmi/vue'
+import { useConnection, useChainId, useConfig } from '@wagmi/vue'
 import { readContract } from '@wagmi/core'
 import { storeToRefs } from 'pinia'
 
@@ -359,7 +359,7 @@ import RedemptionRequestList from '../components/RedemptionRequestList.vue'
 const router = useRouter()
 const profileStore = useProfileStore()
 const { profile } = storeToRefs(profileStore)
-const { address, isConnected } = useAccount()
+const { address, isConnected } = useConnection()
 const chainId = useChainId()
 const { getChainInfo, switchToSupportedChain } = useChain()
 

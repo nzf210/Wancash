@@ -81,7 +81,7 @@
 import { ref, onMounted } from 'vue'
 import { useAddressBookStore } from '../store/addressBookStore'
 import { storeToRefs } from 'pinia'
-import { useAccount } from '@wagmi/vue'
+import { useConnection } from '@wagmi/vue'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -97,7 +97,7 @@ import type { AddressBookEntry } from '../services/addressBookApi'
 
 const store = useAddressBookStore()
 const { addresses, loading } = storeToRefs(store)
-const { address } = useAccount()
+const { address } = useConnection()
 
 const showDialog = ref(false)
 const editingId = ref<string | null>(null)

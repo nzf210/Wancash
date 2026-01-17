@@ -33,7 +33,7 @@
 import { ref, onMounted, watch } from 'vue'
 import { useProfileStore } from '@/modules/profile/store/profileStore'
 import { storeToRefs } from 'pinia'
-import { useAccount } from '@wagmi/vue'
+import { useConnection } from '@wagmi/vue'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -42,7 +42,7 @@ import { toast } from 'vue-sonner'
 
 const profileStore = useProfileStore()
 const { profile, loading } = storeToRefs(profileStore)
-const { address } = useAccount()
+const { address } = useConnection()
 
 const form = ref({
     phone: '',

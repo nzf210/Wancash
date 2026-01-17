@@ -211,7 +211,7 @@ import {
 } from '@/components/ui/dialog'
 import { toast } from 'vue-sonner'
 import { redemptionService, type RedemptionRecord } from '@/app/services/redemptionService'
-import { useAccount, useConfig } from '@wagmi/vue'
+import { useConnection, useConfig } from '@wagmi/vue'
 import { writeContract, waitForTransactionReceipt } from '@wagmi/core'
 import { parseAbi } from 'viem'
 import { wancashContractAddress } from '@/app/services/contracts'
@@ -224,7 +224,7 @@ const isCanceling = ref<string | null>(null)
 const showDetailDialog = ref(false)
 const selectedRequest = ref<RedemptionRecord | null>(null)
 const treasuryAddress = ref<string>('0x0000000000000000000000000000000000000000')
-const { address, chainId } = useAccount()
+const { address, chainId } = useConnection()
 const config = useConfig()
 
 // Confirmation Dialog State

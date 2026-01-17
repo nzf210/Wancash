@@ -56,6 +56,24 @@
 
           <!-- State 3: Active Swap Interface -->
           <div v-else>
+            <!-- Balances -->
+            <div class="grid grid-cols-3 gap-2 text-xs bg-gray-50 dark:bg-gray-900/50 p-2 rounded-lg mb-3">
+              <div class="flex flex-col items-center">
+                <span class="text-gray-500">{{ nativeBalance?.symbol || 'Native' }}</span>
+                <span class="font-medium text-gray-900 dark:text-gray-200">{{ formatBalance(nativeBalance) }}</span>
+              </div>
+              <div class="flex flex-col items-center">
+                <span class="text-gray-500">WCH</span>
+                <span class="font-medium text-gray-900 dark:text-gray-200">{{ formatBalance(wchBalance, 'TOKEN')
+                }}</span>
+              </div>
+              <div class="flex flex-col items-center">
+                <span class="text-gray-500">USDT</span>
+                <span class="font-medium text-gray-900 dark:text-gray-200">{{ formatBalance(usdtBalance, 'TOKEN')
+                }}</span>
+              </div>
+            </div>
+
             <div class="space-y-1">
               <div class="flex justify-between">
                 <label class="text-xs text-gray-500">
@@ -79,6 +97,50 @@
                 <span class="absolute right-3 top-2.5 text-sm font-medium text-gray-500">
                   {{ isSellMode ? 'WCH' : selectedToken }}
                 </span>
+              </div>
+            </div>
+
+            <!-- Percentage Controls -->
+            <div class="space-y-2 mt-2">
+              <!-- Buttons -->
+              <div class="flex justify-between gap-2">
+                <button v-for="pct in [25, 50, 75, 100]" :key="pct" @click="setPercentage(pct)"
+                  class="flex-1 text-xs py-1 rounded bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 transition-colors">
+                  {{ pct === 100 ? 'Max' : pct + '%' }}
+                </button>
+              </div>
+              <!-- Slider & Manual Input -->
+              <div class="flex items-center gap-3">
+                <input type="range" v-model.number="sliderPercentage" min="0" max="100" step="1"
+                  @input="setPercentage(sliderPercentage)"
+                  class="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 accent-purple-500">
+                <div class="relative w-16">
+                  <input type="number" v-model.number="sliderPercentage" @input="setPercentage(sliderPercentage)"
+                    class="w-full p-1 text-xs text-center border rounded dark:bg-gray-800 dark:border-gray-600 dark:text-white remove-arrow"
+                    min="0" max="100">
+                  <span class="absolute right-1 top-1 text-xs text-gray-500">%</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Slippage Controls -->
+            <div class="mt-3">
+              <div class="flex justify-between items-center mb-1">
+                <label class="text-xs text-gray-500">Slippage Tolerance</label>
+                <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ slippageTolerance }}%</span>
+              </div>
+              <div class="flex justify-between gap-2">
+                <button v-for="slip in [0.5, 1, 5]" :key="slip" @click="slippageTolerance = slip"
+                  :class="['flex-1 text-xs py-1.5 rounded transition-colors', slippageTolerance === slip ? 'bg-purple-100 text-purple-700 border border-purple-300 dark:bg-purple-900 dark:border-purple-700 dark:text-purple-300' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600']">
+                  {{ slip }}%
+                </button>
+                <!-- Manual Input -->
+                <div class="relative w-16">
+                  <input type="number" v-model.number="slippageTolerance"
+                    class="w-full p-1.5 text-xs text-center border rounded dark:bg-gray-800 dark:border-gray-600 dark:text-white remove-arrow"
+                    step="0.1" min="0.1" max="50">
+                  <span class="absolute right-1 top-1.5 text-xs text-gray-500">%</span>
+                </div>
               </div>
             </div>
 
@@ -142,7 +204,7 @@
                 <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Market Cap</div>
                 <div class="text-[13px] md:text-base font-semibold text-gray-900 dark:text-white">${{
                   marketCap.toLocaleString(undefined, { maximumFractionDigits: 0 })
-                  }}</div>
+                }}</div>
               </div>
               <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border dark:border-gray-700">
                 <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Volume 24h</div>
@@ -199,8 +261,8 @@ import { Badge } from '@/components/ui/badge'
 import { pancakeSwapService, type SwapQuote } from '../services/pancakeSwapService'
 import TokenPriceChart from './TokenPriceChart.vue'
 import { toast } from 'vue-sonner'
-import { useAccount } from '@wagmi/vue'
-import { useAppKit } from '@reown/appkit/vue'
+import { useConnection, useChainId, useConfig } from '@wagmi/vue'
+import { useAppKit, useAppKitAccount } from '@reown/appkit/vue'
 import { dexScreenerService } from '../services/dexScreenerService'
 
 // Reactive state
@@ -234,13 +296,130 @@ const swapLoading = ref(false)
 const needsApproval = ref(false)
 const approvalLoading = ref(false)
 let debounceTimer: any = null
+const sliderPercentage = ref(0) // 0-100
+const slippageTolerance = ref(0.5) // Default 0.5%
+
+// Balance computed for percentage calcs
+const maxBalance = computed(() => {
+  if (isSellMode.value) {
+    // Sell WCH: use WCH balance
+    return wchBalance.value ? parseFloat(wchBalance.value.formatted) : 0
+  } else {
+    // Buy WCH: use selected token balance
+    if (selectedToken.value === 'BNB') {
+      return nativeBalance.value ? parseFloat(nativeBalance.value.formatted) : 0
+    }
+    return usdtBalance.value ? parseFloat(usdtBalance.value.formatted) : 0
+  }
+})
+
+const setPercentage = (percent: number) => {
+  sliderPercentage.value = percent
+  if (maxBalance.value > 0) {
+    const amount = (maxBalance.value * percent) / 100
+    // BN for precise calculation is ideal, but using float for UI helper
+    // If Native (BNB), leave some for gas? Usually standard practice, but user asked for % value.
+    // Let's us 4 decimals for Native/WCH generally or standard format logic
+    // We'll use 6 decimals for precision in input
+    inputAmount.value = amount.toFixed(6)
+    // Remove trailing zeros
+    inputAmount.value = parseFloat(inputAmount.value).toString()
+    handleInput()
+  }
+}
+
 
 // Chain & Auth State
-const { chainId, isConnected } = useAccount()
+const accountData = useAppKitAccount()
+const address = computed(() => accountData.value.address as `0x${string}` | undefined)
+const isConnected = computed(() => accountData.value.isConnected)
+const chainIdRef = useChainId()
+const chainId = computed(() => chainIdRef.value)
+
 const { open } = useAppKit()
 
 const isSupportedChain = computed(() => {
   return chainId.value === 56 || chainId.value === 97
+})
+
+// Format helpers
+const formatBalance = (bal: any, type: 'NATIVE' | 'TOKEN' = 'NATIVE') => {
+  if (!bal || !bal.formatted) return '0.00'
+  const num = parseFloat(bal.formatted)
+
+  if (type === 'TOKEN') {
+    return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  }
+  // Native: 4 decimals, keep as is (user said it's ok)
+  return num.toFixed(4)
+}
+
+// Balance State
+const nativeBalance = ref<any>(null) // Object with formatted, symbol, etc
+const wchBalance = ref<any>(null)
+const usdtBalance = ref<any>(null)
+const config = useConfig()
+
+// Helpers
+import { getBalance, readContract } from '@wagmi/core'
+import { wancashAbi } from '@/app/services/contracts'
+import { formatUnits } from 'viem'
+
+const fetchNativeBalance = async () => {
+  if (!address.value || !chainId.value) return
+  try {
+    const bal = await getBalance(config, {
+      address: address.value,
+      chainId: chainId.value
+    })
+    nativeBalance.value = bal
+  } catch (e) {
+    console.error('Fetch Native Balance Error:', e)
+    nativeBalance.value = null
+  }
+}
+
+const fetchTokenBalance = async (tokenSymbol: 'WCH' | 'USDT') => {
+  if (!address.value || !chainId.value) return
+  const tokenAddress = pancakeSwapService.getTokenAddress(chainId.value, tokenSymbol)
+  try {
+    if (!tokenAddress) throw new Error(`${tokenSymbol} address not found`)
+
+    // For WCH we can use wancashAbi if standard ERC20, or a generic ERC20 ABI
+    // Using generic readContract for decimals and balance
+    // Simplified: assuming 18 decimals for now or fetching it
+
+    // Use wagmi's getBalance for tokens too is easier if supported
+    const bal = await getBalance(config, {
+      address: address.value,
+      token: tokenAddress as `0x${string}`,
+      chainId: chainId.value
+    })
+    if (tokenSymbol === 'WCH') wchBalance.value = bal
+    if (tokenSymbol === 'USDT') usdtBalance.value = bal
+
+  } catch (e) {
+    console.error(`Fetch ${tokenSymbol} Balance Error:`, e)
+    if (tokenSymbol === 'WCH') wchBalance.value = null
+    if (tokenSymbol === 'USDT') usdtBalance.value = null
+  }
+}
+
+const refreshBalances = () => {
+  fetchNativeBalance()
+  fetchTokenBalance('WCH')
+  fetchTokenBalance('USDT')
+}
+
+// Initial fetch and watch for chain/address changes
+watch([address, chainId], () => {
+  refreshBalances()
+}, { immediate: true })
+
+// Polling
+onMounted(() => {
+  const interval = setInterval(refreshBalances, 10000)
+  return () => clearInterval(interval)
 })
 
 // Reset generic when chain changes
@@ -346,7 +525,7 @@ const executeSwap = async () => {
 
   swapLoading.value = true
   try {
-    const hash = await pancakeSwapService.executeSwap(chainId.value, quote.value)
+    const hash = await pancakeSwapService.executeSwap(chainId.value, quote.value, slippageTolerance.value)
     toast.success("Transaction sent!", {
       description: `Hash: ${hash}`
     })
@@ -460,5 +639,17 @@ onMounted(() => {
 
 .card-hover-effect:hover {
   transform: translateY(-2px);
+}
+
+/* Hide number input arrows */
+.remove-arrow::-webkit-inner-spin-button,
+.remove-arrow::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.remove-arrow {
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
 </style>

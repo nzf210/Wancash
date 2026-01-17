@@ -25,6 +25,7 @@ interface BridgeState {
   destChains: Chain[]
   _timer: any
   userBalance: string
+  destinationAddress: string
 }
 
 const HARDCODED_TOKENS: Token[] = [
@@ -48,6 +49,7 @@ export const useBridgeStore = defineStore('bridge', {
     sourceChains: SUPPORTED_CHAINS as Chain[],
     destChains: SUPPORTED_CHAINS as Chain[],
     userBalance: '0',
+    destinationAddress: '',
   }),
 
   getters: {
@@ -90,6 +92,10 @@ export const useBridgeStore = defineStore('bridge', {
     setAmount(amount: string) {
       this.amount = amount
       this.debounceQuote()
+    },
+
+    setDestinationAddress(address: string) {
+      this.destinationAddress = address
     },
 
     // Load bridge history from persistent storage
@@ -183,11 +189,14 @@ export const useBridgeStore = defineStore('bridge', {
 
         if (!account.address) throw new Error("Wallet not connected")
 
+        // Use stored destination address or fallback to connected wallet
+        const targetAddress = this.destinationAddress || account.address
+
         // Create pending transaction record
         const pending = await transactionHistoryService.createPending({
           type: 'bridge',
           fromAddress: account.address,
-          toAddress: account.address, // Bridge usually sends to self
+          toAddress: targetAddress,
           amount: this.amount,
           tokenSymbol: this.fromToken!.symbol,
           fromChainId: this.fromChain!.id,
@@ -197,7 +206,7 @@ export const useBridgeStore = defineStore('bridge', {
         })
         pendingTxId = pending.id || pending.localId
 
-        const toAddressBytes32 = pad(account.address)
+        const toAddressBytes32 = pad(targetAddress as `0x${string}`)
         // Add executor options (gas limit 200k)
         const extraOptions = Options.newOptions().addExecutorLzReceiveOption(200000, 0).toHex() as `0x${string}`
 
