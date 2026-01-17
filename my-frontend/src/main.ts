@@ -10,6 +10,8 @@ import router from '@/app/router/index'
 import type { Router } from 'vue-router'
 import VueApexCharts from 'vue3-apexcharts'
 import { createHead } from '@unhead/vue/client'
+import i18n from '@/modules/i18n'
+import * as Sentry from "@sentry/vue";
 
 import '../src/assets/style.css'
 
@@ -25,6 +27,20 @@ async function initializeApp() {
     const app = createApp(App)
     const head = createHead()
     app.use(head)
+    app.use(i18n)
+
+    // Sentry Initialization
+    Sentry.init({
+      app,
+      dsn: import.meta.env.VITE_SENTRY_DSN, // Don't forget to add this to .env
+      integrations: [
+        Sentry.browserTracingIntegration(),
+        Sentry.replayIntegration(),
+      ],
+      tracesSampleRate: 1.0,
+      replaysSessionSampleRate: 0.1,
+      replaysOnErrorSampleRate: 1.0,
+    });
 
     app.use(pinia)  // Install Pinia first to establish the active context
     app.use(WagmiPlugin, { config: wagmiConfig, reconnectOnMount: true } as WagmiPluginOptions)  // Install Wagmi next

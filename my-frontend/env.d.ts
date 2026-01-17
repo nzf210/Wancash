@@ -4,6 +4,7 @@ interface ImportMetaEnv {
   readonly VITE_WHITEPAPER_URL?: string;
   readonly VITE_USDT_TOKEN_BSC: string;
   readonly VITE_USDT_TOKEN_BSC_TEST: string;
+  readonly VITE_SENTRY_DSN?: string;
   // Add more env variables as needed
 }
 

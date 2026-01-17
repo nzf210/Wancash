@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/sonner'
 import { toastOptions } from '@/utils/toastUtils'
 import OfflineOverlay from '@/shared/components/OfflineOverlay.vue'
 import { useNetworkStatus } from '@/shared/composables/useNetworkStatus'
+import ErrorBoundary from '@/components/ErrorBoundary.vue'
 
 provideTheme()
 
@@ -20,7 +21,9 @@ const { isOnline } = useNetworkStatus()
   <OfflineOverlay :is-online="isOnline" />
 
   <DefaultLayout v-if="isOnline">
-    <router-view />
+    <ErrorBoundary>
+      <router-view />
+    </ErrorBoundary>
   </DefaultLayout>
 </template>
 

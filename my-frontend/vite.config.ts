@@ -8,6 +8,7 @@ import vue from '@vitejs/plugin-vue';
 import vueJsx from '@vitejs/plugin-vue-jsx';
 import vueDevTools from 'vite-plugin-vue-devtools';
 import tailwindcss from '@tailwindcss/vite';
+import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig(({ mode }) => { // Ambil mode dari Vite (dev/build)
   // Tentuin target proxy dinamis berdasarkan environment
@@ -32,6 +33,28 @@ export default defineConfig(({ mode }) => { // Ambil mode dari Vite (dev/build)
       vueJsx(),
       vueDevTools(),
       tailwindcss(),
+      VitePWA({
+        registerType: 'autoUpdate',
+        includeAssets: ['favicon.ico', 'wancash.png', 'safari-pinned-tab.svg'],
+        manifest: {
+          name: 'Wancash - Cross-Chain Bridge',
+          short_name: 'Wancash',
+          description: 'Bridge WCH tokens seamlessly across blockchains',
+          theme_color: '#8b5cf6',
+          icons: [
+            {
+              src: 'wancash.png',
+              sizes: '192x192',
+              type: 'image/png'
+            },
+            {
+              src: 'wancash.png',
+              sizes: '512x512',
+              type: 'image/png'
+            }
+          ]
+        }
+      })
     ],
     resolve: {
       alias: {

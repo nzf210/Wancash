@@ -89,6 +89,7 @@ export const config = {
         PANCAKESWAP_ROUTER: ['PANCAKESWAP_ROUTER'],
         WHITEPAPER_URL: ['WHITEPAPER_URL'],
         APP_URL: ['APP_URL'],
+        SENTRY_DSN: ['SENTRY_DSN'],
 
     }
 }

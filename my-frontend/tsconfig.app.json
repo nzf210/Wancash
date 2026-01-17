@@ -9,6 +9,7 @@
       "@/*": ["./src/*"]
     },
     "target": "es2023",
-    "lib": ["es2023", "dom", "DOM.Iterable"]
+    "lib": ["es2023", "dom", "DOM.Iterable"],
+    "types": ["bun-types"]
   }
 }

@@ -19,27 +19,33 @@ const follower = ref<HTMLElement>()
 // Hover state (biar blob bisa membesar saat di atas card/button)
 const isHovering = ref(false)
 
+// State untuk posisi target (mouse) dan posisi current (element)
+const mouseX = ref(0)
+const mouseY = ref(0)
+const currentX = ref(0)
+const currentY = ref(0)
+let animationFrameId: number | null = null
+
 const handleMouseMove = (e: MouseEvent) => {
+  mouseX.value = e.clientX
+  mouseY.value = e.clientY
+}
+
+// Single animation loop logic
+const animate = () => {
   if (!follower.value) return
 
-  const x = e.clientX
-  const y = e.clientY
+  // Lerp smoothing (0.15 factor)
+  const dx = mouseX.value - currentX.value
+  const dy = mouseY.value - currentY.value
+  
+  currentX.value += dx * 0.15
+  currentY.value += dy * 0.15
 
-  // Smooth follow pakai lerp (lerp)
-  const updatePosition = () => {
-    if (!follower.value) return
-    const currentX = parseFloat(follower.value.style.left || '0')
-    const currentY = parseFloat(follower.value.style.top || '0')
+  follower.value.style.left = `${currentX.value}px`
+  follower.value.style.top = `${currentY.value}px`
 
-    const lerpX = currentX + (x - currentX) * 0.15
-    const lerpY = currentY + (y - currentY) * 0.15
-
-    follower.value.style.left = `${lerpX}px`
-    follower.value.style.top = `${lerpY}px`
-
-    requestAnimationFrame(updatePosition)
-  }
-  updatePosition()
+  animationFrameId = requestAnimationFrame(animate)
 }
 
 // Efek hover (membesar saat di atas elemen interaktif)
@@ -47,7 +53,15 @@ const handleMouseEnter = () => (isHovering.value = true)
 const handleMouseLeave = () => (isHovering.value = false)
 
 onMounted(() => {
+  // Set initial position to prevent jump
+  // Better: start center or checking initial mouse pos if possible, 
+  // but starting at 0,0 and letting it lerp is standard for this effect.
+  
   window.addEventListener('mousemove', handleMouseMove)
+  
+  // Start the single loop
+  animate()
+
   // Biar semua button, card, link otomatis trigger hover
   document.querySelectorAll('a, button, [role="button"], .cursor-pointer').forEach(el => {
     el.addEventListener('mouseenter', handleMouseEnter)
@@ -57,6 +71,9 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('mousemove', handleMouseMove)
+  if (animationFrameId !== null) {
+    cancelAnimationFrame(animationFrameId)
+  }
 })
 
 </script>
