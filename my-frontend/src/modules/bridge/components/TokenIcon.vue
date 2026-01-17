@@ -2,14 +2,12 @@
   <div class="flex items-center justify-center">
     <template v-if="token">
       <!-- WAN Token -->
-      <img v-if="token.symbol === 'WAN' || token.symbol === 'WCH'" :src="wancashLogo" alt="Wancash"
-        class="w-full h-full rounded-full object-contain" />
+      <WancashIcon v-if="token.symbol === 'WAN' || token.symbol === 'WCH'" class-name="w-full h-full" />
 
-      <!-- Token Logos from Central Source -->
-      <img v-else-if="getTokenLogo(token.symbol)" :src="getTokenLogo(token.symbol)" :alt="token.symbol"
-        class="w-full h-full object-contain rounded-full" />
+      <!-- Chain Tokens (SVG Components) -->
+      <component v-else-if="getTokenIcon(token.symbol)" :is="getTokenIcon(token.symbol)" class="w-full h-full" />
 
-      <!-- Default token icon -->
+      <!-- Fallback / Default -->
       <svg v-else class="w-full h-full" viewBox="0 0 24 24" fill="currentColor">
         <circle cx="12" cy="12" r="10" />
         <path d="M8 12h8M12 8v8" />
@@ -26,21 +24,26 @@
 
 <script lang="ts" setup>
 import type { Token } from '../types/bridge.types'
-import { CHAIN_LOGOS } from '@/shared/constants/chainLogos'
-import wancashLogo from '@/assets/image/logo.jpg'
+import WancashIcon from '@/components/icons/WancashIcon.vue'
+import EthIcon from '@/components/icons/chains/EthIcon.vue'
+import BscIcon from '@/components/icons/chains/BscIcon.vue'
+import AvaxIcon from '@/components/icons/chains/AvaxIcon.vue'
+import MaticIcon from '@/components/icons/chains/MaticIcon.vue'
+import ArbIcon from '@/components/icons/chains/ArbIcon.vue'
+import type { Component } from 'vue'
 
 defineProps<{
   token: Token | null
 }>()
 
-const getTokenLogo = (symbol: string): string | undefined => {
-  const map: Record<string, string> = {
-    'ETH': CHAIN_LOGOS.ETHEREUM,
-    'AVAX': CHAIN_LOGOS.AVALANCHE,
-    'MATIC': CHAIN_LOGOS.POLYGON,
-    'BNB': CHAIN_LOGOS.BSC,
-    'ARB': CHAIN_LOGOS.ARBITRUM,
-    'WETH': CHAIN_LOGOS.ETHEREUM,
+const getTokenIcon = (symbol: string): Component | undefined => {
+  const map: Record<string, Component> = {
+    'ETH': EthIcon,
+    'AVAX': AvaxIcon,
+    'MATIC': MaticIcon,
+    'BNB': BscIcon,
+    'ARB': ArbIcon,
+    'WETH': EthIcon,
   }
   return map[symbol]
 }

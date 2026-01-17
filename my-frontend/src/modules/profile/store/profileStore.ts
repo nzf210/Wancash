@@ -1,7 +1,7 @@
 // Profile Store - Pinia
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { profileApi, type FullProfile, type Profile, type UserSettings, type NotificationSettings, type PrivacySettings } from '../services/profileApi'
+import { profileApi, type Profile, type UserSettings, type NotificationSettings, type PrivacySettings } from '../services/profileApi'
 
 export const useProfileStore = defineStore('profile', () => {
     // State

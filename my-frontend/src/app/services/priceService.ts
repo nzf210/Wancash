@@ -1,5 +1,3 @@
-import { ref } from 'vue'
-
 const COINCAP_API_BASE = 'https://api.coincap.io/v2'
 
 export interface TokenPrice {

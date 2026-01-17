@@ -14,19 +14,12 @@
                 class="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3 border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700 transition-colors group">
                 <div class="flex items-center justify-between mb-2">
                     <div class="flex items-center space-x-2">
-                        <div
-                            class="w-6 h-6 rounded bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center overflow-hidden">
-                            <img v-if="getChainLogo(bridge.fromChain)" :src="getChainLogo(bridge.fromChain)"
-                                :alt="bridge.fromChain" class="w-full h-full object-contain p-0.5" />
-                            <span v-else class="text-white text-[10px] font-bold">{{ bridge.fromChain.charAt(0)
-                            }}</span>
+                        <div class="w-6 h-6 rounded-full overflow-hidden flex items-center justify-center shadow-sm">
+                            <ChainIcon :chain="getChainObject(bridge.fromChain)" />
                         </div>
                         <ArrowRightIcon class="w-3 h-3 text-gray-400 group-hover:text-blue-500 transition-colors" />
-                        <div
-                            class="w-6 h-6 rounded bg-gradient-to-br from-green-500 to-emerald-400 flex items-center justify-center overflow-hidden">
-                            <img v-if="getChainLogo(bridge.toChain)" :src="getChainLogo(bridge.toChain)"
-                                :alt="bridge.toChain" class="w-full h-full object-contain p-0.5" />
-                            <span v-else class="text-white text-[10px] font-bold">{{ bridge.toChain.charAt(0) }}</span>
+                        <div class="w-6 h-6 rounded-full overflow-hidden flex items-center justify-center shadow-sm">
+                            <ChainIcon :chain="getChainObject(bridge.toChain)" />
                         </div>
                     </div>
                     <StatusBadge :status="bridge.status" size="sm" />
@@ -52,22 +45,13 @@ import {
     ClockIcon
 } from '@radix-icons/vue'
 import StatusBadge from '@/modules/bridge/components/StatusBadge.vue'
+import { SUPPORTED_CHAINS } from '@/app/composables/useChain'
 import type { BridgeHistory } from '@/modules/bridge/types/bridge.types'
-import { CHAIN_LOGOS } from '@/shared/constants/chainLogos'
+import ChainIcon from '@/modules/bridge/components/ChainIcon.vue'
 
 defineProps<{
     recentBridges: BridgeHistory[]
 }>()
-
-const getChainLogo = (chainName: string): string | undefined => {
-    const normalize = (s: string) => s.toLowerCase()
-    if (normalize(chainName).includes('eth')) return CHAIN_LOGOS.ETHEREUM
-    if (normalize(chainName).includes('bsc') || normalize(chainName).includes('bnb')) return CHAIN_LOGOS.BSC
-    if (normalize(chainName).includes('avax') || normalize(chainName).includes('avalanche')) return CHAIN_LOGOS.AVALANCHE
-    if (normalize(chainName).includes('matic') || normalize(chainName).includes('polygon')) return CHAIN_LOGOS.POLYGON
-    if (normalize(chainName).includes('arbitrum')) return CHAIN_LOGOS.ARBITRUM
-    return undefined
-}
 
 const formatAmount = (amount: string | number): string => {
     const num = typeof amount === 'string' ? parseFloat(amount) : amount
@@ -85,5 +69,14 @@ const formatTime = (timestamp: number): string => {
     if (hours < 24) return `${hours}h ago`
     const days = Math.floor(hours / 24)
     return `${days}d ago`
+}
+
+const getChainObject = (name: string) => {
+    const chain = SUPPORTED_CHAINS.find(c =>
+        c.name.toLowerCase() === name.toLowerCase() ||
+        c.network.toLowerCase() === name.toLowerCase() ||
+        c.symbol?.toLowerCase() === name.toLowerCase()
+    )
+    return (chain || { name, network: name.toLowerCase() }) as any
 }
 </script>

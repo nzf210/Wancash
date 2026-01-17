@@ -30,12 +30,12 @@
                         <div class="flex items-center space-x-2">
                             <div
                                 class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center">
-                                <span class="text-white text-xs font-bold">{{ bridge.fromChain.charAt(0) }}</span>
+                                <ChainIcon :chain="getChainObject(bridge.fromChain)" class="w-5 h-5 text-white" />
                             </div>
                             <ArrowRightIcon class="w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors" />
                             <div
                                 class="w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-emerald-400 flex items-center justify-center">
-                                <span class="text-white text-xs font-bold">{{ bridge.toChain.charAt(0) }}</span>
+                                <ChainIcon :chain="getChainObject(bridge.toChain)" class="w-5 h-5 text-white" />
                             </div>
                         </div>
                         <StatusBadge :status="bridge.status" />
@@ -114,12 +114,11 @@
                                 <div class="flex items-center -space-x-1">
                                     <div
                                         class="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center ring-2 ring-white dark:ring-gray-900 z-10">
-                                        <span class="text-white text-[10px] font-bold">{{ tx.fromChain.charAt(0)
-                                            }}</span>
+                                        <ChainIcon :chain="getChainObject(tx.fromChain)" class="w-4 h-4 text-white" />
                                     </div>
                                     <div
                                         class="w-7 h-7 rounded-lg bg-gradient-to-br from-green-500 to-emerald-400 flex items-center justify-center ring-2 ring-white dark:ring-gray-900">
-                                        <span class="text-white text-[10px] font-bold">{{ tx.toChain.charAt(0) }}</span>
+                                        <ChainIcon :chain="getChainObject(tx.toChain)" class="w-4 h-4 text-white" />
                                     </div>
                                 </div>
                                 <span class="text-xs text-gray-500 dark:text-gray-400">{{ tx.fromChain }} → {{
@@ -154,12 +153,12 @@
                         <div class="col-span-3 flex items-center space-x-2">
                             <div
                                 class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center">
-                                <span class="text-white text-xs font-bold">{{ tx.fromChain.charAt(0) }}</span>
+                                <ChainIcon :chain="getChainObject(tx.fromChain)" class="w-5 h-5 text-white" />
                             </div>
                             <ArrowRightIcon class="w-4 h-4 text-gray-400" />
                             <div
                                 class="w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-emerald-400 flex items-center justify-center">
-                                <span class="text-white text-xs font-bold">{{ tx.toChain.charAt(0) }}</span>
+                                <ChainIcon :chain="getChainObject(tx.toChain)" class="w-5 h-5 text-white" />
                             </div>
                             <span class="text-sm text-gray-600 dark:text-gray-400 hidden lg:inline">
                                 {{ tx.fromChain }} → {{ tx.toChain }}
@@ -224,7 +223,9 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useBridgeStore } from '@/modules/bridge/store/bridgeStore'
+import { SUPPORTED_CHAINS } from '@/app/composables/useChain'
 import StatusBadge from '@/modules/bridge/components/StatusBadge.vue'
+import ChainIcon from '@/modules/bridge/components/ChainIcon.vue'
 import {
     ArrowLeftIcon,
     ArrowRightIcon,
@@ -273,6 +274,15 @@ const goBack = () => {
 
 const refreshHistory = () => {
     bridgeStore.loadHistory()
+}
+
+const getChainObject = (name: string) => {
+    const chain = SUPPORTED_CHAINS.find(c =>
+        c.name.toLowerCase() === name.toLowerCase() ||
+        c.network.toLowerCase() === name.toLowerCase() ||
+        c.symbol?.toLowerCase() === name.toLowerCase()
+    )
+    return (chain || { name, network: name.toLowerCase() }) as any
 }
 
 const formatTime = (timestamp: number): string => {

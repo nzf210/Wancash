@@ -18,7 +18,7 @@ import {
 const itsProd: boolean = (import.meta as unknown as { env: { VITE_NODE_ENV: string } }).env.VITE_NODE_ENV !== 'production';
 
 export const supportedNetworks = itsProd ?
-  [sepolia, polygonAmoy, avalancheFuji, bscTestnet, arbitrumSepolia, bsc] as const :
+  [sepolia, polygonAmoy, avalancheFuji, bscTestnet, arbitrumSepolia] as const :
   [mainnet, polygon, arbitrum, avalanche, bsc] as const;
 
 export const networks: [AppKitNetwork, ...AppKitNetwork[]] = [...supportedNetworks]

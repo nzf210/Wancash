@@ -10,7 +10,7 @@ interface NetworkStatusOptions {
 export function useNetworkStatus(options: NetworkStatusOptions = {}) {
     const {
         checkInterval = 15000, // Check every 10 seconds
-        timeout = 5000, // 5 second timeout
+        timeout = 6000, // 5 second timeout
         endpoint = 'https://1.1.1.1', // Cloudflare's DNS - very reliable
     } = options
 
@@ -42,7 +42,7 @@ export function useNetworkStatus(options: NetworkStatusOptions = {}) {
 
             // Use HEAD request to minimize data transfer
             // Add timestamp to prevent caching
-            const response = await fetch(`${endpoint}?t=${Date.now()}`, {
+            await fetch(`${endpoint}?t=${Date.now()}`, {
                 method: 'HEAD',
                 mode: 'no-cors', // Allow cross-origin requests
                 cache: 'no-store',
@@ -54,7 +54,7 @@ export function useNetworkStatus(options: NetworkStatusOptions = {}) {
 
             // With no-cors mode, we can't check response.ok, but if we get here without error, we're online
             return true
-        } catch (error) {
+        } catch {
             isChecking.value = false
             // Network error means no internet connectivity
             return false

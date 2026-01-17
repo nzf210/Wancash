@@ -22,8 +22,7 @@
                     </Label>
                     <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
                         <div v-if="chainInfo" class="flex-shrink-0" :title="chainInfo.name">
-                            <img :src="chainInfo.icon" :alt="chainInfo.name"
-                                class="w-6 h-6 sm:w-8 sm:h-8 rounded-full border border-gray-200 dark:border-gray-700 bg-white" />
+                            <ChainIcon :chain="chainInfo" class="w-6 h-6 sm:w-8 sm:h-8" />
                         </div>
                         <div
                             class="w-full sm:flex-grow font-mono text-xs sm:text-sm bg-white dark:bg-gray-800 py-2 px-3 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 select-all break-all">
@@ -91,6 +90,8 @@
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { formatNativeBalance } from '@/utils/format'
+import ChainIcon from '@/modules/bridge/components/ChainIcon.vue'
+import type { Chain } from '@/modules/bridge/types/bridge.types'
 
 export interface UserProfile {
     name: string
@@ -100,16 +101,12 @@ export interface UserProfile {
     whatsapp?: string
 }
 
-export interface ChainInfo {
-    name: string
-    icon: string
-}
 
 defineProps<{
     profile: UserProfile | null
     useProfileData: boolean
     walletAddress?: string
-    chainInfo?: ChainInfo
+    chainInfo?: Chain
     nativeBalance?: number
     nativeCurrencySymbol?: string
 }>()

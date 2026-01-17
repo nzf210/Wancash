@@ -20,7 +20,7 @@ export function useTransactionHistory() {
     /**
      * Fetch send transactions from backend
      */
-    const fetchSendTransactions = async (_walletAddress: string) => {
+    const fetchSendTransactions = async () => {
         try {
             isLoadingSend.value = true
             error.value = null
@@ -50,7 +50,7 @@ export function useTransactionHistory() {
     /**
      * Fetch bridge transactions from backend
      */
-    const fetchBridgeTransactions = async (_walletAddress: string) => {
+    const fetchBridgeTransactions = async () => {
         try {
             isLoadingBridge.value = true
             error.value = null
@@ -81,7 +81,7 @@ export function useTransactionHistory() {
     /**
      * Fetch redeem transactions from backend
      */
-    const fetchRedeemTransactions = async (_walletAddress: string) => {
+    const fetchRedeemTransactions = async () => {
         try {
             isLoadingRedeem.value = true
             error.value = null
@@ -116,11 +116,11 @@ export function useTransactionHistory() {
     /**
      * Refresh all transaction data
      */
-    const refreshTransactions = async (walletAddress: string) => {
+    const refreshTransactions = async (_walletAddress: string) => {
         await Promise.all([
-            fetchSendTransactions(walletAddress),
-            fetchBridgeTransactions(walletAddress),
-            fetchRedeemTransactions(walletAddress),
+            fetchSendTransactions(),
+            fetchBridgeTransactions(),
+            fetchRedeemTransactions(),
         ])
     }
 

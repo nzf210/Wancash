@@ -325,7 +325,7 @@
 
 <script lang="ts" setup>
 import { ref, computed, watch, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+
 import { toast } from 'vue-sonner'
 import { Button } from '@/components/ui/button'
 import {
@@ -356,12 +356,11 @@ import SuccessDialog from '../components/SuccessDialog.vue'
 import ProductList from '../components/ProductList.vue'
 import RedemptionRequestList from '../components/RedemptionRequestList.vue'
 
-const router = useRouter()
 const profileStore = useProfileStore()
 const { profile } = storeToRefs(profileStore)
 const { address, isConnected } = useConnection()
 const chainId = useChainId()
-const { getChainInfo, switchToSupportedChain } = useChain()
+const { getChainInfo } = useChain()
 
 // State
 const walletConnected = computed(() => isConnected.value)
@@ -409,7 +408,7 @@ const handleConfirm = async () => {
   try {
     await confirmDialog.value.onConfirm()
     confirmDialog.value.isOpen = false
-  } catch (e) {
+  } catch {
     // Error handling
   } finally {
     confirmDialog.value.isLoading = false
@@ -491,10 +490,7 @@ const goToCheckout = () => {
 
 // WCH Token balance
 const wchBalance = ref<number>(0)
-const nativeCurrencySymbol = computed(() => {
-  const info = getChainInfo(chainId.value)
-  return info?.symbol || 'ETH'
-})
+
 const config = useConfig()
 const saveToProfile = ref(false)
 const contractAddress = computed(() => {

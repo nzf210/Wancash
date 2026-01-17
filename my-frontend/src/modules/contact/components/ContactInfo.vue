@@ -79,7 +79,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue'
+import { } from 'vue'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useContact } from '../composables/useContact'
 

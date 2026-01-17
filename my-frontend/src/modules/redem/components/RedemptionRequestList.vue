@@ -261,7 +261,7 @@ const handleConfirm = async () => {
     try {
         await confirmDialog.value.onConfirm()
         confirmDialog.value.isOpen = false
-    } catch (e) {
+    } catch {
         // Error handling should be done inside onConfirm or here if generic
     } finally {
         confirmDialog.value.isLoading = false
@@ -323,7 +323,7 @@ const fetchRequests = async () => {
     isLoading.value = true
     try {
         requests.value = await redemptionService.getRedemptions()
-    } catch (e) {
+    } catch {
         toast.error('Failed to load history')
     } finally {
         isLoading.value = false

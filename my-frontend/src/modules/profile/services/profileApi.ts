@@ -58,7 +58,7 @@ export interface FullProfile extends Profile {
 import { apiClient } from '@/utils/apiClient'
 
 export const profileApi = {
-    async getProfile(walletAddress: string): Promise<FullProfile> {
+    async getProfile(_walletAddress: string): Promise<FullProfile> {
         const response = await apiClient.fetch('/api/profile', {
             method: 'GET',
         })
@@ -73,7 +73,7 @@ export const profileApi = {
     },
 
     async updateProfile(
-        walletAddress: string,
+        _walletAddress: string,
         data: Partial<Pick<Profile, 'display_name' | 'username' | 'email' | 'bio' | 'avatar_url' | 'phone' | 'shipping_address'>>
     ): Promise<Profile> {
         const response = await apiClient.fetch('/api/profile', {
@@ -92,7 +92,7 @@ export const profileApi = {
     },
 
     async updateSettings(
-        walletAddress: string,
+        _walletAddress: string,
         data: Partial<Omit<UserSettings, 'id' | 'user_id' | 'updated_at'>>
     ): Promise<UserSettings> {
         const response = await apiClient.fetch('/api/profile/settings', {
@@ -111,7 +111,7 @@ export const profileApi = {
     },
 
     async updateNotifications(
-        walletAddress: string,
+        _walletAddress: string,
         data: Partial<Omit<NotificationSettings, 'id' | 'user_id' | 'updated_at'>>
     ): Promise<NotificationSettings> {
         const response = await apiClient.fetch('/api/profile/notifications', {
@@ -130,7 +130,7 @@ export const profileApi = {
     },
 
     async updatePrivacy(
-        walletAddress: string,
+        _walletAddress: string,
         data: Partial<Omit<PrivacySettings, 'id' | 'user_id' | 'updated_at'>>
     ): Promise<PrivacySettings> {
         const response = await apiClient.fetch('/api/profile/privacy', {
@@ -148,7 +148,7 @@ export const profileApi = {
         return result.data
     },
 
-    async deleteAccount(walletAddress: string): Promise<void> {
+    async deleteAccount(_walletAddress: string): Promise<void> {
         const response = await apiClient.fetch('/api/profile', {
             method: 'DELETE',
         })

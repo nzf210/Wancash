@@ -41,10 +41,7 @@
                         <div class="text-center w-full sm:w-auto">
                             <div
                                 class="w-12 h-12 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-400 flex items-center justify-center mx-auto mb-2">
-                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                </svg>
+                                <ChainIcon :chain="getChainObject(bridge.fromChain)" class="w-7 h-7 text-white" />
                             </div>
                             <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ bridge.fromChain }}</p>
                             <p class="text-xs text-gray-500 dark:text-gray-400">From</p>
@@ -53,7 +50,7 @@
                         <div
                             class="relative flex-1 mx-0 sm:mx-4 w-full sm:w-auto h-12 sm:h-auto flex items-center justify-center">
                             <!-- Desktop Line -->
-                            <div class="hidden sm:block absolute inset-0 flex items-center">
+                            <div class="hidden sm:flex absolute inset-0 items-center">
                                 <div class="w-full border-t border-gray-300 dark:border-gray-700"></div>
                             </div>
                             <!-- Mobile Line -->
@@ -73,10 +70,7 @@
                         <div class="text-center w-full sm:w-auto">
                             <div
                                 class="w-12 h-12 rounded-xl bg-gradient-to-r from-green-500 to-emerald-400 flex items-center justify-center mx-auto mb-2">
-                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                </svg>
+                                <ChainIcon :chain="getChainObject(bridge.toChain)" class="w-7 h-7 text-white" />
                             </div>
                             <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ bridge.toChain }}</p>
                             <p class="text-xs text-gray-500 dark:text-gray-400">To</p>
@@ -148,6 +142,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { Button } from '@/components/ui/button'
+import { SUPPORTED_CHAINS } from '@/app/composables/useChain'
+import ChainIcon from '@/modules/bridge/components/ChainIcon.vue'
 import type { BridgeTransaction } from '../types'
 import { useFormatters } from '../composables'
 
@@ -171,5 +167,14 @@ const handleCopyHash = async (hash: string) => {
         // TODO: Show toast notification instead of alert
         console.log('Hash copied to clipboard')
     }
+}
+
+const getChainObject = (name: string) => {
+    const chain = SUPPORTED_CHAINS.find(c =>
+        c.name.toLowerCase() === name.toLowerCase() ||
+        c.network.toLowerCase() === name.toLowerCase() ||
+        c.symbol?.toLowerCase() === name.toLowerCase()
+    )
+    return (chain || { name, network: name.toLowerCase() }) as any
 }
 </script>

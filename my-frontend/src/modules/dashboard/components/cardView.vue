@@ -7,7 +7,7 @@
           <div class="flex items-center space-x-3">
             <div
               class="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
-              WCH
+              <WancashIcon class-name="w-full h-full" />
             </div>
             <div>
               <CardTitle class="md:text-xl font-bold text-gray-800 dark:text-white">Wancash Token</CardTitle>
@@ -25,9 +25,14 @@
         <!-- Swap Mode Interface -->
         <div v-if="swapMode" class="bg-white dark:bg-gray-800 rounded-lg p-4 border dark:border-gray-700 space-y-3">
           <div class="flex justify-between items-center">
-            <h3 class="font-semibold text-gray-900 dark:text-white">
-              {{ isSellMode ? 'Sell WCH' : 'Buy Wancash' }}
-            </h3>
+            <div class="flex items-center gap-2">
+              <div v-if="activeChainForIcon" class="w-6 h-6 rounded-full overflow-hidden shadow-sm">
+                <ChainIcon :chain="activeChainForIcon" />
+              </div>
+              <h3 class="font-semibold text-gray-900 dark:text-white">
+                {{ isSellMode ? 'Sell WCH' : 'Buy Wancash' }}
+              </h3>
+            </div>
             <Button variant="ghost" size="sm" @click="closeSwapMode" class="h-6 w-6 p-0">✕</Button>
           </div>
 
@@ -65,12 +70,12 @@
               <div class="flex flex-col items-center">
                 <span class="text-gray-500">WCH</span>
                 <span class="font-medium text-gray-900 dark:text-gray-200">{{ formatBalance(wchBalance, 'TOKEN')
-                }}</span>
+                  }}</span>
               </div>
               <div class="flex flex-col items-center">
                 <span class="text-gray-500">USDT</span>
                 <span class="font-medium text-gray-900 dark:text-gray-200">{{ formatBalance(usdtBalance, 'TOKEN')
-                }}</span>
+                  }}</span>
               </div>
             </div>
 
@@ -94,9 +99,16 @@
               <div class="relative">
                 <input v-model="inputAmount" type="number" placeholder="0.0"
                   class="w-full p-2 pr-16 rounded-md border dark:border-gray-600 bg-transparent" @input="handleInput" />
-                <span class="absolute right-3 top-2.5 text-sm font-medium text-gray-500">
-                  {{ isSellMode ? 'WCH' : selectedToken }}
-                </span>
+                <div class="absolute right-3 top-2.5 flex items-center gap-1.5">
+                  <div class="w-4 h-4 rounded-full overflow-hidden flex items-center justify-center">
+                    <WancashIcon v-if="isSellMode" class-name="w-full h-full" />
+                    <UsdtIcon v-else-if="selectedToken === 'USDT'" class-name="w-full h-full" />
+                    <ChainIcon v-else-if="activeChainForIcon" :chain="activeChainForIcon" />
+                  </div>
+                  <span class="text-sm font-medium text-gray-500">
+                    {{ isSellMode ? 'WCH' : selectedToken }}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -152,9 +164,23 @@
               <label class="text-xs text-gray-500">
                 You Receive ({{ isSellMode ? selectedToken : 'WCH' }})
               </label>
-              <div class="p-2 rounded-md bg-gray-100 dark:bg-gray-900 min-h-[42px] flex items-center">
-                <span v-if="quoteLoading" class="text-xs text-gray-400">Fetching best price...</span>
-                <span v-else>{{ estimatedOutput }}</span>
+              <div class="relative items-center">
+                <div class="p-2 pr-16 rounded-md bg-gray-100 dark:bg-gray-900 min-h-[42px] flex items-center w-full">
+                  <span v-if="quoteLoading" class="text-xs text-gray-400">Fetching best price...</span>
+                  <span v-else>{{ estimatedOutput }}</span>
+                </div>
+                <div class="absolute right-3 top-2.5 flex items-center gap-1.5">
+                  <div class="w-4 h-4 rounded-full overflow-hidden flex items-center justify-center">
+                    <template v-if="isSellMode">
+                      <UsdtIcon v-if="selectedToken === 'USDT'" class-name="w-full h-full" />
+                      <ChainIcon v-else-if="activeChainForIcon" :chain="activeChainForIcon" />
+                    </template>
+                    <WancashIcon v-else class-name="w-full h-full" />
+                  </div>
+                  <span class="text-sm font-medium text-gray-500">
+                    {{ isSellMode ? selectedToken : 'WCH' }}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -204,7 +230,7 @@
                 <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Market Cap</div>
                 <div class="text-[13px] md:text-base font-semibold text-gray-900 dark:text-white">${{
                   marketCap.toLocaleString(undefined, { maximumFractionDigits: 0 })
-                }}</div>
+                  }}</div>
               </div>
               <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border dark:border-gray-700">
                 <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Volume 24h</div>
@@ -261,9 +287,13 @@ import { Badge } from '@/components/ui/badge'
 import { pancakeSwapService, type SwapQuote } from '../services/pancakeSwapService'
 import TokenPriceChart from './TokenPriceChart.vue'
 import { toast } from 'vue-sonner'
-import { useConnection, useChainId, useConfig } from '@wagmi/vue'
+import { useChainId, useConfig } from '@wagmi/vue'
 import { useAppKit, useAppKitAccount } from '@reown/appkit/vue'
 import { dexScreenerService } from '../services/dexScreenerService'
+import WancashIcon from '@/components/icons/WancashIcon.vue'
+import UsdtIcon from '@/components/icons/UsdtIcon.vue'
+import ChainIcon from '@/modules/bridge/components/ChainIcon.vue'
+import { networks } from '@/app/components/config/wagmi'
 
 // Reactive state
 const loading = ref<boolean>(false)
@@ -342,6 +372,21 @@ const isSupportedChain = computed(() => {
   return chainId.value === 56 || chainId.value === 97
 })
 
+const activeChainForIcon = computed(() => {
+  if (!chainId.value) return null
+  const network = networks.find(n => n.id === chainId.value)
+  return network ? {
+    id: network.id,
+    name: network.name,
+    network: network.name.toLowerCase(),
+    symbol: network.nativeCurrency?.symbol || '',
+    currency: network.nativeCurrency?.symbol || '',
+    type: 'evm',
+    fee: 0,
+    eid: 0
+  } as any : null
+})
+
 // Format helpers
 const formatBalance = (bal: any, type: 'NATIVE' | 'TOKEN' = 'NATIVE') => {
   if (!bal || !bal.formatted) return '0.00'
@@ -361,9 +406,8 @@ const usdtBalance = ref<any>(null)
 const config = useConfig()
 
 // Helpers
-import { getBalance, readContract } from '@wagmi/core'
-import { wancashAbi } from '@/app/services/contracts'
-import { formatUnits } from 'viem'
+import { getBalance } from '@wagmi/core'
+
 
 const fetchNativeBalance = async () => {
   if (!address.value || !chainId.value) return
@@ -559,9 +603,7 @@ const updateLastUpdated = (): void => {
   })
 }
 
-const simulatePriceUpdate = (): void => {
-  // Deprecated: using fetchRealData
-}
+
 
 // Fetch Real Data
 const fetchRealData = async () => {

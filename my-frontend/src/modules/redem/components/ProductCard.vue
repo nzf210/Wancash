@@ -113,7 +113,7 @@ const displayImages = computed(() => {
     const legacyUrl = props.product.image_url
 
     // Start with array from `images`
-    let combined = [...images]
+    const combined = [...images]
 
     // Add legacy URL if not present
     if (legacyUrl && !combined.includes(legacyUrl)) {

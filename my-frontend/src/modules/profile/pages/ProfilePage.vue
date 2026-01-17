@@ -142,7 +142,7 @@ import PrivacySettingsComponent from '../components/PrivacySettings.vue'
 
 // Composables & Store
 const router = useRouter()
-const { walletAddress, isAuthenticated, logout } = useAuth()
+const { walletAddress, logout } = useAuth()
 const profileStore = useProfileStore()
 
 // State

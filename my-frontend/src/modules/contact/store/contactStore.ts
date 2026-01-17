@@ -67,7 +67,7 @@ export const useContactStore = defineStore('contact-form', () => {
             } else {
                 return { success: false, message: result.error || 'Failed to send message. Please try again.' }
             }
-        } catch (error) {
+        } catch {
             return { success: false, message: 'Failed to send message. Please try again.' }
         } finally {
             loading.value = false

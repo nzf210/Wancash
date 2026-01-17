@@ -220,7 +220,6 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
-    DialogFooter,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import type { RedeemTransaction, RedeemStatus } from '../types'
@@ -236,7 +235,7 @@ defineEmits<{
     'update:open': [value: boolean]
 }>()
 
-const { formatNumber, formatDateTime, shortenTransactionHash, copyToClipboard } = useFormatters()
+const { formatNumber, formatDateTime, copyToClipboard } = useFormatters()
 
 const statusClass = computed(() => {
     if (!props.transaction) return ''

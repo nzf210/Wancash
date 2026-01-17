@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import {
   NavigationMenu,
@@ -10,8 +10,7 @@ import {
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from '@/components/ui/navigation-menu'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+
 import ThemeToggle from '../ThemeToggle.vue'
 import WalletAuthButton from './WalletAuthButton.vue'
 import NotificationView from './notifications/NotificationView.vue'
@@ -43,9 +42,7 @@ const handleScroll = () => {
   isScrolled.value = window.scrollY > 10
 }
 
-const handleNotificationClick = () => {
-  emit('notificationClick')
-}
+
 
 // Lifecycle
 onMounted(() => {

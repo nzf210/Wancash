@@ -36,7 +36,7 @@ export function useBridgeBalance(fromChainId: () => number | null | undefined, s
     // Watch for changes and fetch balance
     watchDebounced(
         queryKey,
-        async ([, contract, address, chainId, tokenAddress]) => {
+        async ([, _contract, address, chainId, _tokenAddress]) => {
             if (!isConnected.value || !address || !chainId) {
                 rawBalance.value = null
                 balanceLoading.value = false

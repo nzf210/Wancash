@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import DynamicNavbar from '@/app/components/navbar/NavbarView.vue'
 import FooterView from '@/app/components/FooterView.vue'
@@ -7,16 +6,8 @@ import { useAuth } from '@/app/composables/useAuth'
 import { useNotificationStore } from '@/stores/notificationStore'
 
 const router = useRouter()
-const { isAuthenticated, logout, user } = useAuth()
+const { logout } = useAuth()
 const notificationStore = useNotificationStore()
-
-// Reactive user data
-const currentUser = ref({
-  name: 'Wancash User',
-  email: 'support@wancash.com',
-  avatar: 'https://avatars.githubusercontent.com/u/124599?v=4',
-  initials: 'WCH'
-})
 
 // Event handlers
 const handleLogin = () => {

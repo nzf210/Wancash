@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import { computed } from 'vue'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 
@@ -78,7 +77,7 @@ const displayAmount = computed({
     </div>
     <div class="text-xs md:text-sm text-gray-600 dark:text-gray-400">
       Equivalent to: <span class="font-semibold text-blue-600 dark:text-blue-400">USD {{ formatCurrency(equivalentValue)
-      }}</span>
+        }}</span>
     </div>
   </div>
 </template>

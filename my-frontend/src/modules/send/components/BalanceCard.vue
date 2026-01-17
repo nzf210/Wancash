@@ -1,18 +1,31 @@
-<script lang="ts" setup>
-import { ref } from 'vue'
+<script setup lang="ts">
+import { ref, computed } from 'vue'
 import { formatTokenBalance, formatNativeBalance, formatUSD } from '@/utils/format'
+import WancashIcon from '@/components/icons/WancashIcon.vue'
+import ChainIcon from '@/modules/bridge/components/ChainIcon.vue'
+import { useChainId } from '@wagmi/vue'
+import { networks } from '@/app/components/config/wagmi'
 
-defineProps<{
-  walletBalance: number
-  tokenPrice: number
-  nativeBalance: number
-  nativeCurrencySymbol: string
-}>()
-const emit = defineEmits<{
-  refresh: []
-}>()
+defineProps<{ walletBalance: number; tokenPrice: number; nativeBalance: number; nativeCurrencySymbol: string }>()
+const emit = defineEmits<{ refresh: [] }>()
 
 const isRefreshing = ref(false)
+
+const chainId = useChainId()
+const activeChain = computed(() => {
+  if (!chainId.value) return null
+  const network = networks.find(n => n.id === chainId.value)
+  return network ? {
+    id: network.id,
+    name: network.name,
+    network: network.name.toLowerCase(),
+    symbol: network.nativeCurrency?.symbol || '',
+    currency: network.nativeCurrency?.symbol || '',
+    type: 'evm',
+    fee: 0,
+    eid: 0
+  } as any : null
+})
 
 const handleRefresh = async () => {
   if (isRefreshing.value) return
@@ -31,7 +44,8 @@ const handleRefresh = async () => {
   <div class="mb-8">
     <div
       class="relative bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-2xl overflow-hidden">
-      <div class="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-cyan-500/5 rounded-3xl"></div>
+      <div class="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-cyan-500/5 rounded-3xl">
+      </div>
 
       <!-- Refresh Button -->
       <button @click="handleRefresh" :disabled="isRefreshing"
@@ -51,10 +65,7 @@ const handleRefresh = async () => {
             <div class="flex items-center justify-center md:justify-start gap-3">
               <div
                 class="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-400 flex items-center justify-center">
-                <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M10 2a8 8 0 100 16 8 8 0 000-16zM4 10a6 6 0 1112 0 6 6 0 01-12 0z"
-                    clip-rule="evenodd" />
-                </svg>
+                <WancashIcon class-name="w-5 h-5 text-white" />
               </div>
               <p class="text-lg md:text-2xl font-bold text-gray-900 dark:text-white">{{
                 formatTokenBalance(walletBalance) }}
@@ -64,12 +75,8 @@ const handleRefresh = async () => {
           <div class="text-center">
             <p class="text-xs md:text-sm text-gray-600 dark:text-gray-400 mb-2">Native Coin Balance</p>
             <div class="flex items-center justify-center gap-2">
-              <div
-                class="w-8 h-8 rounded-lg bg-gradient-to-r from-yellow-500 to-orange-400 flex items-center justify-center">
-                <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.736 6.979C9.208 6.193 9.696 6 10 6c.304 0 .792.193 1.264.979a1 1 0 001.715-1.029C12.279 4.784 11.232 4 10 4s-2.279.784-2.979 1.95c-.285.475-.507 1-.67 1.55H6a1 1 0 000 2h.013a9.358 9.358 0 000 1H6a1 1 0 100 2h.351c.163.55.385 1.075.67 1.55C7.721 15.216 8.768 16 10 16s2.279-.784 2.979-1.95a1 1 0 10-1.715-1.029c-.472.786-.96.979-1.264.979-.304 0-.792-.193-1.264-.979a4.265 4.265 0 01-.264-.521H10a1 1 0 100-2H8.017a7.36 7.36 0 010-1H10a1 1 0 100-2H8.472a4.265 4.265 0 01.264-.521z" />
-                </svg>
+              <div class="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shadow-sm">
+                <ChainIcon :chain="activeChain" />
               </div>
               <p class="text-base md:text-xl font-bold text-yellow-600 dark:text-yellow-400">{{
                 formatNativeBalance(nativeBalance) }}

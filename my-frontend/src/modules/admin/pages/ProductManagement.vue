@@ -329,7 +329,7 @@ const getProductImage = (product: Product): string | undefined => {
     const images = (product.images || []).filter(img => img && img.trim() !== '')
     const legacy = product.image_url
 
-    let allImages = [...images]
+    const allImages = [...images]
     if (legacy && !allImages.includes(legacy)) {
         allImages.unshift(legacy)
     }

@@ -1,4 +1,4 @@
-import { ref, computed, type Ref } from 'vue'
+import { ref } from 'vue'
 
 /**
  * Reusable pagination composable

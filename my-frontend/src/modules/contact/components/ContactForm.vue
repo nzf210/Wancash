@@ -138,7 +138,7 @@
                                             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                     </svg>
                                     <span class="text-gray-700 dark:text-gray-300 truncate max-w-xs">{{ file.name
-                                        }}</span>
+                                    }}</span>
                                 </div>
                                 <button @click="store.removeAttachment(index)" type="button"
                                     class="text-red-500 hover:text-red-600">
@@ -232,8 +232,8 @@ const store = useContactStore()
 const priceStore = usePriceStore()
 const profileStore = useProfileStore()
 const { formattedWchPrice } = storeToRefs(priceStore)
-const { isAuthenticated, walletAddress, user } = useAuth()
-const { profile } = storeToRefs(profileStore)
+const { isAuthenticated, walletAddress } = useAuth()
+const { } = storeToRefs(profileStore)
 
 // Auto-fill wallet address when connected
 watch(walletAddress, (newAddress) => {

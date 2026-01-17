@@ -9,10 +9,7 @@
                         <DialogTitle class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-4">
                             <div
                                 class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg shadow-blue-500/20 flex items-center justify-center shrink-0">
-                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                                </svg>
+                                <ChainIcon :chain="getChainObject(transaction?.fromChain)" class="w-7 h-7 text-white" />
                             </div>
                             <div class="flex flex-col">
                                 <span>Bridge Details</span>
@@ -69,11 +66,8 @@
                             <div class="flex flex-col items-center">
                                 <div
                                     class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center mb-3 shadow-lg shadow-blue-500/20">
-                                    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                    </svg>
+                                    <ChainIcon :chain="getChainObject(transaction.fromChain)"
+                                        class="w-8 h-8 text-white" />
                                 </div>
                                 <span
                                     class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">From</span>
@@ -85,7 +79,7 @@
                             <div
                                 class="relative flex-1 mx-0 sm:mx-6 w-full sm:w-auto h-16 sm:h-auto flex items-center justify-center">
                                 <!-- Desktop Line -->
-                                <div class="hidden sm:block absolute inset-0 flex items-center">
+                                <div class="hidden sm:flex absolute inset-0 items-center">
                                     <div class="w-full border-t-2 border-dashed border-gray-300 dark:border-gray-700">
                                     </div>
                                 </div>
@@ -109,11 +103,8 @@
                             <div class="flex flex-col items-center">
                                 <div
                                     class="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-3 shadow-lg shadow-purple-500/20">
-                                    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                    </svg>
+                                    <ChainIcon :chain="getChainObject(transaction.toChain)"
+                                        class="w-8 h-8 text-white" />
                                 </div>
                                 <span
                                     class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">To</span>
@@ -220,12 +211,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { toast } from 'vue-sonner'
+import { SUPPORTED_CHAINS } from '@/app/composables/useChain'
+import ChainIcon from '@/modules/bridge/components/ChainIcon.vue'
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
-    DialogFooter,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import type { BridgeTransaction, BridgeStatus } from '../types'
@@ -241,7 +233,7 @@ defineEmits<{
     'update:open': [value: boolean]
 }>()
 
-const { formatNumber, formatDateTime, shortenTransactionHash, copyToClipboard } = useFormatters()
+const { formatNumber, formatDateTime, copyToClipboard } = useFormatters()
 
 const statusClass = computed(() => {
     if (!props.transaction) return ''
@@ -291,5 +283,15 @@ const handleCopyHash = async () => {
             toast.success('Transaction hash copied to clipboard')
         }
     }
+}
+
+const getChainObject = (name: string | undefined) => {
+    if (!name) return null
+    const chain = SUPPORTED_CHAINS.find(c =>
+        c.name.toLowerCase() === name.toLowerCase() ||
+        c.network.toLowerCase() === name.toLowerCase() ||
+        c.symbol?.toLowerCase() === name.toLowerCase()
+    )
+    return (chain || { name, network: name.toLowerCase() }) as any
 }
 </script>

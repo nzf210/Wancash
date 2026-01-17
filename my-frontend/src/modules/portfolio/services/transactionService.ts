@@ -50,7 +50,7 @@ export const transactionService = {
     /**
      * Fetch send token transactions for a wallet
      */
-    async fetchSendTransactions(_walletAddress: string): Promise<SendTransaction[]> {
+    async fetchSendTransactions(): Promise<SendTransaction[]> {
         try {
             const transactions = await transactionHistoryService.fetchFromBackend({ type: 'send' })
 
@@ -73,7 +73,7 @@ export const transactionService = {
     /**
      * Fetch bridge transactions for a wallet
      */
-    async fetchBridgeTransactions(_walletAddress: string): Promise<BridgeTransaction[]> {
+    async fetchBridgeTransactions(): Promise<BridgeTransaction[]> {
         try {
             const transactions = await transactionHistoryService.fetchFromBackend({ type: 'bridge' })
 
@@ -98,7 +98,7 @@ export const transactionService = {
      * Fetch redeem transactions for a wallet
      * Uses authenticated wallet from auth_state
      */
-    async fetchRedeemTransactions(_walletAddress: string): Promise<RedeemTransaction[]> {
+    async fetchRedeemTransactions(): Promise<RedeemTransaction[]> {
         try {
             const redemptions = await redemptionService.getRedemptions()
 

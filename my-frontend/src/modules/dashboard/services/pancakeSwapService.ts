@@ -1,4 +1,4 @@
-import { createPublicClient, http, parseUnits, formatUnits, erc20Abi } from 'viem'
+import { createPublicClient, http, parseUnits, erc20Abi } from 'viem'
 import { bsc, bscTestnet } from 'viem/chains'
 import { SmartRouter, SwapRouter } from '@pancakeswap/smart-router'
 import { Token, CurrencyAmount, TradeType, Percent, Native } from '@pancakeswap/sdk'

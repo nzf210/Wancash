@@ -2,7 +2,7 @@
 import { ref, computed, watch, onUnmounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+
 import ThemeToggle from '../ThemeToggle.vue'
 
 import MobileMenuSheet from './MobileMenuSheet.vue'
@@ -10,7 +10,7 @@ import { useConnection, useDisconnect, useConfig } from '@wagmi/vue'
 import { readContract } from '@wagmi/core'
 import { useAuth } from '@/app/composables/useAuth'
 import { useChain } from '@/app/composables/useChain'
-import type { NavbarProps, NavbarEmits, ProfileAuthStores } from './types'
+import type { NavbarProps, ProfileAuthStores } from './types'
 import { navigationItems, productMenuItems } from './menuItem'
 import { useProfileStore } from '@/modules/profile/store/profileStore'
 import { wancashAbi, wancashContractAddress } from '@/app/services/contracts'
@@ -26,7 +26,7 @@ const config = useConfig()
 
 // Props & Emits
 const props = defineProps<NavbarProps>()
-const emit = defineEmits<NavbarEmits>()
+
 
 // State
 const isMobileMenuOpen = ref(false)
