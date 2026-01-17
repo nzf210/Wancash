@@ -4,6 +4,8 @@ export interface DexTokenData {
     pairAddress: string
     priceUsd: string
     priceChange: {
+        h1: number
+        h6: number
         h24: number
     }
     volume: {
@@ -35,6 +37,8 @@ export const dexScreenerService = {
                     pairAddress: data.pairAddress,
                     priceUsd: data.priceUsd,
                     priceChange: {
+                        h1: data.priceChange?.h1 || 0,
+                        h6: data.priceChange?.h6 || 0,
                         h24: data.priceChange?.h24 || 0
                     },
                     volume: {

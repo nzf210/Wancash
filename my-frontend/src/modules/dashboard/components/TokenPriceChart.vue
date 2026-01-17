@@ -21,74 +21,83 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
 import { useDark } from '@vueuse/core'
+import axios from 'axios'
 
-type Timeframe = '1H' | '1D' | '1W' | '1M'
-const timeframes: Timeframe[] = ['1H', '1D', '1W', '1M']
-const selectedTimeframe = ref<Timeframe>('1D')
+type Timeframe = '1m' | '5m' | '1h' | '1d' | '1w' | '1M'
+const timeframes: Timeframe[] = ['1m', '5m', '1h', '1d', '1w', '1M']
+const selectedTimeframe = ref<Timeframe>('1d')
 
 const isDark = useDark()
+const isLoading = ref(false)
+const error = ref<string | null>(null)
 
 // Dynamic Color based on Theme
-const chartColor = computed(() => isDark.value ? '#8b5cf6' : '#6366f1') // Purple (Dark) vs Indigo (Light)
+const chartColor = computed(() => isDark.value ? '#8b5cf6' : '#6366f1')
 
-// Data Generation Logic
-const generateData = (tf: Timeframe) => {
-    let data = []
-    let price = 620.50
-    let now = Date.now()
-    let points = 50
-    let interval = 1800 * 1000 // 30 mins
+// Fetch real data from backend
+const fetchChartData = async (tf: Timeframe) => {
+    isLoading.value = true
+    error.value = null
 
-    // Adjust parameters based on timeframe
-    switch (tf) {
-        case '1H':
-            points = 60
-            interval = 60 * 1000 // 1 min
-            break
-        case '1D':
-            points = 48
-            interval = 30 * 60 * 1000 // 30 min
-            break
-        case '1W':
-            points = 56
-            interval = 3 * 60 * 60 * 1000 // 3 hours
-            break
-        case '1M':
-            points = 30
-            interval = 24 * 60 * 60 * 1000 // 1 day
-            break
-    }
+    try {
+        const pointsMap: Record<Timeframe, number> = {
+            '1m': 60,   // Last hour
+            '5m': 60,   // Last 5 hours
+            '1h': 72,   // Last 3 days
+            '1d': 30,   // Last 30 days
+            '1w': 24,   // Last 6 months (weeks)
+            '1M': 12    // Last year (months)
+        }
 
-    // Generate Random Walk
-    for (let i = points; i >= 0; i--) {
-        const volatility = tf === '1H' ? 0.5 : 2.5
-        const change = (Math.random() - 0.48) * volatility // Slight upward bias
-        price += change
-
-        data.push({
-            x: now - (i * interval),
-            y: price
+        const response = await axios.get('/api/stats/token-price-history', {
+            params: {
+                timeframe: tf,
+                points: pointsMap[tf]
+            }
         })
+
+        if (response.data.success && response.data.data) {
+            // Transform to ApexCharts format
+            const chartData = response.data.data.map((item: any) => ({
+                x: item.timestamp,
+                y: item.price
+            }))
+
+            // Update series
+            series.value = [{
+                name: 'Price (USD)',
+                data: chartData
+            }]
+        } else {
+            throw new Error('No data received')
+        }
+
+    } catch (err) {
+        console.error('Failed to fetch chart data:', err)
+        error.value = 'Failed to load chart data'
+
+        // Keep showing old data on error
+    } finally {
+        isLoading.value = false
     }
-    return data
 }
 
 const series = ref([
     {
-        name: 'Price',
-        data: generateData('1D')
+        name: 'Price (USD)',
+        data: []
     }
 ])
 
+
+const emit = defineEmits(['timeframe-changed'])
+
 const selectTimeframe = (tf: Timeframe) => {
     selectedTimeframe.value = tf
-    // animate series update
-    series.value = [{
-        name: 'Price',
-        data: generateData(tf)
-    }]
+    fetchChartData(tf)
+    emit('timeframe-changed', tf)
 }
 
 const chartOptions = computed(() => ({
@@ -157,29 +166,46 @@ const chartOptions = computed(() => ({
     tooltip: {
         theme: isDark.value ? 'dark' : 'light',
         x: { format: 'dd MMM HH:mm' },
-        y: { formatter: (val: number) => `$${val.toFixed(2)}` },
+        y: {
+            formatter: (val: number) => {
+                // For very small prices, show more decimal places
+                if (val < 0.01) {
+                    // Show up to 8 significant digits for small values
+                    return `$${val.toFixed(8).replace(/\.?0+$/, '')}`
+                } else if (val < 1) {
+                    return `$${val.toFixed(6).replace(/\.?0+$/, '')}`
+                } else if (val < 100) {
+                    return `$${val.toFixed(4).replace(/\.?0+$/, '')}`
+                }
+                return `$${val.toFixed(2)}`
+            }
+        },
         style: { fontSize: '12px' },
         marker: { show: true },
     }
 }))
 
-// Live Animation Simulation (only for 1H or 1D to feel fast)
-onMounted(() => {
-    setInterval(() => {
-        if (selectedTimeframe.value === '1H' || selectedTimeframe.value === '1D') {
-            const data = series.value[0].data
-            const lastPoint = data[data.length - 1]
-            const volatility = selectedTimeframe.value === '1H' ? 0.2 : 0.8
-            const newPrice = lastPoint.y + (Math.random() - 0.5) * volatility
+// Auto-refresh for short timeframes
+let refreshInterval: NodeJS.Timeout | null = null
 
-            series.value[0].data[data.length - 1] = {
-                x: lastPoint.x,
-                y: newPrice
-            }
-            series.value = [...series.value]
+onMounted(() => {
+    // Initial load
+    fetchChartData(selectedTimeframe.value)
+
+    // Auto-refresh for short timeframes
+    refreshInterval = setInterval(() => {
+        if (selectedTimeframe.value === '1m' || selectedTimeframe.value === '5m') {
+            fetchChartData(selectedTimeframe.value)
         }
-    }, 2000)
+    }, 60000) // Refresh every minute for 1m/5m charts
 })
+
+onUnmounted(() => {
+    if (refreshInterval) {
+        clearInterval(refreshInterval)
+    }
+})
+
 </script>
 
 <style scoped>

@@ -132,7 +132,7 @@
 
                 <!-- Chart Integration -->
                 <div class="mt-4 -mx-2 h-[220px]">
-                  <TokenPriceChart />
+                  <TokenPriceChart @timeframe-changed="handleTimeframeChange" />
                 </div>
             </div>
 
@@ -141,7 +141,7 @@
               <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border dark:border-gray-700">
                 <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Market Cap</div>
                 <div class="text-[13px] md:text-base font-semibold text-gray-900 dark:text-white">${{
-                  (currentPrice * circulatingSupply).toLocaleString(undefined, { maximumFractionDigits: 0 })
+                  marketCap.toLocaleString(undefined, { maximumFractionDigits: 0 })
                   }}</div>
               </div>
               <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border dark:border-gray-700">
@@ -206,7 +206,16 @@ import { dexScreenerService } from '../services/dexScreenerService'
 // Reactive state
 const loading = ref<boolean>(false)
 const currentPrice = ref<number>(0.00245)
-const priceChange = ref<number>(12.45)
+// const priceChange = ref<number>(12.45) // Replaced by computed
+const priceChangeData = ref({ h1: 0, h6: 0, h24: 0 })
+const selectedTimeframe = ref('1d')
+
+const priceChange = computed(() => {
+  const tf = selectedTimeframe.value
+  if (tf === '1m' || tf === '5m' || tf === '1h') return priceChangeData.value.h1
+  // if (tf === '1w') return priceChangeData.value.h6 // Optional: use 6h for 1w view if desired, but 24h is standard
+  return priceChangeData.value.h24
+})
 const marketCap = ref<number>(125000000)
 const volume24h = ref<number>(8750000)
 const totalSupply = ref<number>(21000000000)
@@ -384,15 +393,30 @@ const fetchRealData = async () => {
     if (data) {
       pairAddress.value = data.pairAddress
       currentPrice.value = parseFloat(data.priceUsd)
-      priceChange.value = data.priceChange.h24
+      // Store all timeframes
+      priceChangeData.value = {
+        h1: data.priceChange.h1,
+        h6: data.priceChange.h6,
+        h24: data.priceChange.h24
+      }
       volume24h.value = data.volume.h24
       marketCap.value = data.marketCap
+
+      // Calculate implied supply based on Market Cap / Price
+      // This ensures Market Cap = Price * Supply in the UI
+      if (currentPrice.value > 0) {
+        circulatingSupply.value = data.marketCap / currentPrice.value
+      }
     }
   } catch (error) {
     console.error("Failed to load real stats", error)
   } finally {
     updateLastUpdated()
   }
+}
+
+const handleTimeframeChange = (tf: string) => {
+  selectedTimeframe.value = tf
 }
 
 // Lifecycle hooks
