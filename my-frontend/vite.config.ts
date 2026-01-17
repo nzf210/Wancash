@@ -53,6 +53,9 @@ export default defineConfig(({ mode }) => { // Ambil mode dari Vite (dev/build)
               type: 'image/png'
             }
           ]
+        },
+        workbox: {
+          maximumFileSizeToCacheInBytes: 6 * 1024 * 1024 // 6MB
         }
       })
     ],
