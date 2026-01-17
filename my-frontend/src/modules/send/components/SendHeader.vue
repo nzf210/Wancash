@@ -1,5 +1,9 @@
 <script lang="ts" setup>
 import { Button } from '@/components/ui/button'
+import { useChain } from '@/app/composables/useChain'
+import ChainIcon from '@/modules/bridge/components/ChainIcon.vue'
+
+const { currentChain } = useChain()
 </script>
 
 <template>
@@ -7,11 +11,8 @@ import { Button } from '@/components/ui/button'
     <div class="flex items-center justify-between mb-4 md:mb-6">
       <div class="flex items-center gap-3 md:gap-4">
         <div
-          class="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
-          <svg class="w-5 h-5 md:w-7 md:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-          </svg>
+          class="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center p-2 md:p-3">
+          <ChainIcon :chain="currentChain" class="w-full h-full" />
         </div>
         <div>
           <h1 class="text-xl md:text-3xl font-bold text-gray-900 dark:text-white">Token Transfer</h1>

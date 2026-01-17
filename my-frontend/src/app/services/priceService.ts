@@ -1,19 +1,25 @@
-const COINCAP_API_BASE = 'https://api.coincap.io/v2'
+const API_BASE = import.meta.env.VITE_API_URL || ''
 
 export interface TokenPrice {
     priceUsd: number
+    percentChange1h?: number
+    percentChange6h?: number
     percentChange24h: number
+    volume24h?: number
+    marketCap?: number
+    pairAddress?: string
 }
 
 /**
- * Service to fetch token prices from CoinCap API
+ * Service to fetch token prices and statistics
  */
 export const priceService = {
     /**
-     * Fetch ETH price from CoinCap
+     * Fetch ETH price from CoinCap (Fallback)
      */
     async fetchEthPrice(): Promise<TokenPrice | null> {
         try {
+            const COINCAP_API_BASE = 'https://api.coincap.io/v2'
             const response = await fetch(`${COINCAP_API_BASE}/assets/ethereum`)
             if (!response.ok) throw new Error('Failed to fetch ETH price')
 
@@ -29,15 +35,33 @@ export const priceService = {
     },
 
     /**
-     * Fetch WCH price
-     * Currently uses a fallback as WCH is not listed on public APIs yet.
+     * Fetch WCH price and statistics from Backend
      */
     async fetchWchPrice(): Promise<TokenPrice> {
-        // In the future, this would call an API or smart contract
-        // For now, we return the hardcoded price with 0% change
-        return {
-            priceUsd: 0.0013,
-            percentChange24h: 0
+        try {
+            const response = await fetch(`${API_BASE}/api/stats/token-price`)
+            if (!response.ok) throw new Error('Failed to fetch WCH price from backend')
+
+            const data = await response.json()
+            if (data && !data.error) {
+                return {
+                    priceUsd: parseFloat(data.priceUsd),
+                    percentChange1h: data.priceChange?.h1 || 0,
+                    percentChange6h: data.priceChange?.h6 || 0,
+                    percentChange24h: data.priceChange?.h24 || 0,
+                    volume24h: data.volume?.h24 || 0,
+                    marketCap: data.marketCap || 0,
+                    pairAddress: data.pairAddress
+                }
+            }
+            throw new Error('Invalid backend data')
+        } catch (error) {
+            console.warn('Error fetching WCH price from backend:', error)
+            return {
+                priceUsd: 0.0013,
+                percentChange24h: 0
+            }
         }
     }
 }
+

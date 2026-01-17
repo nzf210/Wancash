@@ -288,32 +288,37 @@ import { pancakeSwapService, type SwapQuote } from '../services/pancakeSwapServi
 import TokenPriceChart from './TokenPriceChart.vue'
 import { toast } from 'vue-sonner'
 import { useChainId, useConfig } from '@wagmi/vue'
-import { useAppKit, useAppKitAccount } from '@reown/appkit/vue'
-import { dexScreenerService } from '../services/dexScreenerService'
+import { usePriceStore } from '@/stores/priceStore'
+import { storeToRefs } from 'pinia'
 import WancashIcon from '@/components/icons/WancashIcon.vue'
 import UsdtIcon from '@/components/icons/UsdtIcon.vue'
 import ChainIcon from '@/modules/bridge/components/ChainIcon.vue'
 import { networks } from '@/app/components/config/wagmi'
 
+// Price Store
+const priceStore = usePriceStore()
+const {
+  wchPrice: currentPrice,
+  marketCap,
+  volume24h,
+  pairAddress,
+  wchChange1h,
+  wchChange24h
+} = storeToRefs(priceStore)
+
 // Reactive state
 const loading = ref<boolean>(false)
-const currentPrice = ref<number>(0.00245)
-// const priceChange = ref<number>(12.45) // Replaced by computed
-const priceChangeData = ref({ h1: 0, h6: 0, h24: 0 })
 const selectedTimeframe = ref('1d')
 
 const priceChange = computed(() => {
   const tf = selectedTimeframe.value
-  if (tf === '1m' || tf === '5m' || tf === '1h') return priceChangeData.value.h1
-  // if (tf === '1w') return priceChangeData.value.h6 // Optional: use 6h for 1w view if desired, but 24h is standard
-  return priceChangeData.value.h24
+  if (tf === '1m' || tf === '5m' || tf === '1h') return wchChange1h.value
+  return wchChange24h.value
 })
-const marketCap = ref<number>(125000000)
-const volume24h = ref<number>(8750000)
+
 const totalSupply = ref<number>(21000000000)
 const circulatingSupply = ref<number>(750000000)
 const lastUpdated = ref<string>('')
-const pairAddress = ref<string | null>(null)
 
 // Swap State
 const swapMode = ref(false)
@@ -407,6 +412,7 @@ const config = useConfig()
 
 // Helpers
 import { getBalance } from '@wagmi/core'
+import { useAppKit, useAppKitAccount } from '@reown/appkit/vue'
 
 
 const fetchNativeBalance = async () => {
@@ -608,26 +614,12 @@ const updateLastUpdated = (): void => {
 // Fetch Real Data
 const fetchRealData = async () => {
   try {
-    // Fetch from DexScreener (default returns WBNB data for now)
-    const data = await dexScreenerService.getTokenData()
+    // Fetch from Backend using central price store
+    await priceStore.fetchPrices()
 
-    if (data) {
-      pairAddress.value = data.pairAddress
-      currentPrice.value = parseFloat(data.priceUsd)
-      // Store all timeframes
-      priceChangeData.value = {
-        h1: data.priceChange.h1,
-        h6: data.priceChange.h6,
-        h24: data.priceChange.h24
-      }
-      volume24h.value = data.volume.h24
-      marketCap.value = data.marketCap
-
-      // Calculate implied supply based on Market Cap / Price
-      // This ensures Market Cap = Price * Supply in the UI
-      if (currentPrice.value > 0) {
-        circulatingSupply.value = data.marketCap / currentPrice.value
-      }
+    // Calculate implied supply based on Market Cap / Price if needed
+    if (currentPrice.value > 0) {
+      circulatingSupply.value = marketCap.value / currentPrice.value
     }
   } catch (error) {
     console.error("Failed to load real stats", error)

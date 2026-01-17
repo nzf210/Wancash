@@ -5,7 +5,12 @@ import { priceService } from '@/app/services/priceService'
 export const usePriceStore = defineStore('price', () => {
     // State
     const wchPrice = ref(0.0015) // Default fallback
+    const wchChange1h = ref(0)
+    const wchChange6h = ref(0)
     const wchChange24h = ref(0)
+    const volume24h = ref(0)
+    const marketCap = ref(0)
+    const pairAddress = ref('')
 
     const nativePrice = ref(0) // ETH/BNB price in USD
     const nativeChange24h = ref(0)
@@ -43,10 +48,15 @@ export const usePriceStore = defineStore('price', () => {
                 nativeChange24h.value = ethData.percentChange24h
             }
 
-            // Fetch WCH price
+            // Fetch WCH price and stats from backend
             const wchData = await priceService.fetchWchPrice()
             wchPrice.value = wchData.priceUsd
+            wchChange1h.value = wchData.percentChange1h || 0
+            wchChange6h.value = wchData.percentChange6h || 0
             wchChange24h.value = wchData.percentChange24h
+            volume24h.value = wchData.volume24h || 0
+            marketCap.value = wchData.marketCap || 0
+            pairAddress.value = wchData.pairAddress || ''
 
             lastUpdated.value = new Date()
         } catch (error) {
@@ -65,7 +75,12 @@ export const usePriceStore = defineStore('price', () => {
     return {
         // State
         wchPrice,
+        wchChange1h,
+        wchChange6h,
         wchChange24h,
+        volume24h,
+        marketCap,
+        pairAddress,
         nativePrice,
         nativeChange24h,
         isLoading,
@@ -80,3 +95,4 @@ export const usePriceStore = defineStore('price', () => {
         init
     }
 })
+

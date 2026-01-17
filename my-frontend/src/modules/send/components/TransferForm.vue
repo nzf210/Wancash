@@ -5,6 +5,8 @@ import AmountInput from './AmountInput.vue'
 import NetworkFeeDisplay from './NetworkFeeDisplay.vue'
 import MemoInput from './MemoInput.vue'
 import TermsCheckbox from './TermsCheckbox.vue'
+import { useChain } from '@/app/composables/useChain'
+import ChainIcon from '@/modules/bridge/components/ChainIcon.vue'
 
 const props = defineProps<{
   form: { recipientAddress: string; amount: string; memo: string };
@@ -30,6 +32,8 @@ const emit = defineEmits<{
   'reset-form': [];
 }>()
 
+const { currentChain } = useChain()
+
 const updateRecipientAddress = (value: string) => emit('update:form', { ...props.form, recipientAddress: value })
 const updateAmount = (value: string) => emit('update:form', { ...props.form, amount: value })
 const updateMemo = (value: string) => emit('update:form', { ...props.form, memo: value })
@@ -43,12 +47,9 @@ const updateMemo = (value: string) => emit('update:form', { ...props.form, memo:
     class="relative bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-xl overflow-hidden">
     <div class="p-8">
       <div class="flex items-center gap-3 mb-6">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-400 flex items-center justify-center">
-          <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"
-              clip-rule="evenodd" />
-          </svg>
+        <div
+          class="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-400 flex items-center justify-center p-2">
+          <ChainIcon :chain="currentChain" class="w-full h-full" />
         </div>
         <div>
           <h2 class="text-lg md:text-xl font-bold text-gray-900 dark:text-white">Transfer Form</h2>
@@ -57,6 +58,7 @@ const updateMemo = (value: string) => emit('update:form', { ...props.form, memo:
           </p>
         </div>
       </div>
+
 
       <div class="space-y-8">
         <RecipientInput :recipient-address="form.recipientAddress" :address-error="addressError"
