@@ -1,5 +1,5 @@
 <template>
-    <div class="w-full h-[260px] transition-all duration-300 relative group flex flex-col">
+    <div class="w-full h-full transition-all duration-300 relative group flex flex-col">
         <!-- Header: Timeframe Selector -->
         <div class="absolute top-0 right-0 z-10 flex space-x-1 p-2">
             <button v-for="tf in timeframes" :key="tf" @click="selectTimeframe(tf)" :class="[
@@ -13,7 +13,7 @@
         </div>
 
         <!-- Chart Area -->
-        <div class="flex-1 w-full min-h-0">
+        <div class="flex-1 w-full min-h-0 pt-8">
             <apexchart ref="chart" type="area" height="100%" width="100%" :options="chartOptions" :series="series">
             </apexchart>
         </div>

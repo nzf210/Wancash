@@ -131,7 +131,7 @@
               ${{ currentPrice < 0.01 ? currentPrice.toFixed(8) : currentPrice.toLocaleString() }} </div>
 
                 <!-- Chart Integration -->
-                <div class="mt-4 -mx-2 h-[220px]">
+                <div class="mt-4 h-[220px]">
                   <TokenPriceChart @timeframe-changed="handleTimeframeChange" />
                 </div>
             </div>
@@ -152,13 +152,13 @@
               <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border dark:border-gray-700">
                 <div class="text-xs sm:text-xs md:text-sm text-gray-500 dark:text-gray-400 mb-1">Total Supply</div>
                 <div class="text-[13px] md:text-base font-semibold text-gray-900 dark:text-white">
-                  {{ totalSupply.toLocaleString() }}
+                  {{ totalSupply.toLocaleString(undefined, { maximumFractionDigits: 0 }) }}
                 </div>
               </div>
               <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border dark:border-gray-700">
                 <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Circulating</div>
                 <div class="text-[13px] md:text-base font-semibold text-gray-900 dark:text-white">{{
-                  circulatingSupply.toLocaleString() }}</div>
+                  circulatingSupply.toLocaleString(undefined, { maximumFractionDigits: 0 }) }}</div>
               </div>
             </div>
 
