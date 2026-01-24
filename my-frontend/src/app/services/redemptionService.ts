@@ -40,6 +40,7 @@ export interface Product {
     compare_at_price?: number
     cost_price?: number
     stock: number
+    reserved_stock?: number  // Stock reserved in pending orders
     low_stock_threshold?: number
     track_inventory?: boolean
     allow_backorder?: boolean
@@ -150,6 +151,10 @@ export interface RedemptionRecord {
     created_at: string
     updated_at?: string
     items?: RedemptionItem[]
+
+    // Reservation fields
+    reservation_expires_at?: string
+    is_expired?: boolean
 
     // Reconciliation fields
     payment_status?: 'unpaid' | 'pending' | 'confirmed' | 'failed'

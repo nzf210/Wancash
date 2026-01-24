@@ -62,10 +62,34 @@
             </div>
 
             <div class="w-full pt-4 border-t border-gray-100 dark:border-gray-700">
-                <div class="flex justify-between items-center text-sm mb-3">
+                <div class="flex justify-between items-center text-sm mb-2">
                     <span class="text-gray-600 dark:text-gray-400">Price</span>
                     <span class="font-bold text-blue-600 dark:text-blue-400">{{ formatNumber(product.price_wch) }}
                         WCH</span>
+                </div>
+
+                <!-- Available Stock Info -->
+                <div class="mb-3 p-2 bg-gray-100 dark:bg-gray-600 rounded-lg space-y-1">
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="text-gray-600 dark:text-gray-300">Available</span>
+                        <span 
+                            class="font-semibold"
+                            :class="{
+                                'text-green-600 dark:text-green-400': (product.stock - (product.reserved_stock || 0)) > 5,
+                                'text-yellow-600 dark:text-yellow-400': (product.stock - (product.reserved_stock || 0)) > 0 && (product.stock - (product.reserved_stock || 0)) <= 5,
+                                'text-red-600 dark:text-red-400': (product.stock - (product.reserved_stock || 0)) === 0
+                            }"
+                        >
+                            {{ product.stock - (product.reserved_stock || 0) }} units
+                        </span>
+                    </div>
+                    <div 
+                        v-if="product.reserved_stock && product.reserved_stock > 0"
+                        class="flex justify-between items-center text-[10px] text-gray-500 dark:text-gray-400"
+                    >
+                        <span>Reserved by others</span>
+                        <span>{{ product.reserved_stock }} units</span>
+                    </div>
                 </div>
 
                 <!-- Quantity Controls -->
@@ -82,7 +106,8 @@
 
                     <button @click.stop="$emit('increase', product)"
                         class="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-600 text-white shadow-sm hover:bg-blue-700 disabled:opacity-50 transition-colors"
-                        :disabled="product.stock <= quantity">
+                        :disabled="(product.stock - (product.reserved_stock || 0)) <= quantity"
+                        :title="(product.stock - (product.reserved_stock || 0)) <= quantity ? 'Maximum available stock reached' : 'Add to cart'">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                         </svg>
