@@ -366,19 +366,30 @@ const { getChainInfo } = useChain()
 const route = useRoute()
 const router = useRouter()
 
+// Helper to parse valid tabs from query
+const getValidTab = (val: any): 'new' | 'history' => {
+  const tab = Array.isArray(val) ? val[0] : val
+  return (tab === 'history') ? 'history' : 'new' // default to 'new'
+}
+
 // State
 const walletConnected = computed(() => isConnected.value)
-const activeView = ref<'new' | 'history'>((route.query.tab as 'new' | 'history') || 'new')
+// Initialize active tab from URL query param
+const activeView = ref<'new' | 'history'>(getValidTab(route.query.tab))
 
-// Watch for tab changes and update URL
+// Watch for tab changes -> Update URL
 watch(activeView, (newTab) => {
-  router.replace({ query: { ...route.query, tab: newTab } })
+  const currentTab = getValidTab(route.query.tab)
+  if (currentTab !== newTab) {
+    router.replace({ query: { ...route.query, tab: newTab } })
+  }
 })
 
-// Watch for URL changes (e.g. Back button)
-watch(() => route.query.tab, (newTab) => {
-  if (newTab === 'new' || newTab === 'history') {
-    activeView.value = newTab
+// Watch for URL changes (e.g. Back button) -> Update State
+watch(() => route.query.tab, (newVal) => {
+  const validTab = getValidTab(newVal)
+  if (activeView.value !== validTab) {
+    activeView.value = validTab
   }
 })
 

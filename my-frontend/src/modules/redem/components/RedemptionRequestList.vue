@@ -181,17 +181,22 @@
     <Dialog :open="confirmDialog.isOpen" @update:open="confirmDialog.isOpen = $event">
         <DialogContent>
             <DialogHeader>
-                <DialogTitle>{{ confirmDialog.title }}</DialogTitle>
+                <DialogTitle>{{ isWrongChainConfirm ? 'Switch Network Required' : confirmDialog.title }}</DialogTitle>
                 <DialogDescription>
-                    {{ confirmDialog.description }}
+                    <span v-if="isWrongChainConfirm">
+                        This redemption request is on <b>{{ getChainNameDisplay(confirmDialog.requiredChainId) }}</b>.
+                        Please switch your wallet network to proceed.
+                    </span>
+                    <span v-else>{{ confirmDialog.description }}</span>
                 </DialogDescription>
             </DialogHeader>
             <DialogFooter>
                 <Button variant="outline" @click="confirmDialog.isOpen = false" :disabled="confirmDialog.isLoading">
                     Cancel
                 </Button>
-                <Button :variant="confirmDialog.variant || 'default'" @click="handleConfirm"
-                    :disabled="confirmDialog.isLoading">
+                <!-- Dynamic Button: Switch Chain OR Confirm Action -->
+                <Button :variant="isWrongChainConfirm ? 'secondary' : (confirmDialog.variant || 'default')"
+                    @click="handleConfirm" :disabled="confirmDialog.isLoading">
                     <svg v-if="confirmDialog.isLoading" class="animate-spin -ml-1 mr-2 h-4 w-4"
                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
@@ -200,7 +205,13 @@
                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
                         </path>
                     </svg>
-                    {{ confirmDialog.confirmText || 'Confirm' }}
+                    <!-- Button Text Logic -->
+                    <span v-if="isWrongChainConfirm">
+                        Switch to {{ getChainNameDisplay(confirmDialog.requiredChainId) }}
+                    </span>
+                    <span v-else>
+                        {{ confirmDialog.confirmText || 'Confirm' }}
+                    </span>
                 </Button>
             </DialogFooter>
         </DialogContent>
@@ -211,7 +222,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { Button } from '@/components/ui/button'
 import {
     Dialog,
@@ -259,7 +270,14 @@ const confirmDialog = ref({
     confirmText: 'Confirm',
     variant: 'default' as 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link',
     isLoading: false,
+    requiredChainId: undefined as number | undefined, // NEW: Targeted chain for validation
     onConfirm: async () => { }
+})
+
+// Computed Property to check if user is on wrong chain relative to the open dialog
+const isWrongChainConfirm = computed(() => {
+    if (!confirmDialog.value.isOpen || !confirmDialog.value.requiredChainId) return false
+    return chainId.value !== confirmDialog.value.requiredChainId
 })
 
 const openConfirmDialog = (options: {
@@ -267,6 +285,7 @@ const openConfirmDialog = (options: {
     description: string,
     confirmText?: string,
     variant?: 'default' | 'destructive',
+    requiredChainId?: number,
     onConfirm: () => Promise<void>
 }) => {
     confirmDialog.value = {
@@ -276,17 +295,34 @@ const openConfirmDialog = (options: {
         confirmText: options.confirmText || 'Confirm',
         variant: options.variant || 'default',
         isLoading: false,
+        requiredChainId: options.requiredChainId,
         onConfirm: options.onConfirm
     }
 }
 
 const handleConfirm = async () => {
+    // If wrong chain, user clicked "Switch Chain" button action
+    if (isWrongChainConfirm.value && confirmDialog.value.requiredChainId) {
+        confirmDialog.value.isLoading = true
+        try {
+            await switchChain({ chainId: confirmDialog.value.requiredChainId })
+            // Success: state will update reactively, button becomes "Pay Now"
+        } catch (error) {
+            console.error(error)
+            toast.error('Failed to switch network. Please try manually.')
+        } finally {
+            confirmDialog.value.isLoading = false
+        }
+        return
+    }
+
+    // Normal Confirmation Action (Payment)
     confirmDialog.value.isLoading = true
     try {
         await confirmDialog.value.onConfirm()
         confirmDialog.value.isOpen = false
     } catch {
-        // Error handling should be done inside onConfirm or here if generic
+        // Error handling done in callback
     } finally {
         confirmDialog.value.isLoading = false
     }
@@ -400,22 +436,12 @@ const handlePayment = (req: RedemptionRecord) => {
 
     openConfirmDialog({
         title: 'Confirm Payment',
-        description: `You are about to pay ${formatNumber(req.total_token_amount)} WCH on ${getChainName(targetChainId)}. Proceed?`,
+        description: `You are about to pay ${formatNumber(req.total_token_amount)} WCH on ${getChainName(targetChainId)}.`,
         confirmText: 'Pay Now',
+        requiredChainId: targetChainId, // Enforce Chain Check
         onConfirm: async () => {
             isPaying.value = req.id
             try {
-                // 1. Check Chain Logic
-                if (chainId.value !== targetChainId) {
-                    toast.info(`Switching chain to ${getChainName(targetChainId)}...`)
-                    try {
-                        await switchChain({ chainId: targetChainId })
-                    } catch (err) {
-                        console.error(err)
-                        throw new Error(`Please switch network to ${getChainName(targetChainId)} manually to pay.`)
-                    }
-                }
-
                 // WCH Token Contract Address for current chain
                 const tokenAddress = wancashContractAddress[targetChainId]
                 if (!tokenAddress) throw new Error('Token contract not found for this chain')
