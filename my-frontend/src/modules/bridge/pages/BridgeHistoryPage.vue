@@ -152,7 +152,7 @@
                         <div class="flex items-center justify-between">
                             <div class="flex flex-col">
                                 <span class="text-sm font-bold text-gray-900 dark:text-white">{{ formatNumber(tx.amount)
-                                    }} {{ tx.token }}</span>
+                                }} {{ tx.token }}</span>
                                 <span class="text-xs text-gray-500 dark:text-gray-400 mt-1" v-if="tx.toAddress">
                                     To: {{ shortenHash(tx.toAddress) }}
                                 </span>
@@ -198,7 +198,7 @@
                         <!-- Amount -->
                         <div class="col-span-2 text-right">
                             <span class="font-semibold text-gray-900 dark:text-white">{{ formatNumber(tx.amount)
-                                }}</span>
+                            }}</span>
                         </div>
 
                         <!-- To Address -->
@@ -392,10 +392,7 @@ const shortenHash = (hash: string): string => {
 }
 
 const getExplorerUrl = (hash: string): string => {
-    const isProduction = import.meta.env.VITE_NODE_ENV === 'production'
-    const baseUrl = isProduction
-        ? 'https://layerzeroscan.com/tx'
-        : 'https://testnet.layerzeroscan.com/tx'
-    return `${baseUrl}/${hash}`
+    const baseUrl = import.meta.env.VITE_LZ_SCAN_URL || 'https://testnet.layerzeroscan.com'
+    return `${baseUrl}/tx/${hash}`
 }
 </script>

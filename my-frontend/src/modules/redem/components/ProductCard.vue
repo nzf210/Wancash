@@ -1,5 +1,6 @@
 <template>
-    <div class="group relative bg-white dark:bg-gray-800 rounded-2xl p-4 border-2 transition-all duration-300 overflow-hidden"
+    <div @click="$emit('view-detail', product)"
+        class="group relative bg-white dark:bg-gray-800 rounded-2xl p-4 border-2 transition-all duration-300 overflow-hidden cursor-pointer"
         :class="[
             quantity > 0
                 ? 'border-blue-500 shadow-xl scale-[1.02]'
@@ -94,7 +95,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import type { GoldProduct } from '@/app/services/redemptionService'
+import type { Product as GoldProduct } from '@/app/services/redemptionService'
 
 const props = defineProps<{
     product: GoldProduct
@@ -104,6 +105,7 @@ const props = defineProps<{
 defineEmits<{
     'increase': [product: GoldProduct]
     'decrease': [product: GoldProduct]
+    'view-detail': [product: GoldProduct]
 }>()
 
 const currentImageIndex = ref(0)

@@ -329,8 +329,9 @@
                                     class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300 font-bold">
                                     {{ orphan.amount }}</td>
                                 <td class="px-3 py-2 whitespace-nowrap text-sm text-blue-500">
-                                    <a :href="'#'" title="View on Explorer" class="hover:underline">{{
-                                        orphan.transaction_hash.substring(0, 10) }}...</a>
+                                    <a :href="getChainExplorerUrl(orphan.chain_id, orphan.transaction_hash)"
+                                        target="_blank" title="View on Explorer" class="hover:underline">{{
+                                            orphan.transaction_hash.substring(0, 10) }}...</a>
                                 </td>
                                 <td class="px-3 py-2 whitespace-nowrap">
                                     <span
@@ -381,7 +382,7 @@
                                     Payment Amount: <strong class="text-gray-900 dark:text-white">{{
                                         selectedOrphan?.amount }} WCH</strong><br>
                                     Sender: <span class="font-mono text-xs">{{ selectedOrphan?.sender_address
-                                        }}</span>
+                                    }}</span>
                                 </p>
 
                                 <!-- Action Type Selection -->
@@ -476,6 +477,7 @@
 import { ref, computed } from 'vue';
 import { toast } from 'vue-sonner';
 import { apiClient } from '@/utils/apiClient';
+import { getChainExplorerUrl } from '@/app/composables/useChain';
 
 const redemptionStatus = ref<'idle' | 'running' | 'success' | 'error'>('idle');
 const historyStatus = ref<'idle' | 'running' | 'success' | 'error'>('idle');

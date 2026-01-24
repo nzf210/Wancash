@@ -96,7 +96,7 @@
                             class="flex justify-between text-base font-bold pt-2 border-t border-gray-200 dark:border-gray-700">
                             <span class="text-gray-900 dark:text-white">Total Amount</span>
                             <span class="text-blue-600 dark:text-blue-400">{{ formatNumber(request.total_token_amount)
-                            }} WCH</span>
+                                }} WCH</span>
                         </div>
                     </div>
                 </div>
@@ -112,14 +112,21 @@
                 <!-- Transaction Hash (if paid) -->
                 <div v-if="request.transaction_hash" class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
                     <h3 class="font-semibold text-gray-900 dark:text-white mb-2">Payment Transaction</h3>
-                    <div class="flex items-center gap-2">
-                        <p class="text-sm text-gray-700 dark:text-gray-300 font-mono break-all">
+                    <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                        <p
+                            class="text-sm text-gray-700 dark:text-gray-300 font-mono break-all line-clamp-2 sm:line-clamp-none">
                             {{ request.transaction_hash }}
                         </p>
-                        <a :href="`https://sepolia.etherscan.io/tx/${request.transaction_hash}`" target="_blank"
-                            class="text-blue-600 hover:text-blue-700 dark:text-blue-400 text-xs whitespace-nowrap">
-                            View on Explorer ↗
-                        </a>
+                        <div class="flex items-center gap-2 mt-2 sm:mt-0 min-w-fit">
+                            <span
+                                class="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 whitespace-nowrap">
+                                {{ getChainName(request.chain_id) }}
+                            </span>
+                            <a :href="getChainExplorerUrl(request.chain_id, request.transaction_hash)" target="_blank"
+                                class="text-blue-600 hover:text-blue-700 dark:text-blue-400 text-xs whitespace-nowrap">
+                                View on Explorer ↗
+                            </a>
+                        </div>
                     </div>
                 </div>
 
@@ -162,6 +169,7 @@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import type { RedemptionRecord } from '@/app/services/redemptionService'
+import { getChainExplorerUrl, getChainName } from '@/app/composables/useChain'
 
 defineProps<{
     open: boolean

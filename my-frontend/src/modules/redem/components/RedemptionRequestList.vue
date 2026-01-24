@@ -34,13 +34,25 @@
                 <div class="flex flex-col md:flex-row justify-between gap-4">
                     <!-- Left: Info -->
                     <div>
-                        <div class="flex items-center gap-3 mb-2">
+                        <div class="flex flex-wrap items-center gap-2 mb-3">
+                            <!-- Status Badge -->
                             <span :class="getStatusClass(req.status, req.payment_status)"
                                 class="px-3 py-1 rounded-full text-xs font-semibold uppercase">
                                 {{ getStatusLabel(req.status, req.payment_status) }}
                             </span>
-                            <span class="text-sm text-gray-500 dark:text-gray-400">{{ formatDate(req.created_at)
-                                }}</span>
+
+                            <!-- Chain Badge -->
+                            <div class="flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700"
+                                title="Payment Chain">
+                                <ChainIcon :chain="getChainObject(req.chain_id)" class="w-3.5 h-3.5" />
+                                <span class="text-xs font-medium text-gray-600 dark:text-gray-300">
+                                    {{ getChainNameDisplay(req.chain_id) }}
+                                </span>
+                            </div>
+
+                            <span class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap ml-1">
+                                {{ formatDate(req.created_at) }}
+                            </span>
                         </div>
 
                         <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">
@@ -211,11 +223,13 @@ import {
 } from '@/components/ui/dialog'
 import { toast } from 'vue-sonner'
 import { redemptionService, type RedemptionRecord } from '@/app/services/redemptionService'
-import { useConnection, useConfig } from '@wagmi/vue'
+import { useConnection, useConfig, useSwitchChain } from '@wagmi/vue'
 import { writeContract, waitForTransactionReceipt } from '@wagmi/core'
 import { parseAbi } from 'viem'
 import { wancashContractAddress } from '@/app/services/contracts'
 import UserRedemptionDetailDialog from './UserRedemptionDetailDialog.vue'
+import { getChainName, SUPPORTED_CHAINS } from '@/app/composables/useChain'
+import ChainIcon from '@/modules/bridge/components/ChainIcon.vue'
 
 const requests = ref<RedemptionRecord[]>([])
 const isLoading = ref(true)
@@ -226,6 +240,16 @@ const selectedRequest = ref<RedemptionRecord | null>(null)
 const treasuryAddress = ref<string>('0x0000000000000000000000000000000000000000')
 const { address, chainId } = useConnection()
 const config = useConfig()
+const { switchChain } = useSwitchChain()
+
+const getChainObject = (chainId: number | undefined) => {
+    const chain = SUPPORTED_CHAINS.find(c => c.id === chainId)
+    return chain || null
+}
+
+const getChainNameDisplay = (chainId: number | undefined) => {
+    return getChainName(chainId)
+}
 
 // Confirmation Dialog State
 const confirmDialog = ref({
@@ -371,36 +395,49 @@ const formatNumber = (num: number) => {
 }
 
 const handlePayment = (req: RedemptionRecord) => {
+    // Safety check for chainId
+    const targetChainId = req.chain_id || 0
+
     openConfirmDialog({
         title: 'Confirm Payment',
-        description: `You are about to pay ${formatNumber(req.total_token_amount)} WCH for this redemption. Proceed?`,
+        description: `You are about to pay ${formatNumber(req.total_token_amount)} WCH on ${getChainName(targetChainId)}. Proceed?`,
         confirmText: 'Pay Now',
         onConfirm: async () => {
             isPaying.value = req.id
             try {
+                // 1. Check Chain Logic
+                if (chainId.value !== targetChainId) {
+                    toast.info(`Switching chain to ${getChainName(targetChainId)}...`)
+                    try {
+                        await switchChain({ chainId: targetChainId })
+                    } catch (err) {
+                        console.error(err)
+                        throw new Error(`Please switch network to ${getChainName(targetChainId)} manually to pay.`)
+                    }
+                }
+
                 // WCH Token Contract Address for current chain
-                const tokenAddress = wancashContractAddress[chainId.value || 0]
+                const tokenAddress = wancashContractAddress[targetChainId]
                 if (!tokenAddress) throw new Error('Token contract not found for this chain')
 
                 // Send Transaction
-                // ABI for ERC20 transfer
                 const abi = parseAbi(['function transfer(address to, uint256 amount) returns (bool)'])
-
                 const amountWei = BigInt(Math.floor(req.total_token_amount * 1e18))
 
                 const hash = await writeContract(config, {
                     address: tokenAddress as `0x${string}`,
                     abi,
                     functionName: 'transfer',
-                    args: [treasuryAddress.value as `0x${string}`, amountWei]
+                    args: [treasuryAddress.value as `0x${string}`, amountWei],
+                    chainId: targetChainId // Explicitly set chainId
                 })
 
                 toast.info('Payment transaction sent. Waiting for confirmation...')
 
-                await waitForTransactionReceipt(config, { hash })
+                await waitForTransactionReceipt(config, { hash, chainId: targetChainId })
 
                 // Notify Backend
-                await redemptionService.payRedemption(req.id, hash, chainId.value)
+                await redemptionService.payRedemption(req.id, hash, targetChainId)
 
                 toast.success('Payment successful!')
 
@@ -412,7 +449,7 @@ const handlePayment = (req: RedemptionRecord) => {
                 // DEV: Allow bypass if contract is not deployed
                 // @ts-ignore
                 if (import.meta.env.MODE === 'development' && confirm('Dev Mode: Simulate success?')) {
-                    await redemptionService.payRedemption(req.id, '0xMOCKHASH', chainId.value)
+                    await redemptionService.payRedemption(req.id, '0xMOCKHASH', targetChainId)
                     toast.success('Dev Payment successful!')
                     await fetchRequests()
                 } else {

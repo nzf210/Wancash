@@ -4,17 +4,98 @@
  * This is a global service - all modules should use this instead of module-specific APIs
  */
 import { apiClient } from '@/utils/apiClient';
-export interface GoldProduct {
+// Product Category Interface
+export interface ProductCategory {
     id: string
     name: string
-    weight_grams: number
-    purity: string
-    price_wch: number
-    image_url: string
-    images?: string[] // Optional for backward compatibility
-    stock: number
-    description: string
+    slug: string
+    description?: string
+    icon?: string
+    display_order: number
+    is_active: boolean
+    parent_category_id?: string
+    product_count?: number
 }
+
+// Generic Product Interface (supports all product types)
+export interface Product {
+    // Identifiers
+    id: string
+    sku?: string
+    slug?: string
+
+    // Basic Info
+    name: string
+    brand?: string
+
+    // Categorization
+    category_id?: string
+    category_name?: string  // From API join
+    category_icon?: string  // From API join
+    sub_category?: string
+    tags?: string[]
+
+    // Pricing & Stock
+    price_wch: number
+    compare_at_price?: number
+    cost_price?: number
+    stock: number
+    low_stock_threshold?: number
+    track_inventory?: boolean
+    allow_backorder?: boolean
+
+    // Physical Properties (optional - for physical items)
+    weight_grams?: number
+    purity?: string
+    dimensions?: string
+    unit?: string
+
+    // Digital Properties (optional - for digital items)
+    quantity_unit?: string
+    delivery_type?: 'instant' | 'email' | 'manual'
+    license_type?: string
+
+    // Descriptions
+    description?: string  // Legacy field
+    short_description?: string
+    long_description?: string
+
+    // Structured Data
+    specifications?: Record<string, string>
+    features?: string[]
+    benefits?: string[]
+    metadata?: Record<string, any>
+
+    // Media
+    image_url: string
+    images?: string[]
+    video_url?: string
+
+    // Product Type
+    product_type?: 'physical' | 'digital'
+    auto_fulfill?: boolean
+    fulfillment_data?: Record<string, any>
+
+    // Status & Visibility
+    is_active: boolean
+    is_featured?: boolean
+    is_new?: boolean
+    is_on_sale?: boolean
+
+    // SEO
+    meta_title?: string
+    meta_description?: string
+    meta_keywords?: string[]
+
+    // Timestamps
+    created_at: string
+    updated_at: string
+    available_from?: string
+    available_until?: string
+}
+
+// Backward compatibility alias
+export type GoldProduct = Product
 
 export interface CreateRedemptionRequest {
     wallet_address: string
@@ -93,17 +174,7 @@ let globalConfig: RedemptionConfig = {
 
 
 
-export interface GoldProduct {
-    id: string
-    name: string
-    description: string
-    weight_grams: number
-    purity: string
-    price_wch: number
-    image_url: string
-    images?: string[]
-    stock: number
-}
+
 
 // Helper removed - using apiClient
 
@@ -193,7 +264,7 @@ export const redemptionService = {
      * Get available gold products
      * Fetches from backend, falls back to mock data if not available
      */
-    async getGoldProducts(): Promise<GoldProduct[]> {
+    async getGoldProducts(): Promise<Product[]> {
         try {
             const response = await apiClient.fetch('/api/products', {
                 method: 'GET'
@@ -217,7 +288,10 @@ export const redemptionService = {
                     price_wch: 10,
                     image_url: 'https://via.placeholder.com/150?text=0.1g+Gold',
                     stock: 100,
-                    description: 'Fine Gold 999.9 - 0.1 Gram'
+                    description: 'Fine Gold 999.9 - 0.1 Gram',
+                    is_active: true,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
                 },
                 {
                     id: 'gold-1g',
@@ -227,7 +301,10 @@ export const redemptionService = {
                     price_wch: 95,
                     image_url: 'https://via.placeholder.com/150?text=1g+Gold',
                     stock: 50,
-                    description: 'Fine Gold 999.9 - 1 Gram'
+                    description: 'Fine Gold 999.9 - 1 Gram',
+                    is_active: true,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
                 },
                 {
                     id: 'gold-2g',
@@ -237,7 +314,10 @@ export const redemptionService = {
                     price_wch: 185,
                     image_url: 'https://via.placeholder.com/150?text=2g+Gold',
                     stock: 20,
-                    description: 'Fine Gold 999.9 - 2 Grams'
+                    description: 'Fine Gold 999.9 - 2 Grams',
+                    is_active: true,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
                 },
                 {
                     id: 'gold-5g',
@@ -248,9 +328,33 @@ export const redemptionService = {
                     image_url: 'https://via.placeholder.com/150?text=5g+Gold',
                     images: ['https://via.placeholder.com/150?text=5g+Gold'],
                     stock: 10,
-                    description: 'Fine Gold 999.9 - 5 Grams'
+                    description: 'Fine Gold 999.9 - 5 Grams',
+                    is_active: true,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
                 },
             ];
+        }
+    },
+
+    /**
+     * Get all product categories with product counts
+     */
+    async getCategories(): Promise<ProductCategory[]> {
+        try {
+            const response = await apiClient.fetch('/api/products/categories', {
+                method: 'GET'
+            });
+
+            if (!response.ok) {
+                throw new Error('Categories endpoint not available');
+            }
+
+            const result = await response.json();
+            return result.data || [];
+        } catch (error) {
+            console.warn('Failed to fetch categories:', error);
+            return [];
         }
     },
 

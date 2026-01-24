@@ -105,6 +105,24 @@ export const adminApi = {
     },
 
     /**
+     * Get all product categories
+     */
+    async getCategories(): Promise<any[]> {
+        const response = await fetch(`${API_BASE}/api/products/categories`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to fetch categories');
+        }
+
+        const result = await response.json();
+        return result.data || [];
+    },
+
+    /**
      * Create new gold product
      */
     async createProduct(data: any): Promise<any> {
@@ -128,6 +146,8 @@ export const adminApi = {
      * Update gold product
      */
     async updateProduct(id: string, data: any): Promise<any> {
+        console.log('🌐 API: Updating product', id, 'with data:', data);
+
         const response = await fetch(`${API_BASE}/api/products/admin/products/${id}`, {
             method: 'PUT',
             credentials: 'include',
@@ -135,12 +155,29 @@ export const adminApi = {
             body: JSON.stringify(data)
         });
 
+        console.log('📡 API Response Status:', response.status, response.statusText);
+
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Failed to update product');
+            let errorMessage = 'Failed to update product';
+            let errorDetails = null;
+            try {
+                const error = await response.json();
+                errorMessage = error.error || error.message || errorMessage;
+                errorDetails = error;
+                console.error('❌ API Error Response:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    error: error
+                });
+            } catch (e) {
+                console.error('❌ Failed to parse error response');
+                console.error('❌ Raw response status:', response.status, response.statusText);
+            }
+            throw new Error(errorMessage);
         }
 
         const result = await response.json();
+        console.log('✅ API: Product updated successfully');
         return result.data;
     },
 

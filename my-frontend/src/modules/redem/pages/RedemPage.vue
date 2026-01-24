@@ -325,6 +325,7 @@
 
 <script lang="ts" setup>
 import { ref, computed, watch, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 import { toast } from 'vue-sonner'
 import { Button } from '@/components/ui/button'
@@ -362,9 +363,25 @@ const { address, isConnected } = useConnection()
 const chainId = useChainId()
 const { getChainInfo } = useChain()
 
+const route = useRoute()
+const router = useRouter()
+
 // State
 const walletConnected = computed(() => isConnected.value)
-const activeView = ref<'new' | 'history'>('new')
+const activeView = ref<'new' | 'history'>((route.query.tab as 'new' | 'history') || 'new')
+
+// Watch for tab changes and update URL
+watch(activeView, (newTab) => {
+  router.replace({ query: { ...route.query, tab: newTab } })
+})
+
+// Watch for URL changes (e.g. Back button)
+watch(() => route.query.tab, (newTab) => {
+  if (newTab === 'new' || newTab === 'history') {
+    activeView.value = newTab
+  }
+})
+
 const useProfileData = ref(false)
 const shippingOption = ref<'included' | 'separate'>('included')
 const agreeTerms = ref(false)
@@ -432,6 +449,23 @@ onMounted(async () => {
 })
 
 const increaseQuantity = (id: string) => {
+  const productToAdd = availableProducts.value.find(p => p.id === id)
+  if (!productToAdd) return
+
+  // Validate mixed cart (Physical vs Digital)
+  const cartItems = cartItemsDetails.value
+  if (cartItems.length > 0) {
+    const existingType = cartItems[0].product_type || 'physical'
+    const newType = productToAdd.product_type || 'physical'
+
+    if (existingType !== newType) {
+      toast.error('Cannot mix different product types', {
+        description: `Your cart contains ${existingType} items. Please clear cart before adding ${newType} items.`
+      })
+      return
+    }
+  }
+
   cart.value[id] = (cart.value[id] || 0) + 1
 }
 
@@ -465,7 +499,7 @@ const cartTotalPrice = computed(() => {
 })
 
 const cartTotalWeight = computed(() => {
-  return cartItemsDetails.value.reduce((sum, item) => sum + (item.weight_grams * item.quantity), 0)
+  return cartItemsDetails.value.reduce((sum, item) => sum + ((item.weight_grams || 0) * item.quantity), 0)
 })
 
 const cartTotalItems = computed(() => {
@@ -672,8 +706,8 @@ const submitRedemption = async () => {
       items: cartItemsDetails.value.map(item => ({
         product_id: item.id,
         quantity: item.quantity,
-        snapshot_price: Number(item.price_wch),
-        snapshot_weight: Number(item.weight_grams)
+        snapshot_price: Number(item.price_wch || 0),
+        snapshot_weight: Number(item.weight_grams || 0)
       }))
     }
 

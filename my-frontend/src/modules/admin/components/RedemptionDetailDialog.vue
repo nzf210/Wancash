@@ -140,7 +140,12 @@
                                 <p class="font-mono text-xs text-gray-900 dark:text-white break-all">
                                     {{ request.transaction_hash }}
                                 </p>
-                                <a :href="`https://sepolia.etherscan.io/tx/${request.transaction_hash}`" target="_blank"
+                                <span
+                                    class="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
+                                    {{ getChainName(request.chain_id) }}
+                                </span>
+                                <a :href="getChainExplorerUrl(request.chain_id, request.transaction_hash)"
+                                    target="_blank"
                                     class="text-blue-600 hover:text-blue-700 dark:text-blue-400 text-xs whitespace-nowrap">
                                     Explorer ↗
                                 </a>
@@ -282,7 +287,7 @@
                             </label>
                             <textarea v-model="adminNotes" rows="3"
                                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                                :placeholder="newStatus === 'rejected' ? 'Required: Reason for rejection' : 'Optional notes for this status change'"></textarea>
+                                :placeholder="newStatus === 'rejected' ? 'Required: Reason for rejection' : newStatus === 'completed' ? 'Optional: Enter Digital Code / Voucher / Fulfillment Notes here' : 'Optional notes for this status change'"></textarea>
                         </div>
 
                         <Button @click="updateStatus"
@@ -325,6 +330,8 @@ import { adminApi } from '../services/adminApi'
 import redemptionService from '@/app/services/redemptionService'
 import type { AdminRedemptionRequest } from '../types/admin.types'
 
+import { getChainExplorerUrl, getChainName } from '@/app/composables/useChain'
+
 const props = defineProps<{
     open: boolean
     request: AdminRedemptionRequest | null
@@ -343,8 +350,14 @@ const adminNotes = ref('')
 const isUpdating = ref(false)
 
 const canUpdateStatus = computed(() => {
-    // Can update status if shipping cost has been set (> 0)
-    return props.request && props.request.shipping_cost_token > 0
+    // Determine if status can be updated
+    if (!props.request) return false
+
+    // For physical items (weight > 0), require shipping cost > 0 or manual check
+    // But for digital items (weight 0), shipping cost might be 0
+    // So we should just check if request is not in a final state
+    const finalStates = ['completed', 'rejected']
+    return !finalStates.includes(props.request.status)
 })
 
 // Define allowed status transitions based on current status
@@ -361,10 +374,7 @@ const allowedNextStatuses = computed(() => {
     // rejected/completed → (final states, no transitions)
 
     const transitions: Record<string, { value: string; label: string }[]> = {
-        'pending': [
-            { value: 'waiting_payment', label: 'Waiting Payment' },
-            { value: 'rejected', label: 'Rejected' }
-        ],
+        'pending': [], // Will be populated dynamically
         'waiting_payment': [
             { value: 'processing', label: 'Processing' },
             { value: 'rejected', label: 'Rejected' }
@@ -379,6 +389,7 @@ const allowedNextStatuses = computed(() => {
         ],
         'processing': [
             { value: 'shipped', label: 'Shipped' },
+            { value: 'completed', label: 'Completed' },
             { value: 'rejected', label: 'Rejected' }
         ],
         'shipped': [
@@ -386,6 +397,27 @@ const allowedNextStatuses = computed(() => {
         ],
         'completed': [],
         'rejected': []
+    }
+
+    // Dynamic Logic for 'pending' state
+    if (currentStatus === 'pending') {
+        const isPhysical = props.request.gold_amount_grams > 0
+        const hasShippingCost = props.request.shipping_cost_token > 0
+
+        transitions['pending'] = [
+            { value: 'rejected', label: 'Rejected' }
+        ]
+
+        // For Physical items: Only allow Waiting Payment if Shipping Cost is set
+        if (isPhysical) {
+            if (hasShippingCost) {
+                transitions['pending'].unshift({ value: 'waiting_payment', label: 'Waiting Payment' })
+            }
+        } else {
+            // For Digital items (0g): Allow Waiting Payment or even direct completion if needed
+            transitions['pending'].unshift({ value: 'waiting_payment', label: 'Waiting Payment' })
+            // Optional: You could allow skipping to processing if auto-approved, but stick to standard flow
+        }
     }
 
     return transitions[currentStatus] || []
