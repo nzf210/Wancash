@@ -26,7 +26,7 @@ export function useTransactionHistory() {
             error.value = null
 
             // Fetch from backend using global service
-            const transactions = await transactionHistoryService.fetchFromBackend({ type: 'send' })
+            const { data: transactions } = await transactionHistoryService.fetchFromBackend({ type: 'send' })
 
             // Map API response to SendTransaction type
             sendTransactions.value = transactions.map(tx => ({
@@ -56,7 +56,7 @@ export function useTransactionHistory() {
             error.value = null
 
             // Fetch from backend using global service
-            const transactions = await transactionHistoryService.fetchFromBackend({ type: 'bridge' })
+            const { data: transactions } = await transactionHistoryService.fetchFromBackend({ type: 'bridge' })
 
             // Map API response to BridgeTransaction type
             bridgeTransactions.value = transactions.map(tx => ({

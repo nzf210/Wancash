@@ -52,7 +52,7 @@ export const transactionService = {
      */
     async fetchSendTransactions(): Promise<SendTransaction[]> {
         try {
-            const transactions = await transactionHistoryService.fetchFromBackend({ type: 'send' })
+            const { data: transactions } = await transactionHistoryService.fetchFromBackend({ type: 'send' })
 
             return transactions.map(tx => ({
                 id: typeof tx.id === 'number' ? tx.id : parseInt(tx.id as string) || Date.now(),
@@ -75,7 +75,7 @@ export const transactionService = {
      */
     async fetchBridgeTransactions(): Promise<BridgeTransaction[]> {
         try {
-            const transactions = await transactionHistoryService.fetchFromBackend({ type: 'bridge' })
+            const { data: transactions } = await transactionHistoryService.fetchFromBackend({ type: 'bridge' })
 
             return transactions.map(tx => ({
                 id: typeof tx.id === 'number' ? tx.id : parseInt(tx.id as string) || Date.now(),
@@ -128,7 +128,7 @@ export const transactionService = {
     async getTransactionDetails(transactionId: number): Promise<SendTransaction | BridgeTransaction | null> {
         try {
             // Fetch all transactions and find by ID
-            const allTransactions = await transactionHistoryService.fetchFromBackend()
+            const { data: allTransactions } = await transactionHistoryService.fetchFromBackend()
             const found = allTransactions.find(tx => tx.id === transactionId || tx.id === transactionId.toString())
 
             if (!found) return null

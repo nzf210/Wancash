@@ -4,6 +4,7 @@ import DynamicNavbar from '@/app/components/navbar/NavbarView.vue'
 import FooterView from '@/app/components/FooterView.vue'
 import { useAuth } from '@/app/composables/useAuth'
 import { useNotificationStore } from '@/stores/notificationStore'
+import LiveChatWidget from '@/components/LiveChatWidget.vue'
 
 const router = useRouter()
 const { logout } = useAuth()
@@ -49,5 +50,6 @@ const handleNotificationClick = () => {
       <RouterView />
     </main>
     <FooterView class="mt-auto h-20" />
+    <LiveChatWidget />
   </div>
 </template>

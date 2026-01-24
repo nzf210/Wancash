@@ -16,8 +16,11 @@
 
 <script lang="ts" setup>
 import { Button } from '@/components/ui/button'
+import { useChatStore } from '@/stores/chatStore'
+
+const chatStore = useChatStore()
 
 const openLiveChat = () => {
-    alert('Opening live chat support...')
+    chatStore.openChat()
 }
 </script>
