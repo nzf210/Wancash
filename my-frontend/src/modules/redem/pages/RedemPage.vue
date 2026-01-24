@@ -454,12 +454,17 @@ onMounted(async () => {
     adminSettings.value = await redemptionApi.getSettings()
     // Fetch products directly in parent
     availableProducts.value = await redemptionApi.getGoldProducts()
+
+    // Fetch WCH balance on mount if wallet is already connected
+    if (isConnected.value && address.value && contractAddress.value) {
+      await fetchWchBalance()
+    }
   } catch (e) {
     console.error('Failed to load settings or products', e)
   }
 })
 
-const increaseQuantity = (id: string) => {
+const increaseQuantity = async (id: string) => {
   const productToAdd = availableProducts.value.find(p => p.id === id)
   if (!productToAdd) return
 
@@ -472,6 +477,36 @@ const increaseQuantity = (id: string) => {
     if (existingType !== newType) {
       toast.error('Cannot mix different product types', {
         description: `Your cart contains ${existingType} items. Please clear cart before adding ${newType} items.`
+      })
+      return
+    }
+  }
+
+  // Validate Min Holding Requirement
+  if (productToAdd.min_holding_required && productToAdd.min_holding_required > 0) {
+    if (!walletConnected.value) {
+      toast.error('Connect Wallet', { description: 'Please connect wallet to check eligibility.' })
+      return
+    }
+
+    // IMPORTANT: Fetch latest balance before validation to avoid race condition
+    await fetchWchBalance()
+
+    console.log('🔍 Min Holding Validation:', {
+      productName: productToAdd.name,
+      requiredHolding: productToAdd.min_holding_required,
+      currentBalance: wchBalance.value,
+      chainId: chainId.value,
+      chainName: chainInfo.value?.name,
+      contractAddress: contractAddress.value,
+      isPassing: wchBalance.value >= productToAdd.min_holding_required
+    })
+
+    if (wchBalance.value < productToAdd.min_holding_required) {
+      const required = new Intl.NumberFormat('en-US').format(productToAdd.min_holding_required)
+      const current = new Intl.NumberFormat('en-US').format(wchBalance.value)
+      toast.error('Insufficient Holding Balance', {
+        description: `You need at least ${required} WCH but you have ${current} WCH on ${chainInfo.value?.name || 'this chain'}.`
       })
       return
     }
@@ -601,6 +636,13 @@ watch(address, (newAddress) => {
     fetchWchBalance()
   }
 }, { immediate: true })
+
+// Watch for connection status changes
+watch(isConnected, (connected) => {
+  if (connected && address.value && contractAddress.value) {
+    fetchWchBalance()
+  }
+})
 
 
 // Auto-populate form from profile when profile data becomes available

@@ -102,6 +102,13 @@
                                 <span class="text-gray-600 dark:text-gray-400">SKU:</span>
                                 <span class="text-xs text-gray-500 font-mono">{{ product.sku }}</span>
                             </div>
+                            <div v-if="product.min_holding_required && product.min_holding_required > 0"
+                                class="flex justify-between text-sm">
+                                <span class="text-gray-600 dark:text-gray-400">Min Holding:</span>
+                                <span class="text-xs font-semibold text-purple-600 dark:text-purple-400">
+                                    {{ formatNumber(product.min_holding_required) }} WCH
+                                </span>
+                            </div>
                             <div class="flex justify-between text-sm">
                                 <span class="text-gray-600 dark:text-gray-400">Status:</span>
                                 <span :class="product.is_active ? 'text-green-600' : 'text-gray-400'">
@@ -250,8 +257,7 @@
 
     <!-- Add/Edit Product Modal -->
     <div v-if="showModal"
-        class="fixed inset-0 bg-black/30 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50"
-        @click.self="closeModal">
+        class="fixed inset-0 bg-black/30 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
         <div class="bg-white dark:bg-gray-800 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div
                 class="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center sticky top-0 bg-white dark:bg-gray-800 z-10">
@@ -513,6 +519,18 @@
                             <input v-model.number="form.low_stock_threshold" type="number"
                                 class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
                         </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Min Holding Required (WCH)
+                            </label>
+                            <input v-model.number="form.min_holding_required" type="number" step="0.01" placeholder="0"
+                                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                Minimum WCH balance users must hold to redeem this product (leave empty or 0 for no
+                                requirement)
+                            </p>
+                        </div>
                     </div>
 
                     <div class="flex gap-4">
@@ -637,6 +655,7 @@ const form = ref({
     images: [] as string[],
     stock: 0,
     low_stock_threshold: 5,
+    min_holding_required: null as number | null,
     track_inventory: true,
     allow_backorder: false,
     is_active: true,
@@ -734,6 +753,7 @@ const openAddModal = () => {
         images: [],
         stock: 0,
         low_stock_threshold: 5,
+        min_holding_required: null,
         track_inventory: true,
         allow_backorder: false,
         is_active: true,
@@ -770,6 +790,7 @@ const editProduct = (product: Product) => {
         images: initialImages,
         stock: product.stock,
         low_stock_threshold: product.low_stock_threshold || 5,
+        min_holding_required: product.min_holding_required || null,
         track_inventory: product.track_inventory !== false,
         allow_backorder: product.allow_backorder || false,
         is_active: product.is_active,
@@ -825,6 +846,7 @@ const saveProduct = async () => {
         if (form.value.sku) payload.sku = form.value.sku
         if (form.value.compare_at_price) payload.compare_at_price = form.value.compare_at_price
         if (form.value.low_stock_threshold !== undefined) payload.low_stock_threshold = form.value.low_stock_threshold
+        if (form.value.min_holding_required) payload.min_holding_required = form.value.min_holding_required
 
         // Inventory settings
         payload.track_inventory = form.value.track_inventory

@@ -35,6 +35,9 @@ export default defineConfig(({ mode }) => { // Ambil mode dari Vite (dev/build)
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
+        devOptions: {
+          enabled: true
+        },
         includeAssets: ['favicon.ico', 'wancash.png', 'safari-pinned-tab.svg'],
         manifest: {
           name: 'Wancash - Cross-Chain Bridge',

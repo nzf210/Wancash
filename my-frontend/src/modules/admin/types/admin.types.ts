@@ -42,6 +42,7 @@ export interface DashboardStats {
     pending_requests: number
     waiting_payment: number
     processing: number
+    shipped: number
     completed: number
     total_revenue: number
 }

@@ -43,6 +43,7 @@ export interface Product {
     low_stock_threshold?: number
     track_inventory?: boolean
     allow_backorder?: boolean
+    min_holding_required?: number
 
     // Physical Properties (optional - for physical items)
     weight_grams?: number

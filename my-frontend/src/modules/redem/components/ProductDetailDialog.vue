@@ -172,7 +172,7 @@
                                 <p v-if="product.long_description" class="whitespace-pre-line">{{
                                     product.long_description }}</p>
                                 <p v-else-if="product.description" class="whitespace-pre-line">{{ product.description
-                                }}</p>
+                                    }}</p>
                                 <p v-else class="text-gray-500 dark:text-gray-400 italic">No description available.</p>
                             </div>
 
@@ -208,6 +208,20 @@
                                             class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
                                             <dt class="font-medium text-gray-900 dark:text-white">SKU</dt>
                                             <dd class="text-gray-600 dark:text-gray-400">{{ product.sku }}</dd>
+                                        </div>
+                                        <div v-if="product.min_holding_required && product.min_holding_required > 0"
+                                            class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800 bg-purple-50 dark:bg-purple-900/10 px-3 -mx-3 rounded-lg">
+                                            <dt
+                                                class="font-medium text-purple-900 dark:text-purple-300 flex items-center gap-2">
+                                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd"
+                                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"
+                                                        clip-rule="evenodd" />
+                                                </svg>
+                                                Min Holding Required
+                                            </dt>
+                                            <dd class="font-bold text-purple-700 dark:text-purple-400">{{
+                                                formatNumber(product.min_holding_required) }} WCH</dd>
                                         </div>
                                     </dl>
                                 </div>
