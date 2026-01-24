@@ -53,14 +53,20 @@
                         <div v-for="(item, index) in request.items" :key="index"
                             class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
                             <div class="flex items-center gap-3">
-                                <div
+                                <div v-if="item.snapshot_weight > 0"
                                     class="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-200 to-yellow-500 flex items-center justify-center text-white font-bold text-xs">
                                     {{ item.snapshot_weight }}g
                                 </div>
+                                <div v-else
+                                    class="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400 text-lg">
+                                    💾
+                                </div>
                                 <div>
                                     <p class="font-medium text-gray-900 dark:text-white">{{ item.snapshot_name }}</p>
-                                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ item.snapshot_weight }}g × {{
-                                        item.quantity }} pcs</p>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                                        <span v-if="item.snapshot_weight > 0">{{ item.snapshot_weight }}g × </span>
+                                        {{ item.quantity }} pcs
+                                    </p>
                                 </div>
                             </div>
                             <div class="text-right">
@@ -72,8 +78,10 @@
                         </div>
                     </div>
                     <div v-else class="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
-                        <p class="text-gray-700 dark:text-gray-300">{{ request.gold_amount_grams }}g Gold (Legacy
-                            format)</p>
+                        <p class="text-gray-700 dark:text-gray-300">
+                            <span v-if="request.gold_amount_grams > 0">{{ request.gold_amount_grams }}g </span>
+                            Gold (Legacy format)
+                        </p>
                     </div>
                 </div>
 
@@ -96,7 +104,7 @@
                             class="flex justify-between text-base font-bold pt-2 border-t border-gray-200 dark:border-gray-700">
                             <span class="text-gray-900 dark:text-white">Total Amount</span>
                             <span class="text-blue-600 dark:text-blue-400">{{ formatNumber(request.total_token_amount)
-                                }} WCH</span>
+                            }} WCH</span>
                         </div>
                     </div>
                 </div>

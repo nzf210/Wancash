@@ -1,6 +1,6 @@
 <script lang="ts" setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import Header from '../components/SendHeader.vue'
 import { useChain } from '@/app/composables/useChain'
 import { useAuth } from '@/app/composables/useAuth'
@@ -10,43 +10,117 @@ const { getExplorerTxUrl, currentChain } = useChain()
 const { walletAddress } = useAuth()
 
 const router = useRouter()
+const route = useRoute()
 const transactions = ref<TransactionRecord[]>([])
 const loading = ref(true)
-const activeFilter = ref<'all' | 'incoming' | 'outgoing' | 'bridge'>('all')
+
+// Pagination State
+const pagination = ref({
+    page: 1,
+    limit: parseInt(localStorage.getItem('history_table_limit') || '10'),
+    total: 0,
+    totalPages: 0
+})
+
+// Active Filter (synced with route)
+const activeFilter = computed({
+    get: () => (route.query.tab as 'all' | 'incoming' | 'outgoing' | 'bridge') || 'all',
+    set: (val) => {
+        router.push({
+            query: {
+                ...route.query,
+                tab: val,
+                page: 1 // Reset page on tab change
+            }
+        })
+    }
+})
 
 let refreshInterval: ReturnType<typeof setInterval> | null = null
 
 const loadHistory = async () => {
+    loading.value = true
     try {
-        // Fetch from backend to ensure data is fresh
-        transactions.value = await transactionHistoryService.fetchFromBackend({ limit: 50 })
+        const filter = activeFilter.value
+        const options: any = {
+            page: pagination.value.page,
+            limit: pagination.value.limit
+        }
+
+        // Map filter to backend params
+        if (filter === 'incoming') {
+            options.direction = 'incoming'
+        } else if (filter === 'outgoing') {
+            options.direction = 'outgoing'
+        } else if (filter === 'bridge') {
+            options.type = 'bridge'
+        }
+
+        const result = await transactionHistoryService.fetchFromBackend(options)
+        transactions.value = result.data
+
+        // Update pagination meta
+        if (result.meta) {
+            pagination.value.total = result.meta.total
+            pagination.value.totalPages = Math.ceil(result.meta.total / result.meta.limit)
+            // Ensure limit is synced if backend returns different default
+            if (pagination.value.limit !== result.meta.limit) {
+                pagination.value.limit = result.meta.limit
+            }
+        }
     } catch (error) {
         console.error('Failed to load transaction history:', error)
-        // Fallback to local storage if API fails
+        // Fallback to local storage (limited support for filtering/pagination locally in this view)
         transactions.value = transactionHistoryService.getAll()
     } finally {
         loading.value = false
     }
 }
 
+// Pagination Handlers
+const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > pagination.value.totalPages) return
+
+    // Update route to reflect new page
+    router.push({
+        query: {
+            ...route.query,
+            page: newPage
+        }
+    })
+}
+
+const handleLimitChange = () => {
+    localStorage.setItem('history_table_limit', pagination.value.limit.toString())
+    // Reset to page 1 with new limit
+    router.push({
+        query: {
+            ...route.query,
+            page: 1,
+            limit: pagination.value.limit
+        }
+    })
+}
+
+// Watchers for Route Changes
+watch(
+    () => [route.query.tab, route.query.page, route.query.limit],
+    async ([newTab, newPage, newLimit]) => {
+        // Sync state from query
+        if (newPage) pagination.value.page = parseInt(newPage as string)
+        if (newLimit) pagination.value.limit = parseInt(newLimit as string)
+
+        await loadHistory()
+    },
+    { immediate: true }
+)
+
+// Helper methods
 const isIncoming = (tx: TransactionRecord) => {
     if (!walletAddress.value) return false
     const current = walletAddress.value.toLowerCase()
     return tx.to?.toLowerCase() === current && tx.from?.toLowerCase() !== current
 }
-
-const filteredTransactions = computed(() => {
-    if (activeFilter.value === 'all') {
-        return transactions.value
-    }
-
-    return transactions.value.filter(tx => {
-        if (activeFilter.value === 'incoming') return isIncoming(tx)
-        if (activeFilter.value === 'outgoing') return !isIncoming(tx)
-        if (activeFilter.value === 'bridge') return tx.type === 'bridge'
-        return true
-    })
-})
 
 const formatDate = (timestamp: number) => {
     return new Intl.DateTimeFormat('en-US', {
@@ -84,13 +158,10 @@ const getTypeColor = (type: string) => {
     }
 }
 
-// Get explorer URL based on chainId in transaction, fallback to current chain
 const getTxExplorerUrl = (tx: TransactionRecord) => {
-    // For bridge transactions, use LZ Scan URL if available
     if (tx.type === 'bridge' && tx.lzScanUrl) {
         return tx.lzScanUrl
     }
-    // Otherwise use chain explorer
     const chainId = tx.fromChainId || currentChain.value?.id
     if (!chainId || !tx.hash) return ''
     return getExplorerTxUrl(tx.hash, chainId)
@@ -111,16 +182,13 @@ const getCounterparty = (tx: TransactionRecord) => {
 const goToPortfolio = () => router.push('/portfolio')
 
 onMounted(() => {
-    loadHistory()
+    // Initial load handled by immediate watcher
     // Refresh history every 10 seconds
-    refreshInterval = setInterval(loadHistory, 10000)
+    refreshInterval = setInterval(() => {
+        if (!loading.value) loadHistory() // Simple poll
+    }, 10000)
 })
 
-onUnmounted(() => {
-    if (refreshInterval) {
-        clearInterval(refreshInterval)
-    }
-})
 </script>
 
 <template>
@@ -176,17 +244,17 @@ onUnmounted(() => {
                     </div>
                 </div>
 
-                <div v-if="loading" class="p-8 text-center text-gray-500">
+                <div v-if="loading && transactions.length === 0" class="p-8 text-center text-gray-500">
                     Loading history...
                 </div>
 
-                <div v-else-if="filteredTransactions.length === 0" class="p-12 text-center text-gray-500">
+                <div v-else-if="transactions.length === 0" class="p-12 text-center text-gray-500">
                     <svg class="w-12 h-12 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <p>No {{ activeFilter === 'all' ? '' : activeFilter }} transactions found</p>
+                    <p>No transactions found</p>
                 </div>
 
                 <div v-else class="overflow-x-auto">
@@ -217,7 +285,7 @@ onUnmounted(() => {
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
-                            <tr v-for="tx in filteredTransactions" :key="tx.id"
+                            <tr v-for="tx in transactions" :key="tx.id"
                                 class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                                 <td class="px-6 py-4 text-sm">
                                     <div class="flex items-center gap-2">
@@ -278,6 +346,86 @@ onUnmounted(() => {
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Pagination Controls -->
+                <div v-if="pagination.total > 0"
+                    class="border-t border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center justify-between sm:px-6">
+
+                    <!-- Mobile Pagination -->
+                    <div class="flex-1 flex justify-between sm:hidden">
+                        <button @click="handlePageChange(pagination.page - 1)" :disabled="pagination.page === 1"
+                            class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                            Previous
+                        </button>
+                        <button @click="handlePageChange(pagination.page + 1)"
+                            :disabled="pagination.page === pagination.totalPages"
+                            class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                            Next
+                        </button>
+                    </div>
+
+                    <!-- Desktop Pagination -->
+                    <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                        <div class="flex items-center gap-4">
+                            <p class="text-sm text-gray-700 dark:text-gray-300">
+                                Showing
+                                <span class="font-medium">{{ (pagination.page - 1) * pagination.limit + 1 }}</span>
+                                to
+                                <span class="font-medium">{{ Math.min(pagination.page * pagination.limit,
+                                    pagination.total) }}</span>
+                                of
+                                <span class="font-medium">{{ pagination.total }}</span>
+                                results
+                            </p>
+
+                            <div class="flex items-center gap-2 ml-4">
+                                <span class="text-sm text-gray-700 dark:text-gray-300">Rows:</span>
+                                <select v-model="pagination.limit" @change="handleLimitChange"
+                                    class="text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500 py-1 pl-2 pr-8">
+                                    <option :value="10">10</option>
+                                    <option :value="25">25</option>
+                                    <option :value="50">50</option>
+                                    <option :value="100">100</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+                                aria-label="Pagination">
+                                <button @click="handlePageChange(pagination.page - 1)" :disabled="pagination.page === 1"
+                                    class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <span class="sr-only">Previous</span>
+                                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                        fill="currentColor" aria-hidden="true">
+                                        <path fill-rule="evenodd"
+                                            d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+
+                                <!-- Current Page Info -->
+                                <span
+                                    class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-200">
+                                    Page {{ pagination.page }} of {{ pagination.totalPages }}
+                                </span>
+
+                                <button @click="handlePageChange(pagination.page + 1)"
+                                    :disabled="pagination.page === pagination.totalPages"
+                                    class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <span class="sr-only">Next</span>
+                                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                        fill="currentColor" aria-hidden="true">
+                                        <path fill-rule="evenodd"
+                                            d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>

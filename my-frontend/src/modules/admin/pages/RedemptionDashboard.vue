@@ -241,6 +241,84 @@
                 </div>
                 <p class="text-gray-500 dark:text-gray-400">No redemption requests found</p>
             </div>
+
+            <!-- Pagination Controls -->
+            <div v-if="pagination.total > 0"
+                class="border-t border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between sm:px-6">
+
+                <!-- Mobile Pagination -->
+                <div class="flex-1 flex justify-between sm:hidden">
+                    <button @click="handlePageChange(pagination.page - 1)" :disabled="pagination.page === 1"
+                        class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                        Previous
+                    </button>
+                    <button @click="handlePageChange(pagination.page + 1)"
+                        :disabled="pagination.page === pagination.totalPages"
+                        class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                        Next
+                    </button>
+                </div>
+
+                <!-- Desktop Pagination -->
+                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div class="flex items-center gap-4">
+                        <p class="text-sm text-gray-700 dark:text-gray-300">
+                            Showing
+                            <span class="font-medium">{{ (pagination.page - 1) * pagination.limit + 1 }}</span>
+                            to
+                            <span class="font-medium">{{ Math.min(pagination.page * pagination.limit, pagination.total)
+                                }}</span>
+                            of
+                            <span class="font-medium">{{ pagination.total }}</span>
+                            results
+                        </p>
+
+                        <div class="flex items-center gap-2 ml-4">
+                            <span class="text-sm text-gray-700 dark:text-gray-300">Rows:</span>
+                            <select v-model="pagination.limit" @change="handleLimitChange"
+                                class="text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500 py-1 pl-2 pr-8">
+                                <option :value="10">10</option>
+                                <option :value="25">25</option>
+                                <option :value="50">50</option>
+                                <option :value="100">100</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                            <button @click="handlePageChange(pagination.page - 1)" :disabled="pagination.page === 1"
+                                class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <span class="sr-only">Previous</span>
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                    fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd"
+                                        d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </button>
+
+                            <!-- Current Page Info -->
+                            <span
+                                class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-200">
+                                Page {{ pagination.page }} of {{ pagination.totalPages }}
+                            </span>
+
+                            <button @click="handlePageChange(pagination.page + 1)"
+                                :disabled="pagination.page === pagination.totalPages"
+                                class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <span class="sr-only">Next</span>
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                    fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd"
+                                        d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </nav>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Request Detail Dialog -->
@@ -279,11 +357,39 @@ const filters = ref({
 
 const fetchRequests = async () => {
     try {
-        requests.value = await adminApi.getAllRequests(filters.value)
+        const response = await adminApi.getAllRequests({
+            ...filters.value,
+            page: pagination.value.page,
+            limit: pagination.value.limit
+        })
+        requests.value = response.data || []
+        if (response.meta) {
+            pagination.value.total = response.meta.total
+            pagination.value.totalPages = response.meta.total_pages
+        }
     } catch (error) {
         console.error('Failed to fetch requests:', error)
         toast.error('Failed to load redemption requests')
     }
+}
+
+const pagination = ref({
+    page: 1,
+    limit: parseInt(localStorage.getItem('admin_table_limit') || '10'),
+    total: 0,
+    totalPages: 0
+})
+
+const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > pagination.value.totalPages) return
+    pagination.value.page = newPage
+    fetchRequests()
+}
+
+const handleLimitChange = () => {
+    pagination.value.page = 1 // Reset to first page
+    localStorage.setItem('admin_table_limit', pagination.value.limit.toString())
+    fetchRequests()
 }
 
 const fetchStats = async () => {
@@ -295,6 +401,7 @@ const fetchStats = async () => {
 }
 
 const applyFilters = () => {
+    pagination.value.page = 1
     fetchRequests()
 }
 
@@ -305,6 +412,7 @@ const resetFilters = () => {
         start_date: '',
         end_date: ''
     }
+    pagination.value.page = 1
     fetchRequests()
 }
 

@@ -279,13 +279,22 @@ export const transactionHistoryService = {
     async fetchFromBackend(options?: {
         type?: 'send' | 'bridge';
         status?: 'pending' | 'success' | 'failed';
+        direction?: 'incoming' | 'outgoing';
+        page?: number;
         limit?: number;
-    }): Promise<TransactionRecord[]> {
+    }): Promise<{ data: TransactionRecord[], meta: { total: number, limit: number, offset: number } }> {
         try {
             const params = new URLSearchParams();
             if (options?.type) params.set('type', options.type);
             if (options?.status) params.set('status', options.status);
-            if (options?.limit) params.set('limit', options.limit.toString());
+            if (options?.direction) params.set('direction', options.direction);
+
+            const page = options?.page || 1;
+            const limit = options?.limit || 50;
+            const offset = (page - 1) * limit;
+
+            params.set('limit', limit.toString());
+            params.set('offset', offset.toString());
 
             const response = await apiClient.fetch(
                 `/api/transactions?${params.toString()}`,
@@ -296,19 +305,24 @@ export const transactionHistoryService = {
 
             if (!response.ok) {
                 console.error('Failed to fetch transactions from backend');
-                return this.getAll(); // Fallback to local
+                return { data: this.getAll(), meta: { total: 0, limit, offset } }; // Fallback to local
             }
 
             const data = await response.json();
             const transactions = data.data.map(mapApiToLocal);
 
-            // Update localStorage with backend data
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
+            // Update localStorage with backend data (only if first page, to keep cache fresh)
+            if (page === 1) {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
+            }
 
-            return transactions;
+            return {
+                data: transactions,
+                meta: data.pagination || { total: transactions.length, limit, offset }
+            };
         } catch (error) {
             console.error('API error fetching transactions:', error);
-            return this.getAll(); // Fallback to local
+            return { data: this.getAll(), meta: { total: 0, limit: 50, offset: 0 } }; // Fallback to local
         }
     },
 

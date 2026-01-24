@@ -5,6 +5,8 @@ export interface AdminRequestFilters {
     wallet_address?: string
     start_date?: string
     end_date?: string
+    page?: number
+    limit?: number
 }
 
 export interface UpdateStatusData {
@@ -43,12 +45,14 @@ export const adminApi = {
     /**
      * Get all redemption requests (admin view)
      */
-    async getAllRequests(filters?: AdminRequestFilters): Promise<any[]> {
+    async getAllRequests(filters?: AdminRequestFilters): Promise<{ data: any[], meta?: any }> {
         const params = new URLSearchParams();
         if (filters?.status) params.append('status', filters.status);
         if (filters?.wallet_address) params.append('wallet_address', filters.wallet_address);
         if (filters?.start_date) params.append('start_date', filters.start_date);
         if (filters?.end_date) params.append('end_date', filters.end_date);
+        if (filters?.page) params.append('page', filters.page.toString());
+        if (filters?.limit) params.append('limit', filters.limit.toString());
 
         const response = await fetch(`${API_BASE}/api/redemption/admin/redemption/requests?${params}`, {
             method: 'GET',
@@ -62,7 +66,8 @@ export const adminApi = {
         }
 
         const result = await response.json();
-        return result.data || [];
+        // Return full result to access meta data
+        return result;
     },
 
     /**

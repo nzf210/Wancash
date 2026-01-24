@@ -101,7 +101,8 @@ export const useBridgeStore = defineStore('bridge', {
     // Load bridge history from persistent storage
     async loadHistory() {
       // Sync from backend first
-      const bridgeTxs = await transactionHistoryService.fetchFromBackend({ type: 'bridge' })
+      const result = await transactionHistoryService.fetchFromBackend({ type: 'bridge' })
+      const bridgeTxs = result.data || []
 
       this.history = bridgeTxs.map(tx => ({
         id: typeof tx.id === 'number' ? tx.id : Date.now(),

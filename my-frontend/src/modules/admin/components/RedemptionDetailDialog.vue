@@ -50,14 +50,20 @@
                         <div v-for="(item, index) in request.items" :key="index"
                             class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
                             <div class="flex items-center gap-3">
-                                <div
+                                <div v-if="item.snapshot_weight > 0"
                                     class="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-200 to-yellow-500 flex items-center justify-center text-white font-bold text-xs">
                                     {{ item.snapshot_weight }}g
                                 </div>
+                                <div v-else
+                                    class="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400 text-lg">
+                                    💾
+                                </div>
                                 <div>
                                     <p class="font-medium text-gray-900 dark:text-white">{{ item.snapshot_name }}</p>
-                                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ item.snapshot_weight }}g × {{
-                                        item.quantity }}</p>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                                        <span v-if="item.snapshot_weight > 0">{{ item.snapshot_weight }}g × </span>
+                                        {{ item.quantity }} pcs
+                                    </p>
                                 </div>
                             </div>
                             <div class="text-right">
@@ -78,10 +84,10 @@
                             <span class="font-medium text-gray-900 dark:text-white">{{
                                 formatNumber(request.token_amount_gold) }} WCH</span>
                         </div>
-                        <div class="flex justify-between text-sm">
+                        <div v-if="request.gold_amount_grams > 0" class="flex justify-between text-sm">
                             <span class="text-gray-600 dark:text-gray-400">Total Weight</span>
                             <span class="font-medium text-gray-900 dark:text-white">{{ request.gold_amount_grams
-                                }}g</span>
+                            }}g</span>
                         </div>
 
                         <!-- Shipping Cost Editor -->
@@ -116,7 +122,7 @@
                             class="flex justify-between text-base font-bold pt-2 border-t border-gray-200 dark:border-gray-700">
                             <span class="text-gray-900 dark:text-white">Total Amount</span>
                             <span class="text-blue-600 dark:text-blue-400">{{ formatNumber(request.total_token_amount)
-                                }} WCH</span>
+                            }} WCH</span>
                         </div>
                     </div>
                 </div>
@@ -303,19 +309,7 @@
                 <Button variant="outline" @click="$emit('update:open', false)">
                     Close
                 </Button>
-                <Button @click="updateStatus"
-                    :disabled="!canUpdateStatus || !newStatus || isUpdating || (newStatus === 'rejected' && !adminNotes)"
-                    class="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                    <svg v-if="isUpdating" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
-                        </circle>
-                        <path class="opacity-75" fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                        </path>
-                    </svg>
-                    {{ isUpdating ? 'Updating...' : 'Update Status' }}
-                </Button>
+
             </DialogFooter>
         </DialogContent>
     </Dialog>
@@ -376,7 +370,6 @@ const allowedNextStatuses = computed(() => {
     const transitions: Record<string, { value: string; label: string }[]> = {
         'pending': [], // Will be populated dynamically
         'waiting_payment': [
-            { value: 'processing', label: 'Processing' },
             { value: 'rejected', label: 'Rejected' }
         ],
         'waiting_payment_review': [
@@ -389,34 +382,44 @@ const allowedNextStatuses = computed(() => {
         ],
         'processing': [
             { value: 'shipped', label: 'Shipped' },
-            { value: 'completed', label: 'Completed' },
             { value: 'rejected', label: 'Rejected' }
         ],
         'shipped': [
-            { value: 'completed', label: 'Completed' }
+            { value: 'completed', label: 'Completed' },
+            { value: 'rejected', label: 'Rejected' }
         ],
         'completed': [],
         'rejected': []
     }
 
+    // Dynamic Logic for 'waiting_payment_review'
+    if (currentStatus === 'waiting_payment_review') {
+        const isVerified = props.request.reconciliation_status === 'verified' ||
+            props.request.reconciliation_status === 'manually_merged'
+
+        if (isVerified) {
+            transitions['waiting_payment_review'] = [
+                { value: 'processing', label: 'Processing' },
+                { value: 'rejected', label: 'Rejected' }
+            ]
+        } else {
+            transitions['waiting_payment_review'] = [
+                { value: 'rejected', label: 'Rejected' }
+            ]
+        }
+    }
+
     // Dynamic Logic for 'pending' state
     if (currentStatus === 'pending') {
-        const isPhysical = props.request.gold_amount_grams > 0
-        const hasShippingCost = props.request.shipping_cost_token > 0
+        const isPhysical = Number(props.request.gold_amount_grams || 0) > 0
+        const hasShipping = Number(props.request.shipping_cost_token || 0) > 0
 
         transitions['pending'] = [
             { value: 'rejected', label: 'Rejected' }
         ]
 
-        // For Physical items: Only allow Waiting Payment if Shipping Cost is set
-        if (isPhysical) {
-            if (hasShippingCost) {
-                transitions['pending'].unshift({ value: 'waiting_payment', label: 'Waiting Payment' })
-            }
-        } else {
-            // For Digital items (0g): Allow Waiting Payment or even direct completion if needed
+        if (!isPhysical || hasShipping) {
             transitions['pending'].unshift({ value: 'waiting_payment', label: 'Waiting Payment' })
-            // Optional: You could allow skipping to processing if auto-approved, but stick to standard flow
         }
     }
 
@@ -552,6 +555,21 @@ const verifyPayment = async () => {
             // Update local request data
             if (result.data) {
                 Object.assign(props.request, result.data)
+            }
+
+            // Auto-advance to processing if currently in waiting_payment_review
+            if (props.request.status === 'waiting_payment_review') {
+                try {
+                    const updatedRequest = await adminApi.updateRequestStatus(props.request.id, {
+                        status: 'processing',
+                        admin_notes: 'Auto-advanced after successful payment verification'
+                    })
+                    Object.assign(props.request, updatedRequest)
+                    toast.success('Status auto-updated to Processing')
+                } catch (err) {
+                    console.error('Auto-advance failed:', err)
+                    toast.warning('Payment verifed but failed to auto-update status')
+                }
             }
 
             emit('updated')

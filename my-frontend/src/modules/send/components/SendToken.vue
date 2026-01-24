@@ -475,7 +475,8 @@ const loadTransactionHistory = async () => {
 
   try {
     // Fetch latest from backend (which updates localStorage)
-    const history = await transactionHistoryService.fetchFromBackend({ type: 'send' })
+    const result = await transactionHistoryService.fetchFromBackend({ type: 'send', limit: 3 })
+    const history = result.data || []
 
     // `shortenAddress` and `Transfer` interface are available in scope
     recentTransfers.value = history.map((tx: any) => ({

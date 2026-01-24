@@ -62,12 +62,14 @@
                         <div v-if="req.items && req.items.length > 0" class="space-y-1 mb-3">
                             <div v-for="item in req.items" :key="item.product_id"
                                 class="text-sm text-gray-700 dark:text-gray-300 flex justify-between gap-4">
-                                <span>{{ item.snapshot_name }} ({{ item.snapshot_weight }}g)</span>
+                                <span>{{ item.snapshot_name }} <span v-if="item.snapshot_weight > 0">({{
+                                        item.snapshot_weight }}g)</span></span>
                                 <span class="font-medium">× {{ item.quantity }} pcs</span>
                             </div>
                         </div>
                         <div v-else class="text-sm text-gray-700 dark:text-gray-300 mb-3">
-                            {{ req.gold_amount_grams }}g Prize Item (Legacy)
+                            <span v-if="req.gold_amount_grams > 0">{{ req.gold_amount_grams }}g </span>Prize Item
+                            (Legacy)
                         </div>
 
                         <p class="text-xs text-gray-500 dark:text-gray-400">
