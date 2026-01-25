@@ -26,6 +26,7 @@ interface BridgeState {
   _timer: any
   userBalance: string
   destinationAddress: string
+  abortController: AbortController | null
 }
 
 const HARDCODED_TOKENS: Token[] = [
@@ -50,6 +51,7 @@ export const useBridgeStore = defineStore('bridge', {
     destChains: SUPPORTED_CHAINS as Chain[],
     userBalance: '0',
     destinationAddress: '',
+    abortController: null,
   }),
 
   getters: {
@@ -100,21 +102,37 @@ export const useBridgeStore = defineStore('bridge', {
 
     // Load bridge history from persistent storage
     async loadHistory() {
-      // Sync from backend first
-      const result = await transactionHistoryService.fetchFromBackend({ type: 'bridge' })
-      const bridgeTxs = result.data || []
+      // Cancel previous request
+      if (this.abortController) {
+        this.abortController.abort()
+      }
+      this.abortController = new AbortController()
 
-      this.history = bridgeTxs.map(tx => ({
-        id: typeof tx.id === 'number' ? tx.id : Date.now(),
-        fromChain: tx.fromChainName || 'Unknown',
-        toChain: tx.toChainName || 'Unknown',
-        token: tx.tokenSymbol,
-        amount: tx.amount,
-        timestamp: tx.timestamp,
-        status: tx.status === 'success' ? 'completed' as const : tx.status === 'failed' ? 'failed' as const : 'pending' as const,
-        toAddress: tx.to,
-        txHash: tx.hash
-      }))
+      try {
+        // Sync from backend first
+        const result = await transactionHistoryService.fetchFromBackend({
+          type: 'bridge',
+          signal: this.abortController.signal
+        })
+        const bridgeTxs = result.data || []
+
+        this.history = bridgeTxs.map(tx => ({
+          id: typeof tx.id === 'number' ? tx.id : Date.now(),
+          fromChain: tx.fromChainName || 'Unknown',
+          toChain: tx.toChainName || 'Unknown',
+          token: tx.tokenSymbol,
+          amount: tx.amount,
+          timestamp: tx.timestamp,
+          status: tx.status === 'success' ? 'completed' as const : tx.status === 'failed' ? 'failed' as const : 'pending' as const,
+          toAddress: tx.to,
+          txHash: tx.hash
+        }))
+      } catch (error: any) {
+        if (error.name === 'AbortError') return
+        console.error('Failed to load bridge history:', error)
+      } finally {
+        this.abortController = null
+      }
     },
 
     debounceQuote() {

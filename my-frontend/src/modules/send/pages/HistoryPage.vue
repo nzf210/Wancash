@@ -36,15 +36,27 @@ const activeFilter = computed({
     }
 })
 
+
 let refreshInterval: ReturnType<typeof setInterval> | null = null
+let abortController: AbortController | null = null
+const error = ref<string | null>(null)
 
 const loadHistory = async () => {
+    // Cancel previous request if exists
+    if (abortController) {
+        abortController.abort()
+    }
+    abortController = new AbortController()
+
     loading.value = true
+    error.value = null
+
     try {
         const filter = activeFilter.value
         const options: any = {
             page: pagination.value.page,
-            limit: pagination.value.limit
+            limit: pagination.value.limit,
+            signal: abortController.signal
         }
 
         // Map filter to backend params
@@ -68,12 +80,18 @@ const loadHistory = async () => {
                 pagination.value.limit = result.meta.limit
             }
         }
-    } catch (error) {
-        console.error('Failed to load transaction history:', error)
+    } catch (err: any) {
+        if (err.name === 'AbortError') {
+            console.log('Request cancelled')
+            return
+        }
+        console.error('Failed to load transaction history:', err)
+        error.value = 'Failed to load history. Showing cached data.'
         // Fallback to local storage (limited support for filtering/pagination locally in this view)
         transactions.value = transactionHistoryService.getAll()
     } finally {
         loading.value = false
+        abortController = null
     }
 }
 

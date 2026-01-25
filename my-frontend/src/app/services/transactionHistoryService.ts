@@ -282,6 +282,7 @@ export const transactionHistoryService = {
         direction?: 'incoming' | 'outgoing';
         page?: number;
         limit?: number;
+        signal?: AbortSignal;
     }): Promise<{ data: TransactionRecord[], meta: { total: number, limit: number, offset: number } }> {
         try {
             const params = new URLSearchParams();
@@ -299,13 +300,15 @@ export const transactionHistoryService = {
             const response = await apiClient.fetch(
                 `/api/transactions?${params.toString()}`,
                 {
-                    method: 'GET'
+                    method: 'GET',
+                    signal: options?.signal // Pass abort signal
                 }
             );
 
             if (!response.ok) {
-                console.error('Failed to fetch transactions from backend');
-                return { data: this.getAll(), meta: { total: 0, limit, offset } }; // Fallback to local
+                // Throw error to let caller handle it (e.g., showing error UI)
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to fetch transactions');
             }
 
             const data = await response.json();
@@ -322,7 +325,7 @@ export const transactionHistoryService = {
             };
         } catch (error) {
             console.error('API error fetching transactions:', error);
-            return { data: this.getAll(), meta: { total: 0, limit: 50, offset: 0 } }; // Fallback to local
+            throw error; // Propagate error instead of silent fallback
         }
     },
 
