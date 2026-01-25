@@ -59,11 +59,16 @@ const fetchChartData = async (tf: Timeframe) => {
         })
 
         if (response.data.success && response.data.data) {
-            // Transform to ApexCharts format
-            const chartData = response.data.data.map((item: any) => ({
-                x: item.timestamp,
-                y: item.price
-            }))
+            const chartData = response.data.data
+                .map((item: any) => ({
+                    x: item.timestamp,
+                    y: item.price
+                }))
+                .filter((p: any) => 
+                    p.x != null && !isNaN(p.x) && 
+                    p.y != null && !isNaN(p.y) && 
+                    typeof p.y === 'number'
+                )
 
             // Update series
             series.value = [{
