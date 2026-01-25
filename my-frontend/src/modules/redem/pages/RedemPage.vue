@@ -386,8 +386,9 @@ watch(activeView, (newTab) => {
   }
 
   // Re-fetch products when switching back to 'new' tab to ensure data is fresh
+  // Use cached data for speed (forceRefresh = false)
   if (newTab === 'new' && !isCheckout.value) {
-    fetchProductsAndCategories()
+    fetchProductsAndCategories(false)
   }
 })
 
@@ -457,13 +458,13 @@ const cart = ref<Record<string, number>>({}) // product_id -> quantity
 const productListComponent = ref() // To access products array from child
 const availableProducts = ref<GoldProduct[]>([]) // Store products in parent
 
-const fetchProductsAndCategories = async () => {
+const fetchProductsAndCategories = async (forceRefresh = false) => {
   isFetchingProducts.value = true
   fetchError.value = ''
   try {
     const [products, categories] = await Promise.all([
-      redemptionApi.getGoldProducts(),
-      redemptionApi.getCategories()
+      redemptionApi.getGoldProducts(undefined, forceRefresh),
+      redemptionApi.getCategories(forceRefresh)
     ])
     availableProducts.value = products
     availableCategories.value = categories

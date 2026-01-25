@@ -4,6 +4,7 @@
  * This is a global service - all modules should use this instead of module-specific APIs
  */
 import { apiClient } from '@/utils/apiClient';
+
 // Product Category Interface
 export interface ProductCategory {
     id: string
@@ -179,11 +180,10 @@ let globalConfig: RedemptionConfig = {
     shipping_cost_wch: 0            // 0 when disabled
 };
 
-
-
-
-
-// Helper removed - using apiClient
+// Cache State
+const CACHE_TTL = 60 * 1000; // 1 minute
+const productsCache = new Map<string, { data: Product[], timestamp: number }>();
+let categoriesCache: { data: ProductCategory[], timestamp: number } | null = null;
 
 export const redemptionService = {
     async getSettings(): Promise<RedemptionConfig> {
@@ -271,7 +271,16 @@ export const redemptionService = {
      * Get available gold products
      * Fetches from backend, falls back to mock data if not available
      */
-    async getGoldProducts(chainId?: number): Promise<Product[]> {
+    async getGoldProducts(chainId?: number, forceRefresh = false): Promise<Product[]> {
+        const cacheKey = chainId ? `products_${chainId}` : 'products_all';
+        const cached = productsCache.get(cacheKey);
+        const now = Date.now();
+
+        if (!forceRefresh && cached && (now - cached.timestamp < CACHE_TTL)) {
+            console.log(`📦 [redemptionService] Returning cached products for ${cacheKey}`);
+            return cached.data;
+        }
+
         try {
             const url = chainId ? `/api/products?chainId=${chainId}` : '/api/products';
             const response = await apiClient.fetch(url, {
@@ -283,11 +292,16 @@ export const redemptionService = {
             }
 
             const result = await response.json();
-            return result.data || [];
+            const data = result.data || [];
+
+            // Update cache
+            productsCache.set(cacheKey, { data, timestamp: now });
+
+            return data;
         } catch (error) {
             // Fallback to mock data for development
             console.warn('Using mock product data:', error);
-            return [
+            const mockData = [
                 {
                     id: 'gold-0.1g',
                     name: 'Gold 0.1g',
@@ -342,13 +356,20 @@ export const redemptionService = {
                     updated_at: new Date().toISOString()
                 },
             ];
+            return mockData;
         }
     },
 
     /**
      * Get all product categories with product counts
      */
-    async getCategories(): Promise<ProductCategory[]> {
+    async getCategories(forceRefresh = false): Promise<ProductCategory[]> {
+        const now = Date.now();
+        if (!forceRefresh && categoriesCache && (now - categoriesCache.timestamp < CACHE_TTL)) {
+            console.log('📦 [redemptionService] Returning cached categories');
+            return categoriesCache.data;
+        }
+
         try {
             const response = await apiClient.fetch('/api/products/categories', {
                 method: 'GET'
@@ -359,7 +380,12 @@ export const redemptionService = {
             }
 
             const result = await response.json();
-            return result.data || [];
+            const data = result.data || [];
+
+            // Update cache
+            categoriesCache = { data, timestamp: now };
+
+            return data;
         } catch (error) {
             console.warn('Failed to fetch categories:', error);
             return [];
