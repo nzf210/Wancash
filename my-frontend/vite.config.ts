@@ -38,7 +38,7 @@ export default defineConfig(({ mode }) => { // Ambil mode dari Vite (dev/build)
         devOptions: {
           enabled: true
         },
-        includeAssets: ['favicon.ico', 'wancash.png', 'safari-pinned-tab.svg'],
+        includeAssets: ['favicon.ico', 'wancash.png', 'pwa-192x192.png', 'pwa-512x512.png', 'safari-pinned-tab.svg'],
         manifest: {
           name: 'Wancash - Cross-Chain Bridge',
           short_name: 'Wancash',
@@ -46,14 +46,20 @@ export default defineConfig(({ mode }) => { // Ambil mode dari Vite (dev/build)
           theme_color: '#8b5cf6',
           icons: [
             {
-              src: 'wancash.png',
+              src: 'pwa-192x192.png',
               sizes: '192x192',
               type: 'image/png'
             },
             {
-              src: 'wancash.png',
+              src: 'pwa-512x512.png',
               sizes: '512x512',
               type: 'image/png'
+            },
+            {
+              src: 'pwa-512x512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'any maskable'
             }
           ]
         },

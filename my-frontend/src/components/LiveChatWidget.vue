@@ -1,8 +1,8 @@
 <template>
-    <div v-if="isSupportPage" class="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-4">
+    <div v-if="isSupportPage" class="fixed bottom-4 right-2 sm:right-4 z-50 flex flex-col items-end gap-4">
         <!-- Chat Window -->
         <div v-if="isOpen"
-            class="bg-white dark:bg-gray-900 shadow-xl rounded-2xl w-[350px] flex flex-col border border-gray-200 dark:border-gray-800 h-[500px] overflow-hidden transition-all duration-300">
+            class="bg-white dark:bg-gray-900 shadow-xl rounded-2xl w-[342px] sm:w-[350px] flex flex-col border border-gray-200 dark:border-gray-800 h-[500px] overflow-hidden transition-all duration-300">
 
             <!-- Header -->
             <div class="bg-yellow-400 dark:bg-yellow-600 p-4 flex justify-between items-center text-white">
