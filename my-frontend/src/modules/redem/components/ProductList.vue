@@ -3,7 +3,7 @@
         <!-- Category Filter Sidebar -->
         <aside v-if="categories.length > 0" class="hidden lg:block w-64 flex-shrink-0">
             <div class="sticky top-4">
-                <CategoryFilter :categories="categories" :total-products="allProducts.length" v-model="selectedCategory"
+                <CategoryFilter :categories="categories" :total-products="products.length" v-model="selectedCategory"
                     @select="handleCategoryChange" />
             </div>
         </aside>
@@ -20,7 +20,7 @@
                 <!-- Mobile Category Dropdown -->
                 <select v-if="categories.length > 0" v-model="selectedCategory"
                     class="lg:hidden px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
-                    <option :value="null">🛍️ All Products ({{ allProducts.length }})</option>
+                    <option :value="null">🛍️ All Products ({{ products.length }})</option>
                     <option v-for="cat in categories" :key="cat.id" :value="cat.id">
                         {{ cat.icon }} {{ cat.name }} ({{ cat.product_count }})
                     </option>
@@ -95,17 +95,18 @@ import ProductDetailDialog from './ProductDetailDialog.vue'
 // Cart modeled as Record<ProductId, Quantity>
 const props = defineProps<{
     cart: Record<string, number>
+    products: Product[]
+    categories: ProductCategory[]
+    isLoading?: boolean
+    error?: string
 }>()
 
 const emit = defineEmits<{
     'increase': [id: string]
     'decrease': [id: string]
+    'refresh': []
 }>()
 
-const allProducts = ref<Product[]>([])
-const categories = ref<ProductCategory[]>([])
-const isLoading = ref(true)
-const error = ref('')
 const selectedCategory = ref<string | null>(null)
 const sortBy = ref('default')
 
@@ -115,12 +116,12 @@ const selectedProduct = ref<Product | null>(null)
 
 const activeCategory = computed(() => {
     if (!selectedCategory.value) return null
-    return categories.value.find(c => c.id === selectedCategory.value)
+    return props.categories.find(c => c.id === selectedCategory.value)
 })
 
 const filteredProducts = computed(() => {
     // First filter: Only show active products
-    let products = allProducts.value.filter(p => p.is_active)
+    let products = props.products.filter(p => p.is_active)
 
     // Second filter: Category filter (if selected)
     if (selectedCategory.value) {
@@ -149,36 +150,8 @@ const sortedProducts = computed(() => {
     }
 })
 
-const fetchData = async () => {
-    isLoading.value = true
-    error.value = ''
-    try {
-        // Fetch both products and categories in parallel
-        const [productsData, categoriesData] = await Promise.all([
-            redemptionService.getGoldProducts(),
-            redemptionService.getCategories()
-        ])
-
-        allProducts.value = productsData
-        categories.value = categoriesData
-
-        // Debug logging
-        const activeCount = productsData.filter(p => p.is_active).length
-        const inactiveCount = productsData.length - activeCount
-        console.log('✅ Products loaded:', productsData.length, 'total products')
-        console.log('   ├─ Active products:', activeCount)
-        console.log('   └─ Inactive products:', inactiveCount)
-        console.log('📦 All products:', allProducts.value)
-        console.log('🔢 Filtered & sorted products:', sortedProducts.value.length)
-        if (sortedProducts.value.length === 0 && productsData.length > 0) {
-            console.warn('⚠️ Products exist but none are showing! Check is_active status in database.')
-        }
-    } catch (e) {
-        error.value = 'Failed to load products'
-        console.error('❌ Error loading products:', e)
-    } finally {
-        isLoading.value = false
-    }
+const fetchData = () => {
+    emit('refresh')
 }
 
 const openProductDetail = (product: Product) => {
@@ -208,11 +181,11 @@ const handleCategoryChange = (categoryId: string | null) => {
 }
 
 onMounted(() => {
-    fetchData()
+    // fetchData() // Managed by parent now
 })
 
 defineExpose({
-    products: allProducts,
-    categories
+    products: props.products,
+    categories: props.categories
 })
 </script>

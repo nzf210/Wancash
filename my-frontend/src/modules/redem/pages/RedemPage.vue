@@ -51,8 +51,9 @@
         <div v-if="activeView === 'new'">
           <!-- Step 1: Product Selection (Cart) -->
           <div v-if="!isCheckout" class="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <ProductList :cart="cart" @increase="increaseQuantity" @decrease="decreaseQuantity"
-              ref="productListComponent" />
+            <ProductList :cart="cart" :products="availableProducts" :categories="availableCategories"
+              :isLoading="isFetchingProducts" :error="fetchError" @increase="increaseQuantity"
+              @decrease="decreaseQuantity" @refresh="fetchProductsAndCategories" ref="productListComponent" />
 
             <!-- Cart Footer -->
             <div v-if="cartTotalItems > 0"
@@ -383,6 +384,11 @@ watch(activeView, (newTab) => {
   if (currentTab !== newTab) {
     router.replace({ query: { ...route.query, tab: newTab } })
   }
+
+  // Re-fetch products when switching back to 'new' tab to ensure data is fresh
+  if (newTab === 'new' && !isCheckout.value) {
+    fetchProductsAndCategories()
+  }
 })
 
 // Watch for URL changes (e.g. Back button) -> Update State
@@ -399,6 +405,9 @@ const agreeTerms = ref(false)
 const isLoading = ref(false)
 const showSuccess = ref(false)
 const isCheckout = ref(false)
+const isFetchingProducts = ref(true)
+const fetchError = ref('')
+const availableCategories = ref<any[]>([])
 
 const adminSettings = ref<RedemptionConfig>({ shipping_enabled: false, shipping_cost_wch: 0 })
 
@@ -448,19 +457,36 @@ const cart = ref<Record<string, number>>({}) // product_id -> quantity
 const productListComponent = ref() // To access products array from child
 const availableProducts = ref<GoldProduct[]>([]) // Store products in parent
 
+const fetchProductsAndCategories = async () => {
+  isFetchingProducts.value = true
+  fetchError.value = ''
+  try {
+    const [products, categories] = await Promise.all([
+      redemptionApi.getGoldProducts(),
+      redemptionApi.getCategories()
+    ])
+    availableProducts.value = products
+    availableCategories.value = categories
+  } catch (e) {
+    console.error('Failed to load products or categories', e)
+    fetchError.value = 'Failed to load products'
+  } finally {
+    isFetchingProducts.value = false
+  }
+}
+
 // Fetch products and settings on mount
 onMounted(async () => {
   try {
     adminSettings.value = await redemptionApi.getSettings()
-    // Fetch products directly in parent
-    availableProducts.value = await redemptionApi.getGoldProducts()
+    await fetchProductsAndCategories()
 
     // Fetch WCH balance on mount if wallet is already connected
     if (isConnected.value && address.value && contractAddress.value) {
       await fetchWchBalance()
     }
   } catch (e) {
-    console.error('Failed to load settings or products', e)
+    console.error('Failed to initialize redemption page', e)
   }
 })
 
@@ -492,16 +518,6 @@ const increaseQuantity = async (id: string) => {
     // IMPORTANT: Fetch latest balance before validation to avoid race condition
     await fetchWchBalance()
 
-    console.log('🔍 Min Holding Validation:', {
-      productName: productToAdd.name,
-      requiredHolding: productToAdd.min_holding_required,
-      currentBalance: wchBalance.value,
-      chainId: chainId.value,
-      chainName: chainInfo.value?.name,
-      contractAddress: contractAddress.value,
-      isPassing: wchBalance.value >= productToAdd.min_holding_required
-    })
-
     if (wchBalance.value < productToAdd.min_holding_required) {
       const required = new Intl.NumberFormat('en-US').format(productToAdd.min_holding_required)
       const current = new Intl.NumberFormat('en-US').format(wchBalance.value)
@@ -511,6 +527,22 @@ const increaseQuantity = async (id: string) => {
       return
     }
   }
+
+  // --- CHAIN VALIDATION ---
+  const activeChains = productToAdd.active_chains
+  if (activeChains && activeChains.length > 0) {
+    const currentChainId = Number(chainId.value)
+    // Convert all activeChains to numbers for safe comparison
+    const supportedChains = activeChains.map(Number)
+
+    if (!supportedChains.includes(currentChainId)) {
+      toast.error('Not Available on Current Chain', {
+        description: `${productToAdd.name} is only available on chains: ${supportedChains.join(', ')}. Your active chain ID is ${currentChainId}.`
+      })
+      return
+    }
+  }
+  // ------------------------
 
   cart.value[id] = (cart.value[id] || 0) + 1
 }
@@ -625,9 +657,10 @@ const fetchWchBalance = async () => {
   }
 }
 
-watch(chainId, () => {
+watch(chainId, async () => {
   if (isConnected.value && address.value) {
     fetchWchBalance()
+    await fetchProductsAndCategories()
   }
 })
 

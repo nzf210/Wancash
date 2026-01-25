@@ -141,15 +141,33 @@
                     </div>
 
                     <!-- Action Buttons -->
-                    <div class="flex gap-3">
+                    <div class="space-y-3">
+                        <div v-if="!isAvailableOnCurrentChain"
+                            class="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-2">
+                            <svg class="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            <div class="flex-1">
+                                <p class="text-xs font-bold text-red-800 dark:text-red-300">Not Available on Current
+                                    Chain</p>
+                                <p class="text-[10px] text-red-700 dark:text-red-400 mt-0.5">
+                                    This product is only available on chains: {{
+                                        product.active_chains?.map(Number).join(', ') }}.
+                                    Please switch your network to redeem this item.
+                                </p>
+                            </div>
+                        </div>
+
                         <Button @click="addToCart"
-                            class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
-                            :disabled="product.stock === 0 || localQuantity === 0">
+                            class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
+                            :disabled="product.stock === 0 || localQuantity === 0 || !isAvailableOnCurrentChain">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                             </svg>
-                            Add to Cart
+                            {{ isAvailableOnCurrentChain ? 'Add to Cart' : 'Switch Chain to Add' }}
                         </Button>
                     </div>
 
@@ -255,6 +273,7 @@
 import { ref, computed, watch } from 'vue'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { useChainId } from '@wagmi/vue'
 import type { Product } from '@/app/services/redemptionService'
 import { toast } from 'vue-sonner'
 
@@ -272,6 +291,14 @@ const emit = defineEmits<{
 const currentImageIndex = ref(0)
 const localQuantity = ref(props.quantity)
 const activeTab = ref<'description' | 'specifications' | 'features'>('description')
+const chainId = useChainId()
+
+const isAvailableOnCurrentChain = computed(() => {
+    const activeChains = props.product.active_chains
+    if (!activeChains || activeChains.length === 0) return true
+    const currentChainId = Number(chainId.value)
+    return activeChains.map(Number).includes(currentChainId)
+})
 
 const tabs = computed(() => {
     const allTabs = [

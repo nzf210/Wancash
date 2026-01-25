@@ -94,6 +94,7 @@ export interface Product {
     updated_at: string
     available_from?: string
     available_until?: string
+    active_chains?: number[] // Added for chain-specific availability
 }
 
 // Backward compatibility alias
@@ -270,9 +271,10 @@ export const redemptionService = {
      * Get available gold products
      * Fetches from backend, falls back to mock data if not available
      */
-    async getGoldProducts(): Promise<Product[]> {
+    async getGoldProducts(chainId?: number): Promise<Product[]> {
         try {
-            const response = await apiClient.fetch('/api/products', {
+            const url = chainId ? `/api/products?chainId=${chainId}` : '/api/products';
+            const response = await apiClient.fetch(url, {
                 method: 'GET'
             });
 

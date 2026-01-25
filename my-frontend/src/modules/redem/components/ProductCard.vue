@@ -72,21 +72,16 @@
                 <div class="mb-3 p-2 bg-gray-100 dark:bg-gray-600 rounded-lg space-y-1">
                     <div class="flex justify-between items-center text-xs">
                         <span class="text-gray-600 dark:text-gray-300">Available</span>
-                        <span 
-                            class="font-semibold"
-                            :class="{
-                                'text-green-600 dark:text-green-400': (product.stock - (product.reserved_stock || 0)) > 5,
-                                'text-yellow-600 dark:text-yellow-400': (product.stock - (product.reserved_stock || 0)) > 0 && (product.stock - (product.reserved_stock || 0)) <= 5,
-                                'text-red-600 dark:text-red-400': (product.stock - (product.reserved_stock || 0)) === 0
-                            }"
-                        >
+                        <span class="font-semibold" :class="{
+                            'text-green-600 dark:text-green-400': (product.stock - (product.reserved_stock || 0)) > 5,
+                            'text-yellow-600 dark:text-yellow-400': (product.stock - (product.reserved_stock || 0)) > 0 && (product.stock - (product.reserved_stock || 0)) <= 5,
+                            'text-red-600 dark:text-red-400': (product.stock - (product.reserved_stock || 0)) === 0
+                        }">
                             {{ product.stock - (product.reserved_stock || 0) }} units
                         </span>
                     </div>
-                    <div 
-                        v-if="product.reserved_stock && product.reserved_stock > 0"
-                        class="flex justify-between items-center text-[10px] text-gray-500 dark:text-gray-400"
-                    >
+                    <div v-if="product.reserved_stock && product.reserved_stock > 0"
+                        class="flex justify-between items-center text-[10px] text-gray-500 dark:text-gray-400">
                         <span>Reserved by others</span>
                         <span>{{ product.reserved_stock }} units</span>
                     </div>
@@ -106,8 +101,8 @@
 
                     <button @click.stop="$emit('increase', product)"
                         class="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-600 text-white shadow-sm hover:bg-blue-700 disabled:opacity-50 transition-colors"
-                        :disabled="(product.stock - (product.reserved_stock || 0)) <= quantity"
-                        :title="(product.stock - (product.reserved_stock || 0)) <= quantity ? 'Maximum available stock reached' : 'Add to cart'">
+                        :disabled="(product.stock - (product.reserved_stock || 0)) <= quantity || !isAvailableOnCurrentChain"
+                        :title="!isAvailableOnCurrentChain ? `Only available on chains: ${product.active_chains?.map(Number).join(', ')}` : (product.stock - (product.reserved_stock || 0)) <= quantity ? 'Maximum available stock reached' : 'Add to cart'">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                         </svg>
@@ -120,12 +115,22 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useChainId } from '@wagmi/vue'
 import type { Product as GoldProduct } from '@/app/services/redemptionService'
 
 const props = defineProps<{
     product: GoldProduct
     quantity: number
 }>()
+
+const chainId = useChainId()
+
+const isAvailableOnCurrentChain = computed(() => {
+    const activeChains = props.product.active_chains
+    if (!activeChains || activeChains.length === 0) return true
+    const currentChainId = Number(chainId.value)
+    return activeChains.map(Number).includes(currentChainId)
+})
 
 defineEmits<{
     'increase': [product: GoldProduct]
