@@ -44,6 +44,7 @@ export default defineConfig(({ mode }) => { // Ambil mode dari Vite (dev/build)
           name: 'Wancash - Cross-Chain Bridge',
           short_name: 'Wancash',
           description: 'Bridge WCH tokens seamlessly across blockchains',
+          display: 'standalone',
           theme_color: '#8b5cf6',
           icons: [
             {
