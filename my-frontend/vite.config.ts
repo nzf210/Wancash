@@ -35,6 +35,7 @@ export default defineConfig(({ mode }) => { // Ambil mode dari Vite (dev/build)
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
+        injectRegister: 'auto',
         devOptions: {
           enabled: true
         },
