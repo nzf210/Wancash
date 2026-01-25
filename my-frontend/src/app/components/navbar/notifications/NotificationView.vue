@@ -28,13 +28,15 @@ const isOpen = ref(false)
         <SheetTrigger as-child>
             <NotificationIcon :is-mobile="true" />
         </SheetTrigger>
-        <SheetContent side="bottom" class="h-[80vh] flex flex-col p-0">
-            <SheetHeader class="px-4 pt-4">
+        <SheetContent side="bottom" class="h-[75vh] flex flex-col p-0 !rounded-t-[20px] bottom-5 sm:bottom-0">
+            <SheetHeader class="px-4 pt-4 shrink-0">
                 <SheetTitle class="text-left">
                     Notifications
                 </SheetTitle>
             </SheetHeader>
-            <NotificationList />
+            <div class="flex-1 overflow-hidden">
+                <NotificationList />
+            </div>
         </SheetContent>
     </Sheet>
 
@@ -43,7 +45,7 @@ const isOpen = ref(false)
         <PopoverTrigger as-child>
             <NotificationIcon />
         </PopoverTrigger>
-        <PopoverContent align="end" class="w-[380px] p-0">
+        <PopoverContent align="end" class="w-[370px] sm:w-[380px] p-0 mb-7 sm:mb-2 text-wrap break-all">
             <NotificationList />
         </PopoverContent>
     </Popover>
