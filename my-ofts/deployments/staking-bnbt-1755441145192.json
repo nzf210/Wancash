@@ -1,0 +1,36 @@
+{
+  "contractName": "EnhancedStaking",
+  "contractAddress": "0x689e33e459B395f6700a3796ad1AF77CF31C903A",
+  "stakingToken": "0x1A3c41392caF81aa7281EFaADC73C653064D22A1",
+  "deployer": "0x7b97A7a3688ab41e5129D5b252de0c332697813d",
+  "network": "bnbt",
+  "deploymentTime": "2025-08-17T14:32:25.192Z",
+  "transactionHash": "0x4e359dc3d7205c30acd043cb1888b1878cbeeb47e1d6af8853b23b6ac95cda09",
+  "lockOptions": [
+    {
+      "period": "3 Months",
+      "duration": "90 days",
+      "reward": "15%"
+    },
+    {
+      "period": "6 Months",
+      "duration": "180 days",
+      "reward": "35%"
+    },
+    {
+      "period": "1 Year",
+      "duration": "365 days",
+      "reward": "80%"
+    },
+    {
+      "period": "2 Years",
+      "duration": "730 days",
+      "reward": "200%"
+    },
+    {
+      "period": "3 Years",
+      "duration": "1095 days",
+      "reward": "500%"
+    }
+  ]
+}

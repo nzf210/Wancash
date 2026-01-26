@@ -7,12 +7,14 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+
 node_modules
 .DS_Store
 dist
 dist-ssr
 coverage
 *.local
+.env.dev
 
 /cypress/videos/
 /cypress/screenshots/
@@ -28,3 +30,9 @@ coverage
 *.sw?
 
 *.tsbuildinfo
+/supabase
+/cloude-flare-wancash
+.vercel
+# .clinerules
+# .clinerules-quick-ref.md
+DEVELOPMENT_RULES.md

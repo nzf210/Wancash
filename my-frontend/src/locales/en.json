@@ -1,0 +1,20 @@
+{
+    "nav": {
+        "home": "Home",
+        "dashboard": "Dashboard",
+        "about": "About Us",
+        "faq": "FAQ",
+        "wallet": "Connect Wallet"
+    },
+    "hero": {
+        "title": "Decentralized Cross-Chain Token Bridge",
+        "subtitle": "Bridge your WCH tokens seamlessly across BSC, Polygon, Arbitrum, and more blockchains.",
+        "cta_stake": "Start Staking",
+        "cta_learn": "Learn More"
+    },
+    "common": {
+        "loading": "Loading...",
+        "error": "Something went wrong",
+        "success": "Success!"
+    }
+}

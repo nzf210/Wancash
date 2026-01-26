@@ -12,11 +12,12 @@
     }
   ],
   "compilerOptions": {
-    "module": "NodeNext",
+    "module": "es2022",
     "baseUrl": ".",
     "paths": {
-    "@/*": ["./src/*"]
+      "@/*": ["./src/*"]
     },
-    "types": ["@thirdweb-dev/vue/client"]
+    "types": ["@thirdweb-dev/vue/client","vue-sonner"],
+    "typeRoots": ["node_modules/@types", "src/types"],
   }
 }

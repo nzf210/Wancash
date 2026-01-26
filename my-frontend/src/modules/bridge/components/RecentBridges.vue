@@ -1,0 +1,82 @@
+<template>
+    <div
+        class="bg-white dark:bg-gray-900 rounded-3xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-800 p-4 md:p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg md:text-xl font-bold text-gray-900 dark:text-white">Recent Bridges</h3>
+            <router-link to="/bridge/history"
+                class="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center space-x-1">
+                <span>View All</span>
+                <ChevronRightIcon class="w-4 h-4" />
+            </router-link>
+        </div>
+        <div class="space-y-3">
+            <div v-for="bridge in recentBridges.slice(0, 6)" :key="bridge.id"
+                class="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3 border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700 transition-colors group">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-6 h-6 rounded-full overflow-hidden flex items-center justify-center shadow-sm">
+                            <ChainIcon :chain="getChainObject(bridge.fromChain)" />
+                        </div>
+                        <ArrowRightIcon class="w-3 h-3 text-gray-400 group-hover:text-blue-500 transition-colors" />
+                        <div class="w-6 h-6 rounded-full overflow-hidden flex items-center justify-center shadow-sm">
+                            <ChainIcon :chain="getChainObject(bridge.toChain)" />
+                        </div>
+                    </div>
+                    <StatusBadge :status="bridge.status" size="sm" />
+                </div>
+                <div class="flex items-center justify-between">
+                    <div class="text-sm font-medium text-gray-900 dark:text-white">
+                        {{ formatAmount(bridge.amount) }} {{ bridge.token }}
+                    </div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 flex items-center">
+                        <ClockIcon class="w-3 h-3 mr-1" />
+                        {{ formatTime(bridge.timestamp) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script setup lang="ts">
+import {
+    ChevronRightIcon,
+    ArrowRightIcon,
+    ClockIcon
+} from '@radix-icons/vue'
+import StatusBadge from '@/modules/bridge/components/StatusBadge.vue'
+import { SUPPORTED_CHAINS } from '@/app/composables/useChain'
+import type { BridgeHistory } from '@/modules/bridge/types/bridge.types'
+import ChainIcon from '@/modules/bridge/components/ChainIcon.vue'
+
+defineProps<{
+    recentBridges: BridgeHistory[]
+}>()
+
+const formatAmount = (amount: string | number): string => {
+    const num = typeof amount === 'string' ? parseFloat(amount) : amount
+    return new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(num)
+}
+
+const formatTime = (timestamp: number): string => {
+    const minutes = Math.floor((Date.now() - timestamp) / 60000)
+    if (minutes < 1) return 'Just now'
+    if (minutes < 60) return `${minutes}m ago`
+    const hours = Math.floor(minutes / 60)
+    if (hours < 24) return `${hours}h ago`
+    const days = Math.floor(hours / 24)
+    return `${days}d ago`
+}
+
+const getChainObject = (name: string) => {
+    const chain = SUPPORTED_CHAINS.find(c =>
+        c.name.toLowerCase() === name.toLowerCase() ||
+        c.network.toLowerCase() === name.toLowerCase() ||
+        c.symbol?.toLowerCase() === name.toLowerCase()
+    )
+    return (chain || { name, network: name.toLowerCase() }) as any
+}
+</script>

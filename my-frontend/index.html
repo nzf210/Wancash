@@ -1,13 +1,114 @@
 <!DOCTYPE html>
-<html lang="">
+<html lang="en">
   <head>
     <meta charset="UTF-8">
-    <link rel="icon" href="/favicon.ico">
+    <link rel="icon" href="/wancash.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vite App</title>
+    <title>Wancash</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --loader-bg: #ffffff;
+        --loader-toast-bg: rgba(255, 255, 255, 0.9);
+        --loader-toast-border: rgba(0, 0, 0, 0.1);
+        --loader-text: #0f172a;
+        --loader-spinner-track: rgba(0, 0, 0, 0.1);
+        --loader-spinner-active: #3b82f6;
+        --loader-shadow: rgba(0, 0, 0, 0.1);
+      }
+      .dark {
+        --loader-bg: #0f172a;
+        --loader-toast-bg: rgba(30, 41, 59, 0.7);
+        --loader-toast-border: rgba(255, 255, 255, 0.08);
+        --loader-text: #f8fafc;
+        --loader-spinner-track: rgba(255, 255, 255, 0.2);
+        --loader-spinner-active: #60a5fa;
+        --loader-shadow: rgba(0, 0, 0, 0.3);
+      }
+      
+      body { margin: 0; padding: 0; font-family: 'Outfit', sans-serif; background-color: var(--loader-bg); }
+      
+      .app-loader {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: var(--loader-bg);
+        z-index: 9999;
+        transition: background-color 0.3s ease;
+      }
+      .loader-toast {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 28px;
+        background: var(--loader-toast-bg);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid var(--loader-toast-border);
+        border-radius: 100px;
+        box-shadow: 0 10px 25px -5px var(--loader-shadow);
+        animation: floatUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .loader-spinner {
+        width: 18px;
+        height: 18px;
+        border: 2px solid var(--loader-spinner-track);
+        border-top-color: var(--loader-spinner-active);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      .loader-text {
+        color: var(--loader-text);
+        font-size: 15px;
+        font-weight: 500;
+        letter-spacing: 0.3px;
+      }
+      @keyframes spin { 100% { transform: rotate(360deg); } }
+      @keyframes floatUp {
+        0% { opacity: 0; transform: translateY(20px) scale(0.95); }
+        100% { opacity: 1; transform: translateY(0) scale(1); }
+      }
+    </style>
+    <script>
+      (function() {
+        try {
+          const localTheme = localStorage.getItem('theme');
+          const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          let isDark = systemDark;
+          
+          if (localTheme) {
+            // vueuse stores strings with quotes sometimes, strip them
+            const theme = localTheme.replace(/^['"]|['"]$/g, '');
+            if (theme === 'dark') isDark = true;
+            else if (theme === 'light') isDark = false;
+            // if system, default to systemDark which is already set
+          }
+          
+          if (isDark) {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+            document.documentElement.classList.add('light');
+          }
+        } catch (e) {
+          console.warn('Theme detection failed', e);
+        }
+      })();
+    </script>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <div class="app-loader">
+        <div class="loader-toast">
+          <div class="loader-spinner"></div>
+          <span class="loader-text">Wancash</span>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

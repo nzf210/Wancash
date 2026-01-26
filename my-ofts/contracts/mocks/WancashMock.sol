@@ -3,29 +3,18 @@ pragma solidity ^0.8.22;
 
 import { Wancash } from "../Wancash.sol";
 
-// @dev WARNING: This is for testing purposes only
 contract WancashMock is Wancash {
-    uint16 public immutable mainChainId;
-
     constructor(
         string memory _name,
         string memory _symbol,
         address _lzEndpoint,
         address _delegate,
+        address _treasury,
         uint16 _mainChainId,
         uint256 _initialSupply
+    ) Wancash(_name, _symbol, _lzEndpoint, _delegate, _treasury, _mainChainId, _initialSupply) {}
 
-    ) Wancash(_name, _symbol, _lzEndpoint, _delegate) {
-        mainChainId = _mainChainId;
-        
-        // Only mint initial supply if deployed on main chain
-        if (block.chainid == _mainChainId) {
-            _mint(msg.sender, _initialSupply);
-        }
+    function mint(address _to, uint256 _amount) public virtual override {
+        _mint(_to, _amount);
     }
-
-    function mint(address, uint256) public virtual {
-        revert("Direct minting disabled - use cross-chain transfer");
-    }
-
 }

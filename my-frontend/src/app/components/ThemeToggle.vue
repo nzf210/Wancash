@@ -1,9 +1,15 @@
 <script setup lang="ts">
 import { SunIcon, MoonIcon, DesktopIcon } from '@radix-icons/vue'
 import { useTheme } from '@/app/components/providers/theme-provider'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { Button } from '@/components/ui/button'
+import { updateAppKitTheme } from '@/app/components/config/appkit'
+import { watch } from 'vue'
 const { setTheme, resolvedTheme } = useTheme()
+
+watch(() => resolvedTheme.value, (newTheme) => {
+  updateAppKitTheme(newTheme)
+}, { immediate: true })
 </script>
 
 <template>

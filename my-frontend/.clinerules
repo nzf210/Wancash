@@ -1,0 +1,191 @@
+# Wancash Staking Project - Development Rules
+
+## 🎯 Core Architecture & Principles
+
+The Wancash Staking project is a multi-layered decentralized application:
+
+1.  **Frontend**: Vue 3 (Composition API) + Pinia + Tailwind CSS.
+2.  **Backend**: Cloudflare Workers (Hono/TypeScript) + Neon DB (PostgreSQL).
+3.  **Smart Contracts**: Hardhat/Solidity + LayerZero V2 for cross-chain bridging.
+
+### 1. Planning Before Execution (MANDATORY)
+
+- **ALWAYS** create an `implementation_plan.md` artifact for complex changes.
+- **ALWAYS** get user approval via `notify_user` before making code changes.
+- Break down work into clear, reviewable steps in `task.md`.
+
+---
+
+## 💾 Data Structure & State Management
+
+### 1. Database Migrations (Neon DB)
+
+- **Baseline**: `migrations/000_baseline_schema.sql` contains the project's initial manual schema.
+- **Workflow**:
+  1. **Drafting**: Create a new `.sql` file in `cloude-flare-wancash/migrations/` using incremental numbering (e.g., `013_new_feature.sql`).
+  2. **Verification (CRITICAL)**:
+     - **Double-Check**: Review existing `migrations/` to ensure you aren't duplicating work or conflicting with previous changes.
+     - **Idempotency**: **ALWAYS** use `IF NOT EXISTS` for tables and `ADD COLUMN IF NOT EXISTS` for columns.
+     - **Safety**: Avoid destructive operations (`DROP TABLE`/`DROP COLUMN`) unless explicitly authorized and planned for data loss/backup.
+  3. **Application**: Use `bun run scripts/apply-migrations.ts` to apply ALL pending migrations. This script tracks applied migrations in the `_migrations` table.
+  4. **Post-Check**: Verify the migration was successful and the schema is as expected.
+- **Mocking**: When testing, use `vi.mock('@neondatabase/serverless')`.
+
+### 2. State & Variable Management
+
+- **Global Variables**: **ALWAYS** trace usage using `grep_search` before modification.
+- **Frontend State**: Use Pinia stores for global app state and Composables for reusable logic.
+- **Consistency**: Ensure TypeScript interfaces match the backend database schema and API responses.
+
+---
+
+## 🌍 Environment & Configuration
+
+### 1. Environment Synchronization
+
+- **Single Source of Truth**: The root `.env` file.
+- **Worker Env**: Use `my-frontend/cloude-flare-wancash/scripts/generate-env-only.ts` to sync `.env` to `.dev.vars` and generate `src/env.d.ts`.
+- **Command**: Run the sync script after adding any new environment variable.
+
+### 2. API & Network Configuration
+
+- **Wrangler**: Update `wrangler.jsonc` for new bindings (Rate limiters, KV, etc.).
+- **Vite**: Ensure frontend `.env` matches the backend RPC and contract addresses.
+
+---
+
+---
+
+## 🔧 Backend Architecture (Cloudflare Workers + Hono)
+
+### 1. Middleware & Context
+- **Pattern**: Must use `createMiddleware` from `hono/factory`.
+- **Context Injection**: Database client (`client`) is injected via `dbMiddleware`.
+  - **Rule**: ALWAYS retrieve via `c.get('db')`.
+  - **Type Safety**: Ensure `AppEnv` in `src/index.ts` correctly types `Variables.db`.
+
+### 2. Routing & Logic
+- **Routing**: New feature routes must be defined in a dedicated file (e.g., `src/features.ts`) and mounted in `src/index.ts`.
+- **Logic placement**: Keep verify/business logic in service classes or standalone functions, not inside the route handler if complex.
+
+### 3. Logging Standards
+- **Use Emojis**:
+  - 🔐 `Auth`: Login, JWT verification, Token issues.
+  - ❌ `Error`: Exceptions, 4xx/5xx responses.
+  - ✅ `Success`: Critical operations completed.
+  - ⚠️ `Warning`: Non-critical issues or missing configs.
+
+---
+
+## 🎨 Frontend Architecture (Vue 3 + Modules)
+
+### 1. Modular Design
+- **Location**: Feature-specific logic MUST go into `src/modules/{module_name}/`.
+  - `components/`: Module-specific UI.
+  - `stores/`: Module-specific state (Pinia).
+  - `composables/`: Module-specific logic reuse.
+
+### 2. Global Configuration
+- **Entry Point**: `src/main.ts` is the SINGLE point of entry for plugins (Pinia, Wagmi, Router).
+- **Rule**: Do not bootstrap plugins elsewhere to avoid "Active Pinia" errors.
+
+---
+
+## 🚫 Critical "No-Go" Zones
+
+1. **Baseline Schema**: Do NOT modify `migrations/000_baseline_schema.sql`.
+2. **Hardcoded Chains**: Do NOT hardcode Chain IDs (e.g., `1`, `56`). Use `c.env` or constants (e.g., `CHAIN_ID_BSC`).
+3. **secrets in code**: Do NOT commit secrets. Use `.dev.vars` and `wrangler.jsonc` bindings.
+
+---
+
+## 🚀 Feature Implementation Workflow (AI-TDD)
+
+Follow the **"Spec First, Test Second, Code Third"** principle:
+
+1.  **Spec-First**: Request or define TypeScript Interfaces/Types and list all test scenarios (Happy & Sad paths).
+2.  **Generate Tests (Red)**: Create `.spec.ts` in `test/` (e.g., `my-frontend/cloude-flare-wancash/test/`) before implementation.
+3.  **Implement (Green)**: Write the minimum code to pass the tests.
+4.  **Refactor**: Optimize once tests pass.
+5.  **Service Layer**: Update `src/app/services/` in the frontend to match new backend endpoints.
+
+---
+
+## 🔔 Notification & Error Systems
+
+### 1. Telegram Alert Mapping
+
+- `TELEGRAM_CHAT_ID_ERROR`: System errors and exceptions.
+- `TELEGRAM_CHAT_ID_REDEMPTION`: Redemption request updates (pending -> processing -> etc.).
+- `TELEGRAM_CHAT_ID_BRIDGE`: LayerZero bridge transaction events.
+- `TELEGRAM_CHAT_ID_SEND_TRX`: Send token transaction events.
+
+### 2. Explorer Links
+
+- Use chain-specific explorer URLs (`EXPLORER_URL_SEPOLIA`, `LZ_SCAN_URL`, etc.) in notification messages.
+
+---
+
+## 🧪 Testing Protocol
+
+### 1. Cloudflare Workers
+
+- **Framework**: Vitest + `@cloudflare/vitest-pool-workers`.
+- **Command**: `bun run test` (Always use Bun).
+- **Mocks**: Mock `Client` from `@neondatabase/serverless` and JWT verification using `jose`.
+
+### 2. Smart Contracts
+
+- **Framework**: Hardhat.
+- **Context**: Check `my-ofts/hardhat.config.ts` for network settings.
+- **Tooling**: Use LayerZero CLI for cross-chain testing.
+
+---
+
+## 📁 Folder Structure Enforcement
+
+### Frontend (`my-frontend/src`)
+
+- `app/components/`: Core shared components.
+- `app/composables/`: Reusable logic (e.g., `useAuth.ts`, `useWallet.ts`).
+- `app/services/`: API communication layer.
+- `modules/`: Feature-specific logic (e.g., `redemption/`, `bridge/`).
+
+### Backend (`my-frontend/cloude-flare-wancash/src`)
+
+- `index.ts`: Entry point & CORS.
+- `auth.ts`, `db.ts`, `metrics.ts`: Modular backend logic.
+- `migrations/`: SQL migration files.
+
+### Contracts (`my-ofts/contracts`)
+
+- Keep logic in `contracts/` and deployment scripts in `deploy/`.
+
+---
+
+## 🧹 Safe Removal Protocol
+
+1. **Mandatory Dependency Check**: 
+   - Before removing ANY variable, function, or file, you **MUST** use `grep_search` to find all relations and usages.
+   - **Rule**: If you find NO usages, double-check for dynamic references or implicit dependencies (e.g., database columns used in API responses).
+
+2. **The "Don't Know" Rule**:
+   - If you are unsure if something is safe to remove, or if you "don't know" its purpose/relations: **DO NOT REMOVE IT**.
+   - **Action**: Ask the user for clarification or perform a deep-dive investigation first.
+
+---
+
+## ⚠️ Pre-Change Checklist
+
+1. 🔍 **Search** all usages (Variable/Endpoint).
+2. 📋 **Plan** via `implementation_plan.md`.
+3. ✅ **Approve** via `notify_user`.
+4. 🛠️ **Implement** incrementally.
+5. ✨ **Verify** via tests and `walkthrough.md`.
+
+# User Preferences
+- Always ask for user confirmation before making any code changes
+
+---
+
+_Last updated: 2026-01-15 - Synchronized with Baseline Migration 000_

@@ -1,15 +1,55 @@
 <script setup lang="ts">
-import NavbarView from '../components/NavbarView.vue'
+import { useRouter } from 'vue-router'
+import DynamicNavbar from '@/app/components/navbar/NavbarView.vue'
+import FooterView from '@/app/components/FooterView.vue'
+import { useAuth } from '@/app/composables/useAuth'
+import { useNotificationStore } from '@/stores/notificationStore'
+import LiveChatWidget from '@/components/LiveChatWidget.vue'
+
+const router = useRouter()
+const { logout } = useAuth()
+const notificationStore = useNotificationStore()
+
+// Event handlers
+const handleLogin = () => {
+  router.push('/login')
+}
+
+const handleLogout = async () => {
+  try {
+    await logout()
+    router.push('/')
+  } catch (error) {
+    console.error('Logout failed:', error)
+  }
+}
+
+const handleProfileClick = () => {
+  router.push('/profile')
+}
+
+const handleSettingsClick = () => {
+  router.push('/settings')
+}
+
+const handleNotificationClick = () => {
+  router.push('/notifications')
+  // Mark notifications as read
+  notificationStore.markAllAsRead()
+}
 </script>
 
 <template>
-  <div
-    class="min-h-screen border-b sticky top-0 z-50 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-    <header class="">
-      <NavbarView />
-    </header>
-    <main class="py-6">
-      <slot />
+
+  <div id="app" class="min-h-screen flex flex-col">
+    <!-- Dynamic Navbar with fallback listeners -->
+    <DynamicNavbar @login="handleLogin" @logout="handleLogout" @profile-click="handleProfileClick"
+      @settings-click="handleSettingsClick" @notification-click="handleNotificationClick" />
+    <!-- Main content -->
+    <main class="container mx-auto p-4">
+      <RouterView />
     </main>
+    <FooterView class="mt-auto h-20" />
+    <LiveChatWidget />
   </div>
 </template>
