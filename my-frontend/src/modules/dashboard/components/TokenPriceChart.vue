@@ -43,8 +43,8 @@ const fetchChartData = async (tf: Timeframe) => {
 
     try {
         const pointsMap: Record<Timeframe, number> = {
-            '1m': 180,  // Last 3 hours
-            '5m': 120,  // Last 10 hours
+            '1m': 120,  // Last 2 hours (Matches KV PRICE_SERIES:1M)
+            '5m': 120,  // Last 10 hours (KV PRICE_SERIES:5M has up to 576, but 120 is good for view)
             '1h': 120,  // Last 5 days
             '1d': 30,   // Last 30 days
             '1w': 24,   // Last 6 months (weeks)
@@ -158,12 +158,30 @@ const chartOptions = computed(() => ({
         },
     },
     yaxis: {
-        show: false,
+        show: true,
+        opposite: true, // Right side for trading feel
+        labels: {
+            show: true,
+            style: {
+                colors: isDark.value ? '#94a3b8' : '#64748b',
+                fontSize: '10px'
+            },
+            formatter: (val: number) => {
+                if (val < 0.01) return val.toFixed(6)
+                if (val < 1) return val.toFixed(4)
+                return val.toFixed(2)
+            }
+        },
         tooltip: { enabled: true },
     },
     grid: {
-        show: false,
-        padding: { top: 0, right: 0, bottom: 0, left: 0 }
+        show: true,
+        borderColor: isDark.value ? '#334155' : '#e2e8f0',
+        strokeDashArray: 4,
+        position: 'back',
+        xaxis: { lines: { show: false } },
+        yaxis: { lines: { show: true } },
+        padding: { top: 0, right: 10, bottom: 0, left: 0 }
     },
     theme: {
         mode: isDark.value ? 'dark' : 'light'
