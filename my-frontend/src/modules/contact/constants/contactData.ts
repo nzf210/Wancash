@@ -28,11 +28,11 @@ export const CONTACT_TYPES: ContactType[] = [
  * Quick FAQ items
  */
 export const QUICK_FAQS: FAQItem[] = [
-    { id: 1, question: 'How to stake Wancash?' },
-    { id: 2, question: 'What is the minimum deposit for staking?' },
-    { id: 3, question: 'What fees are charged?' },
-    { id: 4, question: 'How to claim rewards?' },
-    { id: 5, question: 'Is my token safe?' }
+    { id: 1, question: 'What is Wancash (WCH)?' },
+    { id: 2, question: 'What is the total supply of WCH?' },
+    { id: 3, question: 'How does the vesting mechanism work?' },
+    { id: 4, question: 'Is there a max holding limit per wallet?' },
+    { id: 5, question: 'Where does staking revenue come from?' }
 ]
 
 /**

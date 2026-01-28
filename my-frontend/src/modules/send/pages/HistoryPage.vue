@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import Header from '../components/SendHeader.vue'
 import { useChain } from '@/app/composables/useChain'
@@ -24,35 +24,53 @@ const pagination = ref({
 
 // Active Filter (synced with route)
 const activeFilter = computed({
-    get: () => (route.query.tab as 'all' | 'incoming' | 'outgoing' | 'bridge') || 'all',
+    get: () => (route.query.tab as 'all' | 'received' | 'send' | 'bridge') || 'all',
     set: (val) => {
-        router.push({
-            query: {
-                ...route.query,
-                tab: val,
-                page: 1 // Reset page on tab change
-            }
-        })
+        const query: any = { ...route.query, tab: val }
+        if (val === 'all') delete query.tab
+        delete query.page // Reset page on tab change
+
+        router.push({ query })
     }
 })
 
+
+const currentFilterLabel = computed(() => {
+    switch (activeFilter.value) {
+        case 'received': return 'Received Records'
+        case 'send': return 'Send Records'
+        case 'bridge': return 'Bridge Records'
+        default: return 'All Records'
+    }
+})
+
+const fromToHeader = computed(() => {
+    switch (activeFilter.value) {
+        case 'received': return 'From'
+        case 'send': return 'To'
+        default: return 'From/To'
+    }
+})
 
 let refreshInterval: ReturnType<typeof setInterval> | null = null
 let abortController: AbortController | null = null
 const error = ref<string | null>(null)
 
-const loadHistory = async () => {
+const loadHistory = async (isBackground = false) => {
     // Cancel previous request if exists
     if (abortController) {
         abortController.abort()
     }
     abortController = new AbortController()
 
-    loading.value = true
+    const filter = activeFilter.value
+
+    if (!isBackground) {
+        loading.value = true
+    }
     error.value = null
 
     try {
-        const filter = activeFilter.value
         const options: any = {
             page: pagination.value.page,
             limit: pagination.value.limit,
@@ -60,9 +78,9 @@ const loadHistory = async () => {
         }
 
         // Map filter to backend params
-        if (filter === 'incoming') {
+        if (filter === 'received') {
             options.direction = 'incoming'
-        } else if (filter === 'outgoing') {
+        } else if (filter === 'send') {
             options.direction = 'outgoing'
         } else if (filter === 'bridge') {
             options.type = 'bridge'
@@ -81,16 +99,31 @@ const loadHistory = async () => {
             }
         }
     } catch (err: any) {
-        if (err.name === 'AbortError') {
-            console.log('Request cancelled')
+        // Only handle as error if NOT an abort
+        if (err.name === 'AbortError' || err.message?.includes('aborted')) {
             return
         }
+
         console.error('Failed to load transaction history:', err)
         error.value = 'Failed to load history. Showing cached data.'
-        // Fallback to local storage (limited support for filtering/pagination locally in this view)
-        transactions.value = transactionHistoryService.getAll()
+
+        // Fallback to local storage with strict client-side filtering
+        let allLocal = transactionHistoryService.getAll()
+        const userAddr = walletAddress.value?.toLowerCase()
+
+        if (filter === 'received' && userAddr) {
+            allLocal = allLocal.filter(tx => tx.to?.toLowerCase() === userAddr)
+        } else if (filter === 'send' && userAddr) {
+            allLocal = allLocal.filter(tx => tx.from?.toLowerCase() === userAddr)
+        } else if (filter === 'bridge') {
+            allLocal = allLocal.filter(tx => tx.type === 'bridge')
+        }
+
+        transactions.value = allLocal
     } finally {
-        loading.value = false
+        if (!isBackground) {
+            loading.value = false
+        }
         abortController = null
     }
 }
@@ -124,7 +157,7 @@ const handleLimitChange = () => {
 watch(
     () => [route.query.tab, route.query.page, route.query.limit],
     async ([newTab, newPage, newLimit]) => {
-        // Sync state from query
+        // Sync state from query before loading
         if (newPage) pagination.value.page = parseInt(newPage as string)
         if (newLimit) pagination.value.limit = parseInt(newLimit as string)
 
@@ -133,11 +166,26 @@ watch(
     { immediate: true }
 )
 
+onBeforeUnmount(() => {
+    if (refreshInterval) {
+        clearInterval(refreshInterval)
+        refreshInterval = null
+    }
+    if (abortController) {
+        abortController.abort()
+        abortController = null
+    }
+})
+
 // Helper methods
 const isIncoming = (tx: TransactionRecord) => {
     if (!walletAddress.value) return false
-    const current = walletAddress.value.toLowerCase()
-    return tx.to?.toLowerCase() === current && tx.from?.toLowerCase() !== current
+    return tx.to?.toLowerCase() === walletAddress.value.toLowerCase()
+}
+
+const isOutgoing = (tx: TransactionRecord) => {
+    if (!walletAddress.value) return false
+    return tx.from?.toLowerCase() === walletAddress.value.toLowerCase()
 }
 
 const formatDate = (timestamp: number) => {
@@ -168,12 +216,10 @@ const getStatusColor = (status: string) => {
     }
 }
 
-const getTypeColor = (type: string) => {
-    switch (type) {
-        case 'send': return 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30'
-        case 'bridge': return 'text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30'
-        default: return 'text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800'
-    }
+const getTypeColor = (type: string, tx?: TransactionRecord) => {
+    if (type === 'bridge') return 'text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30'
+    if (tx && isIncoming(tx)) return 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30'
+    return 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30'
 }
 
 const getTxExplorerUrl = (tx: TransactionRecord) => {
@@ -212,13 +258,14 @@ onMounted(() => {
 <template>
     <div class="min-h-screen bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-950 p-4 md:p-6">
         <div class="max-w-6xl mx-auto">
-            <Header @go-to-portfolio="goToPortfolio" />
+            <Header @go-to-portfolio="goToPortfolio" title="Transaction History"
+                subtitle="View and track your previous token transfers and bridge activities" />
 
             <div
                 class="mt-8 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-xl overflow-hidden">
                 <div class="p-6 border-b border-gray-200 dark:border-gray-800">
                     <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">Transaction History</h2>
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">{{ currentFilterLabel }}</h2>
                         <button @click="router.push('/sendToken')"
                             class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
                             Back to Send
@@ -235,21 +282,21 @@ onMounted(() => {
                         ]">
                             All
                         </button>
-                        <button @click="activeFilter = 'incoming'" :class="[
+                        <button @click="activeFilter = 'received'" :class="[
                             'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
-                            activeFilter === 'incoming'
+                            activeFilter === 'received'
                                 ? 'bg-green-600 text-white'
                                 : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                         ]">
-                            Incoming
+                            Received
                         </button>
-                        <button @click="activeFilter = 'outgoing'" :class="[
+                        <button @click="activeFilter = 'send'" :class="[
                             'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
-                            activeFilter === 'outgoing'
+                            activeFilter === 'send'
                                 ? 'bg-blue-600 text-white'
                                 : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                         ]">
-                            Outgoing
+                            Send
                         </button>
                         <button @click="activeFilter = 'bridge'" :class="[
                             'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
@@ -290,7 +337,7 @@ onMounted(() => {
                                     Chain</th>
                                 <th
                                     class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    From/To</th>
+                                    {{ fromToHeader }}</th>
                                 <th
                                     class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Amount</th>
@@ -321,8 +368,9 @@ onMounted(() => {
                                             </svg>
                                         </div>
                                         <span class="px-2 py-1 rounded-full text-xs font-medium capitalize"
-                                            :class="getTypeColor(tx.type)">
-                                            {{ tx.type }}
+                                            :class="getTypeColor(tx.type, tx)">
+                                            {{ tx.type === 'bridge' ? 'Bridge' : (isIncoming(tx) ? 'Received' : 'Send')
+                                            }}
                                         </span>
                                     </div>
                                 </td>
@@ -334,7 +382,8 @@ onMounted(() => {
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300 font-mono">
                                     <div class="flex flex-col">
-                                        <span class="text-xs text-gray-400">{{ isIncoming(tx) ? 'From' : 'To' }}</span>
+                                        <span v-if="activeFilter === 'all' || activeFilter === 'bridge'"
+                                            class="text-xs text-gray-400">{{ isIncoming(tx) ? 'From' : 'To' }}</span>
                                         <span>{{ shortenAddress(getCounterparty(tx)) }}</span>
                                     </div>
                                 </td>

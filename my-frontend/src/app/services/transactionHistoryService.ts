@@ -314,8 +314,9 @@ export const transactionHistoryService = {
             const data = await response.json();
             const transactions = data.data.map(mapApiToLocal);
 
-            // Update localStorage with backend data (only if first page, to keep cache fresh)
-            if (page === 1) {
+            // Update localStorage with backend data (only if first page AND no filters, to keep global cache valid)
+            const hasFilters = options?.direction || options?.type || options?.status;
+            if (page === 1 && !hasFilters) {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
             }
 
@@ -323,7 +324,11 @@ export const transactionHistoryService = {
                 data: transactions,
                 meta: data.pagination || { total: transactions.length, limit, offset }
             };
-        } catch (error) {
+        } catch (error: any) {
+            // Do not log AbortError as an API error
+            if (error.name === 'AbortError' || error.message?.includes('aborted')) {
+                throw error;
+            }
             console.error('API error fetching transactions:', error);
             throw error; // Propagate error instead of silent fallback
         }

@@ -1,13 +1,32 @@
 <script lang="ts" setup>
 import { Button } from '@/components/ui/button'
 import { useChain } from '@/app/composables/useChain'
+import { useAuth } from '@/app/composables/useAuth'
 import ChainIcon from '@/modules/bridge/components/ChainIcon.vue'
 
 const { getExplorerTxUrl, currentChain } = useChain()
+const { walletAddress } = useAuth()
 
-defineProps<{ recentTransfers: Array<{ id: number; recipientShort: string; amount: number; time: string; status: string; hash?: string }> }>()
+defineProps<{
+  recentTransfers: Array<{
+    id: number | string;
+    recipientShort: string;
+    amount: number | string;
+    time: string;
+    status: string;
+    hash?: string;
+    toAddress?: string; // Need this for isIncoming
+  }>
+}>()
+
 defineEmits<{ 'go-to-history': [] }>()
-const formatNumber = (num: number) => new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 }).format(num)
+
+const formatNumber = (num: number | string) => new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 }).format(Number(num))
+
+const isIncomingTransfer = (transfer: any) => {
+  if (!walletAddress.value || !transfer.toAddress) return false
+  return transfer.toAddress.toLowerCase() === walletAddress.value.toLowerCase()
+}
 </script>
 
 <template>
@@ -44,7 +63,12 @@ const formatNumber = (num: number) => new Intl.NumberFormat('en-US', { minimumFr
             </a>
           </div>
           <div class="text-right">
-            <p class="font-semibold text-red-600 dark:text-red-400">-{{ formatNumber(transfer.amount) }} WCH</p>
+            <p :class="[
+              'font-semibold',
+              isIncomingTransfer(transfer) ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+            ]">
+              {{ isIncomingTransfer(transfer) ? '+' : '-' }}{{ formatNumber(transfer.amount) }} WCH
+            </p>
             <p class="text-xs text-gray-500 dark:text-gray-400">{{ transfer.status }}</p>
           </div>
         </div>

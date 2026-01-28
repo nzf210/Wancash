@@ -129,7 +129,7 @@ const isLoading = ref(false);
 
 // Get whitepaper URL from environment variable
 const whitepaperUrl = computed(() => {
-  return import.meta.env.VITE_WHITEPAPER_URL || 'https://wancash.gitbook.io/whitepaper';
+  return import.meta.env.VITE_WHITEPAPER_URL || 'https://wancash.gitbook.io/wancash';
 });
 
 const handleSubscribe = async () => {

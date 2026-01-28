@@ -4,7 +4,7 @@
             <CardTitle class="text-xl font-bold text-gray-800 dark:text-white">Quick FAQ</CardTitle>
         </CardHeader>
         <CardContent class="space-y-3">
-            <a v-for="faq in QUICK_FAQS" :key="faq.id" href="#"
+            <router-link v-for="faq in QUICK_FAQS" :key="faq.id" to="/faq"
                 class="block p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-blue-800/30 transition-colors">
                 <div class="flex items-center justify-between">
                     <span class="text-gray-700 dark:text-gray-300">{{ faq.question }}</span>
@@ -12,7 +12,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
                 </div>
-            </a>
+            </router-link>
         </CardContent>
     </Card>
 </template>

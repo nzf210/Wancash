@@ -137,7 +137,7 @@ onMounted(() => {
 })
 
 // Interfaces (kept for type safety)
-interface Transfer { id: number; recipientShort: string; amount: number; time: string; status: string; hash?: string }
+interface Transfer { id: number | string; recipientShort: string; toAddress?: string; amount: number | string; time: string; status: string; hash?: string }
 interface FormData { recipientAddress: string; amount: string; memo: string }
 interface LastTransaction { amount: string; recipientName: string; transactionHash: string; recipientAddress: string; memo: string }
 
@@ -388,6 +388,7 @@ const confirmTransfer = async () => {
       recentTransfers.value.unshift({
         id: Date.now(),
         recipientShort: shortenAddress(form.value.recipientAddress),
+        toAddress: form.value.recipientAddress,
         amount,
         time: 'Just now',
         status: 'Successful',
@@ -482,6 +483,7 @@ const loadTransactionHistory = async () => {
     recentTransfers.value = history.map((tx: any) => ({
       id: tx.id || Date.now(),
       recipientShort: shortenAddress(tx.to),
+      toAddress: tx.to,
       amount: tx.amount,
       time: new Intl.DateTimeFormat('en-US', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(tx.timestamp)),
       status: tx.status.charAt(0).toUpperCase() + tx.status.slice(1),

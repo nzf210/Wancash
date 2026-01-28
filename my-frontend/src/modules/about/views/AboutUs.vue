@@ -1,178 +1,167 @@
 <template>
-    <div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-6xl mx-auto">
+    <div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+        <!-- Background Animation Blobs (similar to dashboard) -->
+        <div class="absolute top-0 left-0 w-full h-full pointer-events-none opacity-20 dark:opacity-40">
+            <div class="absolute top-[10%] left-[5%] w-72 h-72 bg-purple-400 rounded-full blur-[120px] animate-pulse">
+            </div>
+            <div class="absolute bottom-[20%] right-[10%] w-96 h-96 bg-blue-400 rounded-full blur-[150px] animate-pulse"
+                style="animation-delay: 2s"></div>
+        </div>
 
-            <!-- Hero Section -->
+        <div class="max-w-5xl mx-auto relative z-10">
+            <!-- Hero Header -->
             <div class="text-center mb-16">
-                <h1 class="text-5xl font-bold text-gray-900 dark:text-white mb-4">About Wancash</h1>
-                <p class="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-                    Building the future of decentralized finance through innovative cross-chain staking solutions
+                <div
+                    class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-xs font-bold mb-4 border border-purple-200 dark:border-purple-800">
+                    <span>🟢</span> WCH ECOSYSTEM
+                </div>
+                <h1 class="text-4xl md:text-6xl font-extrabold text-gray-900 dark:text-white mb-6 tracking-tight">
+                    About <span
+                        class="bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">Wancash</span>
+                </h1>
+                <p class="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto leading-relaxed">
+                    Building a sustainable blockchain ecosystem powered by real utility and asset-backed stability.
                 </p>
             </div>
 
-            <!-- Vision & Mission -->
-            <div class="grid md:grid-cols-2 gap-8 mb-16">
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
-                    <div class="flex items-center mb-4">
-                        <div
-                            class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mr-4">
-                            <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
-                                </path>
-                            </svg>
-                        </div>
-                        <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Our Vision</h2>
+            <!-- Core Vision Card -->
+            <div
+                class="bg-white dark:bg-gray-800/50 backdrop-blur-sm rounded-3xl p-8 md:p-12 shadow-xl border border-gray-100 dark:border-gray-700/50 mb-12">
+                <div class="flex flex-col md:flex-row gap-8 items-start">
+                    <div
+                        class="w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-purple-500/20">
+                        <WancashIcon class-name="w-10 h-10 text-white" />
                     </div>
-                    <p class="text-gray-700 dark:text-gray-300 leading-relaxed">
-                        To become a leading multi-chain DeFi platform that empowers users worldwide to participate in
-                        decentralized finance through secure, efficient, and user-friendly staking and reward
-                        mechanisms.
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">The WCH Vision</h2>
+                        <p class="text-gray-700 dark:text-gray-300 leading-relaxed text-lg mb-6">
+                            Wancash is a blockchain-based project focused on building a sustainable ecosystem powered by
+                            real utility, with WCH serving as the core token that drives all activities within the
+                            platform.
+                        </p>
+                        <p class="text-gray-600 dark:text-gray-400 leading-relaxed">
+                            Unlike speculative tokens that rely solely on price movement, WCH is designed as a hybrid
+                            utility token with direct operational use cases, including serving as the gas fee for the
+                            Wancash arbitrage bot platform, a staking instrument, and the official medium of exchange
+                            for products and services within the Wancash redeem system.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Asset Backing Section -->
+            <div class="grid md:grid-cols-2 gap-8 mb-12">
+                <div class="bg-gradient-to-br from-amber-500 to-amber-600 rounded-3xl p-8 text-white shadow-xl">
+                    <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-6">
+                        <span class="text-2xl">💰</span>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Real Assets, Real Value</h3>
+                    <p class="text-amber-50 leading-relaxed">
+                        The Wancash ecosystem integrates both on-chain and offline activities, where a portion of
+                        project revenue is allocated to strengthen real-world asset backing in the form of <span
+                            class="font-bold underline">gold reserves</span>.
+                    </p>
+                    <p class="mt-4 text-amber-100 text-sm italic">
+                        This approach aims to establish a more stable value foundation and support long-term
+                        sustainability.
                     </p>
                 </div>
 
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
-                    <div class="flex items-center mb-4">
-                        <div
-                            class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-4">
-                            <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                        </div>
-                        <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Our Mission</h2>
+                <div
+                    class="bg-gray-900 rounded-3xl p-8 text-white shadow-xl relative overflow-hidden border border-gray-800">
+                    <div class="absolute -right-8 -bottom-8 opacity-10">
+                        <WancashIcon class-name="w-48 h-48" />
                     </div>
-                    <p class="text-gray-700 dark:text-gray-300 leading-relaxed">
-                        To provide accessible, transparent, and secure DeFi solutions that bridge multiple blockchain
-                        networks,
-                        enabling seamless asset management and maximizing returns for our community.
+                    <div
+                        class="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center mb-6 border border-purple-500/30">
+                        <span class="text-2xl">🌍</span>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Multi-Chain Vision</h3>
+                    <p class="text-gray-400 leading-relaxed">
+                        WCH is developed with a multi-chain and cross-ecosystem vision, starting with EVM-compatible
+                        networks and planned expansion to non-EVM networks such as <span
+                            class="text-blue-400 font-bold">Solana</span> and <span
+                            class="text-purple-400 font-bold">SUI</span>.
                     </p>
                 </div>
             </div>
 
-            <!-- Key Features -->
-            <div class="mb-16">
-                <h2 class="text-3xl font-bold text-gray-900 dark:text-white text-center mb-8">What We Offer</h2>
-                <div class="grid md:grid-cols-3 gap-6">
-
-                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 hover:shadow-xl transition">
-                        <div
-                            class="w-14 h-14 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center mb-4">
-                            <svg class="w-8 h-8 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
-                                </path>
-                            </svg>
-                        </div>
-                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Token Staking</h3>
-                        <p class="text-gray-600 dark:text-gray-400">
-                            Stake your WCH tokens to earn competitive rewards while supporting the network's security
-                            and growth.
-                        </p>
+            <!-- Revenue Allocation Section -->
+            <div class="mb-12">
+                <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-8 text-center">Disciplined Allocation
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div
+                        class="bg-white dark:bg-gray-800 p-8 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm text-center">
+                        <div class="text-4xl font-black text-amber-500 mb-2">40%</div>
+                        <div class="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-widest mb-4">Gold
+                            Reserves</div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Strengthening the physical asset foundation
+                            of the token value.</p>
                     </div>
-
-                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 hover:shadow-xl transition">
-                        <div
-                            class="w-14 h-14 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mb-4">
-                            <svg class="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
-                            </svg>
-                        </div>
-                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Cross-Chain Bridge</h3>
-                        <p class="text-gray-600 dark:text-gray-400">
-                            Seamlessly transfer assets across multiple blockchain networks using LayerZero V2
-                            technology.
-                        </p>
+                    <div
+                        class="bg-white dark:bg-gray-800 p-8 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm text-center">
+                        <div class="text-4xl font-black text-blue-500 mb-2">40%</div>
+                        <div class="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-widest mb-4">
+                            Operations</div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Funding continuous platform development and
+                            ecosystem growth.</p>
                     </div>
-
-                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 hover:shadow-xl transition">
-                        <div
-                            class="w-14 h-14 bg-yellow-100 dark:bg-yellow-900 rounded-lg flex items-center justify-center mb-4">
-                            <svg class="w-8 h-8 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7">
-                                </path>
-                            </svg>
-                        </div>
-                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Reward Redemption</h3>
-                        <p class="text-gray-600 dark:text-gray-400">
-                            Exchange your earned points for exclusive rewards and products from our curated marketplace.
-                        </p>
-                    </div>
-
-                </div>
-            </div>
-
-            <!-- Technology Stack -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 mb-16">
-                <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-6">Our Technology</h2>
-                <p class="text-gray-700 dark:text-gray-300 mb-6 leading-relaxed">
-                    Wancash is built on cutting-edge blockchain technology, ensuring security, scalability, and
-                    interoperability:
-                </p>
-
-                <div class="grid md:grid-cols-2 gap-6">
-                    <div class="border-l-4 border-blue-500 pl-4">
-                        <h3 class="font-semibold text-gray-900 dark:text-white mb-2">Smart Contracts</h3>
-                        <p class="text-gray-600 dark:text-gray-400 text-sm">
-                            Solidity-based smart contracts with comprehensive security audits and testing
-                        </p>
-                    </div>
-
-                    <div class="border-l-4 border-green-500 pl-4">
-                        <h3 class="font-semibold text-gray-900 dark:text-white mb-2">LayerZero V2</h3>
-                        <p class="text-gray-600 dark:text-gray-400 text-sm">
-                            Next-generation cross-chain messaging protocol for seamless interoperability
-                        </p>
-                    </div>
-
-                    <div class="border-l-4 border-purple-500 pl-4">
-                        <h3 class="font-semibold text-gray-900 dark:text-white mb-2">Multi-Chain Support</h3>
-                        <p class="text-gray-600 dark:text-gray-400 text-sm">
-                            Compatible with Ethereum, BSC, Avalanche, Arbitrum, and more
-                        </p>
-                    </div>
-
-                    <div class="border-l-4 border-yellow-500 pl-4">
-                        <h3 class="font-semibold text-gray-900 dark:text-white mb-2">Decentralized Architecture</h3>
-                        <p class="text-gray-600 dark:text-gray-400 text-sm">
-                            Non-custodial platform ensuring users maintain full control of their assets
-                        </p>
+                    <div
+                        class="bg-white dark:bg-gray-800 p-8 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm text-center">
+                        <div class="text-4xl font-black text-green-500 mb-2">20%</div>
+                        <div class="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-widest mb-4">
+                            Buyback</div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Token buybacks and liquidity provision to
+                            enhance market stability.</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Community -->
-            <div class="text-center bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg shadow-lg p-12">
-                <h2 class="text-3xl font-bold text-white mb-4">Join Our Community</h2>
-                <p class="text-blue-100 mb-8 max-w-2xl mx-auto">
-                    Be part of a growing community of DeFi enthusiasts, developers, and innovators shaping the future of
-                    finance.
-                </p>
-                <div class="flex justify-center gap-4 flex-wrap">
-                    <a href="#"
-                        class="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition">
-                        Twitter
+            <!-- Commitment Section -->
+            <div
+                class="bg-gradient-to-r from-gray-900 to-black rounded-3xl p-8 md:p-12 text-white border border-gray-800">
+                <div class="max-w-3xl">
+                    <h2 class="text-2xl md:text-3xl font-bold mb-6">Our Commitment</h2>
+                    <p class="text-gray-400 leading-relaxed mb-6">
+                        Through the implementation of <span class="text-white font-medium">anti-whale mechanisms</span>,
+                        <span class="text-white font-medium">adaptive vesting</span>, and <span
+                            class="text-white font-medium">open-source smart contracts</span>, Wancash is committed to
+                        building a fair, transparent, and publicly verifiable ecosystem.
+                    </p>
+                    <div class="flex items-center gap-6">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                            <span class="text-xs font-bold uppercase tracking-wider">Fair Launch</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                            <span class="text-xs font-bold uppercase tracking-wider">Verified Code</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+                            <span class="text-xs font-bold uppercase tracking-wider">Audited</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Community CTA -->
+            <div class="mt-16 text-center">
+                <p class="text-gray-500 dark:text-gray-400 mb-6 font-medium tracking-wide uppercase text-xs">Join the
+                    Community</p>
+                <div class="flex justify-center gap-4">
+                    <a href="https://t.me/wancash_token" target="_blank"
+                        class="w-12 h-12 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-2xl flex items-center justify-center transition-all">
+                        <span class="text-lg">📱</span>
                     </a>
-                    <a href="#"
-                        class="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition">
-                        Telegram
+                    <a href="https://twitter.com/Wancash_token" target="_blank"
+                        class="w-12 h-12 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-2xl flex items-center justify-center transition-all">
+                        <span class="text-lg">🐦</span>
                     </a>
-                    <a href="#"
-                        class="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition">
-                        Discord
-                    </a>
-                    <a href="#"
-                        class="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition">
-                        GitHub
+                    <a href="https://wancash.org" target="_blank"
+                        class="w-12 h-12 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-2xl flex items-center justify-center transition-all">
+                        <span class="text-lg">🌐</span>
                     </a>
                 </div>
             </div>
@@ -183,12 +172,13 @@
 
 <script lang="ts" setup>
 import { useSEO } from '@/utils/useSEO'
+import WancashIcon from '@/components/icons/WancashIcon.vue'
 
 // SEO Configuration
 useSEO({
-    title: 'About Wancash - Our Vision & Mission',
-    description: 'Learn about Wancash\'s mission to provide accessible, transparent, and secure DeFi solutions that bridge multiple blockchain networks. Built on LayerZero V2 for seamless cross-chain transfers.',
-    keywords: ['about wancash', 'defi platform', 'cross-chain technology', 'layerzero', 'blockchain', 'crypto staking'],
+    title: 'About Wancash (WCH) - Sustainable Utility Ecosystem',
+    description: 'Wancash is a hybrid utility ecosystem powered by WCH, featuring gold-backed reserves, arbitrage bots, and a sustainable 40/40/20 revenue model.',
+    keywords: ['about wancash', 'wch token', 'hybrid utility token', 'gold backed crypto', 'arbitrage bot fuel', 'sustainable defi'],
     url: typeof window !== 'undefined' ? `${window.location.origin}/about` : 'https://wancash.org/about'
 })
 </script>

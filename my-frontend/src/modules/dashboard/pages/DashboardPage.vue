@@ -6,9 +6,9 @@ import { useSEO, useOrganizationSchema } from '@/utils/useSEO'
 
 // SEO Configuration
 useSEO({
-  title: 'Wancash - Decentralized Cross-Chain Token Bridge',
-  description: 'Bridge your WCH tokens seamlessly across BSC, Polygon, Arbitrum, and more blockchains. Fast, secure, and decentralized token transfers with real-time price charts.',
-  keywords: ['wancash', 'wch token', 'cross-chain bridge', 'defi', 'cryptocurrency', 'token bridge', 'bsc', 'polygon', 'arbitrum']
+  title: 'Wancash (WCH) - Hybrid Multi-Chain Utility Token',
+  description: 'WCH is the core fuel for the Wancash ecosystem, powering arbitrage bots, staking, and real-world utility across Arbitrum and other EVM chains.',
+  keywords: ['wancash', 'wch token', 'hybrid token', 'arbitrage bot fuel', 'staking rewards', 'arbitrum token', 'multi-chain', 'defi utility']
 })
 useOrganizationSchema()
 

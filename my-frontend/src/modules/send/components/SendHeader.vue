@@ -4,6 +4,11 @@ import { useChain } from '@/app/composables/useChain'
 import ChainIcon from '@/modules/bridge/components/ChainIcon.vue'
 
 const { currentChain } = useChain()
+
+defineProps<{
+  title?: string
+  subtitle?: string
+}>()
 </script>
 
 <template>
@@ -15,9 +20,10 @@ const { currentChain } = useChain()
           <ChainIcon :chain="currentChain" class="w-full h-full" />
         </div>
         <div>
-          <h1 class="text-xl md:text-3xl font-bold text-gray-900 dark:text-white">Token Transfer</h1>
-          <p class="text-xs md:text-base text-gray-600 dark:text-gray-300">Send tokens to another wallet address
-            securely</p>
+          <h1 class="text-xl md:text-3xl font-bold text-gray-900 dark:text-white">{{ title || 'Token Transfer' }}</h1>
+          <p class="text-xs md:text-base text-gray-600 dark:text-gray-300">
+            {{ subtitle || 'Send tokens to another wallet address securely' }}
+          </p>
         </div>
       </div>
       <Button @click="$emit('go-to-portfolio')"

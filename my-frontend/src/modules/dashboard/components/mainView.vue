@@ -1,16 +1,12 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref, computed, watch } from 'vue'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { pancakeSwapService, type SwapQuote } from '../services/pancakeSwapService'
-import TokenPriceChart from './TokenPriceChart.vue'
 import { toast } from 'vue-sonner'
 import { useChainId, useConfig } from '@wagmi/vue'
 import { usePriceStore } from '@/stores/priceStore'
 import { storeToRefs } from 'pinia'
 import WancashIcon from '@/components/icons/WancashIcon.vue'
-import UsdtIcon from '@/components/icons/UsdtIcon.vue'
 import ChainIcon from '@/modules/bridge/components/ChainIcon.vue'
 import { networks } from '@/app/components/config/wagmi'
 import { wancashContractAddress } from '@/app/services/contracts'
@@ -66,14 +62,11 @@ const priceStore = usePriceStore()
 const {
   wchPrice: currentPrice,
   marketCap,
-  volume24h,
-  pairAddress,
   wchChange1h,
   wchChange24h
 } = storeToRefs(priceStore)
 
 // Reactive state
-const loading = ref<boolean>(false)
 const selectedTimeframe = ref('1d')
 
 const priceChange = computed(() => {
@@ -82,7 +75,6 @@ const priceChange = computed(() => {
   return wchChange24h.value
 })
 
-const totalSupply = ref<number>(21000000000)
 const circulatingSupply = ref<number>(750000000)
 const lastUpdated = ref<string>('')
 
@@ -133,7 +125,6 @@ const setPercentage = (percent: number) => {
 // Chain & Auth State
 const accountData = useAppKitAccount()
 const address = computed(() => accountData.value.address as `0x${string}` | undefined)
-const isConnected = computed(() => accountData.value.isConnected)
 const chainIdRef = useChainId()
 const chainId = computed(() => chainIdRef.value)
 
@@ -420,6 +411,11 @@ const chainContractAddresses = computed(() => {
   return addresses
 })
 
+// Get whitepaper URL from environment variable
+const whitepaperUrl = computed(() => {
+  return (import.meta.env as any).VITE_WHITEPAPER_URL || 'https://wancash.gitbook.io/wancash';
+});
+
 // Lifecycle hooks
 onMounted(() => {
   fetchRealData()
@@ -450,50 +446,95 @@ onMounted(() => {
       <div class="flex items-center mb-6">
         <div
           class="w-12 h-12 bg-gradient-to-r from-purple-600 to-blue-500 rounded-xl flex items-center justify-center mr-4">
-          <span class="text-2xl font-bold text-white">W</span>
+          <WancashIcon class-name="w-8 h-8 text-white" />
         </div>
         <div>
           <h1 class="text-xl md:text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-500
-                     dark:from-purple-400 dark:to-blue-300 bg-clip-text text-transparent">
-            Wancash Token
+                     dark:from-purple-400 dark:to-blue-300 bg-clip-text text-transparent flex items-center gap-2">
+            <span>🟢</span> WCH – Wancash Token
           </h1>
-          <p class="text-gray-600 dark:text-gray-400 text-sm">Building the Future of Decentralized Finance</p>
+          <p class="text-gray-600 dark:text-gray-400 text-sm">Hybrid Multi-Chain Core Ecosystem Fuel</p>
         </div>
       </div>
 
-      <!-- Moto Utama -->
-      <div class="mb-8">
-        <blockquote class=" md:text-xl italic border-l-4 border-purple-500 pl-6 py-2
-                          text-gray-800 dark:text-gray-200">
-          "Decentralizing finance, empowering communities — one token at a time."
-        </blockquote>
-        <p class="mt-4 text-gray-700 dark:text-gray-300 leading-relaxed">
-          Experience the power of community-driven growth with Wancash. Secure, scalable, and designed for you.
+      <!-- Moto Utama & Description -->
+      <div
+        class="mb-8 p-6 bg-purple-50/50 dark:bg-purple-900/10 rounded-2xl border border-purple-100 dark:border-purple-800/30">
+        <p class="text-gray-700 dark:text-gray-300 leading-relaxed text-lg italic mb-6">
+          WCH (Wancash Token) is a hybrid multi-chain token designed as the core fuel of the Wancash ecosystem.
+        </p>
+        <p class="text-gray-700 dark:text-gray-300 leading-relaxed">
+          WCH is used as a gas fee for the arbitrage bot platform, staking utility, and a medium of exchange for
+          products and merchandise, bridging DeFi activities with real digital and offline utility.
         </p>
       </div>
 
-      <!-- Contract Addresses Section -->
+      <!-- Sustainability Model -->
+      <div class="mb-8">
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Sustainability Model</h2>
+        <div
+          class="relative p-6 bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl overflow-hidden border border-gray-700">
+          <div class="absolute top-0 right-0 p-4 opacity-10">
+            <WancashIcon class-name="w-32 h-32" />
+          </div>
+          <p class="text-gray-300 text-sm mb-6 relative z-10 leading-relaxed">
+            Ecosystem revenue is allocated in a sustainable manner:
+            <span class="text-amber-400 font-bold">40%</span> to strengthen gold-backed reserves,
+            <span class="text-blue-400 font-bold">40%</span> for operations and development, and
+            <span class="text-green-400 font-bold">20%</span> for token buyback and liquidity enhancement, supporting
+            long-term ecosystem stability.
+          </p>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 relative z-10">
+            <div class="text-center group">
+              <div class="text-3xl font-extrabold text-amber-400 mb-1 group-hover:scale-110 transition-transform">40%
+              </div>
+              <div class="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Gold-Backed Reserves</div>
+            </div>
+            <div class="text-center group">
+              <div class="text-3xl font-extrabold text-blue-400 mb-1 group-hover:scale-110 transition-transform">40%
+              </div>
+              <div class="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Ops & Development</div>
+            </div>
+            <div class="text-center group">
+              <div class="text-3xl font-extrabold text-green-400 mb-1 group-hover:scale-110 transition-transform">20%
+              </div>
+              <div class="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Buyback & Liquidity</div>
+            </div>
+          </div>
+          <p class="mt-8 text-sm text-center text-gray-300 font-medium italic relative z-10">
+            Designed for long-term growth through real utility, not pure speculation.
+          </p>
+        </div>
+      </div>
+
+      <!-- Featured Contract Addresses Section -->
       <div class="mb-8 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700">
-        <h3 class="flex items-center text-sm font-semibold text-gray-900 dark:text-white mb-3">
+        <h3 class="flex items-center text-sm font-semibold text-gray-900 dark:text-white mb-4">
           <span class="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse"></span>
-          Official Contract Addresses
+          Supported Network Contracts
         </h3>
-        <div class="space-y-3">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div v-for="item in chainContractAddresses" :key="item.chain.id"
-            class="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 hover:border-purple-200 dark:hover:border-purple-800 transition-colors">
+            class="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-800 transition-all hover:shadow-sm"
+            :class="{ 'ring-1 ring-blue-500/30 border-blue-400/50': item.chain.id === 42161 }">
             <div class="flex items-center gap-3">
-              <div class="w-6 h-6 rounded-full overflow-hidden">
+              <div class="w-8 h-8 rounded-full overflow-hidden shadow-sm flex-shrink-0">
                 <ChainIcon :chain="item.chain" />
               </div>
-              <div class="flex flex-col">
-                <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ item.chain.name }}</span>
-                <span class="text-xs font-mono text-gray-700 dark:text-gray-200 hidden md:block">{{ item.address
-                  }}</span>
-                <span class="text-xs font-mono text-gray-700 dark:text-gray-200 md:hidden">{{ item.address.slice(0, 6)
-                  }}...{{ item.address.slice(-4) }}</span>
+              <div class="flex flex-col min-w-0">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-[11px] font-bold text-gray-900 dark:text-white">{{ item.chain.name }}</span>
+                  <span v-if="item.chain.id === 42161"
+                    class="text-[9px] px-1 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 rounded font-bold">CORE</span>
+                </div>
+                <span class="text-[10px] font-mono text-gray-500 dark:text-gray-400 truncate md:hidden">{{
+                  item.address.slice(0, 10) }}...{{ item.address.slice(-8) }}</span>
+                <span class="text-[10px] font-mono text-gray-500 dark:text-gray-400 truncate hidden md:block">{{
+                  item.address.slice(0, 14) }}...{{ item.address.slice(-10) }}</span>
               </div>
             </div>
-            <Button variant="ghost" size="sm" class="h-8 w-8 p-0 ml-2" @click="copyToClipboard(item.address)">
+            <Button variant="ghost" size="sm" class="h-8 w-8 p-0 flex-shrink-0 ml-1"
+              @click="copyToClipboard(item.address)">
               <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -503,97 +544,74 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- Profil Singkat -->
-      <div class="mb-8">
-        <h2 class="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-4">About Wancash</h2>
-        <p class="text-gray-700 dark:text-gray-300 leading-relaxed">
-          Wancash is more than just a digital asset; it's the gateway to a decentralized future.
-          Built for speed and low-cost transactions, we empower users with sustainable staking rewards
-          and true governance. Join us in bridging the gap between traditional finance and the limitless
-          potential of blockchain technology.
-          <router-link to="/about"
-            class="inline-flex items-center font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors ml-1">
-            Read more ...
-            <svg class="w-4 h-4 ml-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round">
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-              <polyline points="12 5 19 12 12 19"></polyline>
-            </svg>
-          </router-link>
-        </p>
-      </div>
-
-      <!-- Key Features -->
-      <div class="mb-8">
-        <h2 class="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-4">Why Choose Wancash?</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="flex items-start p-3 bg-gray-100 dark:bg-gray-800/50 rounded-lg">
-            <span class="text-green-600 dark:text-green-400 mr-3">✓</span>
-            <span class="text-gray-800 dark:text-gray-300">Seamless Cross-Chain Swaps</span>
-          </div>
-          <div class="flex items-start p-3 bg-gray-100 dark:bg-gray-800/50 rounded-lg">
-            <span class="text-green-600 dark:text-green-400 mr-3">✓</span>
-            <span class="text-gray-800 dark:text-gray-300">High-Yield Staking Rewards</span>
-          </div>
-          <div class="flex items-start p-3 bg-gray-100 dark:bg-gray-800/50 rounded-lg">
-            <span class="text-green-600 dark:text-green-400 mr-3">✓</span>
-            <span class="text-gray-800 dark:text-gray-300">Community-Led Governance</span>
-          </div>
-          <div class="flex items-start p-3 bg-gray-100 dark:bg-gray-800/50 rounded-lg">
-            <span class="text-green-600 dark:text-green-400 mr-3">✓</span>
-            <span class="text-gray-800 dark:text-gray-300">Enterprise-Grade Security</span>
-          </div>
+      <!-- Quick Actions -->
+      <div class="mb-8 pt-4">
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Actions</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Button as-child
+            class="h-14 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 shadow-lg shadow-purple-500/20">
+            <router-link to="/staking" class="flex flex-col items-center justify-center">
+              <span class="font-bold">Stake WCH</span>
+              <span class="text-[10px] opacity-80">Earn passive rewards</span>
+            </router-link>
+          </Button>
+          <Button as-child variant="outline"
+            class="h-14 border-blue-200 dark:border-blue-900 hover:bg-blue-50 dark:hover:bg-blue-900/20">
+            <a href="#" target="_blank" class="flex flex-col items-center justify-center">
+              <span class="font-bold text-blue-600 dark:text-blue-400">Arbitrage Platform</span>
+              <span class="text-[10px] text-gray-500">Explore Bot</span>
+            </a>
+          </Button>
+          <Button as-child variant="ghost"
+            class="h-14 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20">
+            <a :href="whitepaperUrl" target="_blank" class="flex flex-col items-center justify-center">
+              <span class="font-bold">Whitepaper</span>
+              <span class="text-[10px] text-gray-500">Read Documentation</span>
+            </a>
+          </Button>
         </div>
       </div>
 
-      <!-- Roadmap & Community -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <!-- Roadmap (Simplified) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
         <div>
-          <h3 class="md:text-xl font-bold text-gray-900 dark:text-white mb-3">Roadmap</h3>
-          <ul class="space-y-2">
-            <li class="flex items-center text-gray-700 dark:text-gray-300">
-              <div class="w-2 h-2 bg-purple-500 rounded-full mr-3"></div>
-              Q4 2026: CEX Listings & Mobile App
-            </li>
-            <li class="flex items-center text-gray-700 dark:text-gray-300">
-              <div class="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
-              Q1 2027: Staking & Lending Platform
-            </li>
-            <li class="flex items-center text-gray-700 dark:text-gray-300">
-              <div class="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-              Q2 2028: Global Merchant Adoption
-            </li>
-          </ul>
-        </div>
-
-        <div>
-          <h3 class="md:text-xl font-bold text-gray-900 dark:text-white mb-3">Join Community</h3>
+          <h3 class="md:text-xl font-bold text-gray-900 dark:text-white mb-3">Community Links</h3>
           <div class="flex space-x-4">
-            <a target="_blank" href="https://t.me/wancash_token" class="w-10 h-10 bg-blue-100 hover:bg-blue-200 dark:bg-blue-500/20
-                     dark:hover:bg-blue-500/40 rounded-lg flex items-center justify-center
+            <a target="_blank" href="https://t.me/wancash_token" class="w-12 h-12 bg-blue-100 hover:bg-blue-200 dark:bg-blue-500/20
+                     dark:hover:bg-blue-500/40 rounded-xl flex items-center justify-center
                      transition-colors cursor-pointer" title="Telegram">
-              <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 24 24">
+              <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 24 24">
                 <path
                   d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.461-1.901-.903-1.056-.693-1.653-1.124-2.678-1.8-1.185-.781-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.139-5.062 3.345-.479.329-.913.489-1.302.481-.428-.009-1.252-.242-1.865-.442-.752-.244-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.831-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635.099-.002.321.023.465.141.121.099.155.232.171.326.016.093.036.305.02.47z" />
               </svg>
             </a>
-            <a target="_blank" href="https://twitter.com/Wancash_token" class="w-10 h-10 bg-sky-100 hover:bg-sky-200 dark:bg-sky-500/20
-                     dark:hover:bg-sky-500/40 rounded-lg flex items-center justify-center
+            <a target="_blank" href="https://twitter.com/Wancash_token" class="w-12 h-12 bg-sky-100 hover:bg-sky-200 dark:bg-sky-500/20
+                     dark:hover:bg-sky-500/40 rounded-xl flex items-center justify-center
                      transition-colors cursor-pointer" title="Twitter">
-              <svg class="w-5 h-5 text-sky-600 dark:text-sky-400" fill="currentColor" viewBox="0 0 24 24">
+              <svg class="w-6 h-6 text-sky-600 dark:text-sky-400" fill="currentColor" viewBox="0 0 24 24">
                 <path
                   d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" />
               </svg>
             </a>
-            <a href="https://wancash.org" class="w-10 h-10 bg-purple-100 hover:bg-purple-200 dark:bg-purple-500/20
-                     dark:hover:bg-purple-500/40 rounded-lg flex items-center justify-center
+            <a href="https://wancash.org" class="w-12 h-12 bg-purple-100 hover:bg-purple-200 dark:bg-purple-500/20
+                     dark:hover:bg-purple-500/40 rounded-xl flex items-center justify-center
                      transition-colors cursor-pointer" title="Website">
-              <svg class="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24"
+              <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
               </svg>
             </a>
+          </div>
+        </div>
+
+        <div class="flex items-end justify-center md:justify-end">
+          <div class="text-right">
+            <h3 class="md:text-sm font-bold text-gray-400 mb-1">Ecosystem Status</h3>
+            <div class="flex items-center gap-2 justify-end">
+              <span class="text-xs text-gray-500">Mainnet v2.4</span>
+              <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+            </div>
           </div>
         </div>
       </div>

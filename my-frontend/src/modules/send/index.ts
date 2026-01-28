@@ -1,4 +1,4 @@
-// src/modules/dashboard/index.ts
+// src/modules/send/index.ts
 import buyWancash from './pages/SendTokenPage.vue'
 
 export default [
@@ -12,7 +12,7 @@ export default [
     }
   },
   {
-    path: '/historySending',
+    path: '/send/history',
     name: 'Transaction History',
     component: () => import('./pages/HistoryPage.vue'),
     meta: {
