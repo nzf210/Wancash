@@ -102,7 +102,7 @@
                 </div>
 
                 <div class="flex items-center space-x-2">
-                    <Checkbox id="urgent" v-model:checked="store.form.urgent"
+                    <Checkbox id="urgent" v-model="store.form.urgent"
                         class="border-gray-300 dark:border-blue-light" />
                     <Label for="urgent" class="text-gray-700 dark:text-gray-300 text-sm cursor-pointer">
                         Mark as urgent (high priority)

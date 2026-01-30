@@ -52,7 +52,15 @@ export const submitContactForm = async (data: ContactSubmission): Promise<Submit
             body: JSON.stringify(requestBody)
         })
 
-        const result = await response.json()
+        const responseText = await response.text()
+        let result
+        try {
+            result = JSON.parse(responseText)
+        } catch (e) {
+            console.error('❌ Failed to parse API response as JSON:', responseText)
+            return { success: false, error: 'Server returned an invalid response format.' }
+        }
+
         console.log('📥 API Response:', response.status, result)
 
         if (!response.ok) {
