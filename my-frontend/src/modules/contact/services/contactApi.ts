@@ -1,7 +1,7 @@
 import type { ContactFormData, Attachment } from '../types/contact.types'
 import { useAuth } from '@/app/composables/useAuth'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8787'
+const API_BASE_URL = import.meta.env.VITE_API_URL || ''
 
 interface ContactSubmission extends ContactFormData {
     type: string
@@ -35,13 +35,14 @@ export const submitContactForm = async (data: ContactSubmission): Promise<Submit
         priority: data.urgent ? 'high' : 'normal'
     }
 
-    console.log('📤 Submitting ticket:', requestBody)
-    console.log('📍 API URL:', `${API_BASE_URL}/api/support`)
+    const fullUrl = `${API_BASE_URL}/api/support`
+    console.log('📤 Submitting ticket to:', fullUrl)
+    console.log('� Request body:', requestBody)
 
     const { getAuthHeaders } = useAuth()
 
     try {
-        const response = await fetch(`${API_BASE_URL}/api/support`, {
+        const response = await fetch(fullUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -55,13 +56,16 @@ export const submitContactForm = async (data: ContactSubmission): Promise<Submit
         console.log('📥 API Response:', response.status, result)
 
         if (!response.ok) {
-            return { success: false, error: result.error || 'Failed to submit ticket' }
+            return { success: false, error: result.error || `Failed to submit ticket (${response.status})` }
         }
 
         return result
     } catch (error) {
         console.error('❌ Submit ticket error:', error)
-        return { success: false, error: 'Network error. Please try again.' }
+        return {
+            success: false,
+            error: error instanceof TypeError ? `Network error or CORS issue. Please check if ${fullUrl} is accessible.` : 'Network error. Please try again.'
+        }
     }
 }
 
