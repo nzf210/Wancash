@@ -345,6 +345,12 @@ export const useAuth = () => {
       // Attempt refresh
       console.log('⚠️ [useAuth] Session check failed, attempting refresh...')
       const refreshed = await refreshSession()
+
+      if (!refreshed && prevStatus === 'AUTHENTICATED') {
+        console.log('🔍 [useAuth] Session definitely invalid, resetting state')
+        resetState()
+      }
+
       console.log('🔍 [useAuth] ========== END (attempted refresh) ==========\n')
       return refreshed
 
@@ -603,7 +609,7 @@ export const useAuth = () => {
 
       console.log('✅ [useAuth] Session verification PASSED')
       // Continue with server-side check
-      checkSession()
+      await checkSession()
 
     } catch (e) {
       console.error('❌ [useAuth] Verification error:', e)
