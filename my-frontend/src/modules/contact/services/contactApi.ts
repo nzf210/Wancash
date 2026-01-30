@@ -1,7 +1,7 @@
 import type { ContactFormData, Attachment } from '../types/contact.types'
 import { useAuth } from '@/app/composables/useAuth'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || ''
+const API_BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
 
 interface ContactSubmission extends ContactFormData {
     type: string

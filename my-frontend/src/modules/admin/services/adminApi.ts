@@ -16,7 +16,7 @@ export interface UpdateStatusData {
     shipping_cost_token?: number
 }
 
-const API_BASE = import.meta.env.VITE_API_URL || '';
+const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
 
 // Helper to get auth headers
 const getAuthHeaders = (additionalHeaders: Record<string, string> = {}) => {
