@@ -8,10 +8,12 @@ The Wancash Staking project is a multi-layered decentralized application:
 2.  **Backend**: Cloudflare Workers (Hono/TypeScript) + Neon DB (PostgreSQL).
 3.  **Smart Contracts**: Hardhat/Solidity + LayerZero V2 for cross-chain bridging.
 
-### 1. Planning Before Execution (MANDATORY)
+### 1. Planning & Knowledge Management (MANDATORY)
 
-- **ALWAYS** create an `implementation_plan.md` artifact for complex changes.
-- **ALWAYS** get user approval via `notify_user` before making code changes.
+- **INITIALIZATION**: **YOU MUST READ `.clinerules` AS THE VERY FIRST ACTION** in every new chat session to synchronize with the current project status and rules.
+- **CLINERULES UPDATES**: If you implement a new feature, update a flow, or change an architectural pattern, you **MUST** immediately update `.clinerules` to reflect these changes.
+- **documentation**: **ALWAYS** create an `implementation_plan.md` artifact for complex changes.
+- **APPROVAL**: **ALWAYS** get user approval via `notify_user` before making code changes.
 - Break down work into clear, reviewable steps in `task.md`.
 
 ---
@@ -51,6 +53,7 @@ The Wancash Staking project is a multi-layered decentralized application:
 
 - **Wrangler**: Update `wrangler.jsonc` for new bindings (Rate limiters, KV, etc.).
 - **Vite**: Ensure frontend `.env` matches the backend RPC and contract addresses.
+- **URL Sanitization**: **ALWAYS** sanitize `API_BASE_URL` to remove trailing slashes using `.replace(/\/$/, '')` to prevent double-slashes in endpoint construction.
 
 ---
 
@@ -88,10 +91,32 @@ The Wancash Staking project is a multi-layered decentralized application:
 ### 2. Global Configuration
 - **Entry Point**: `src/main.ts` is the SINGLE point of entry for plugins (Pinia, Wagmi, Router).
 - **Rule**: Do not bootstrap plugins elsewhere to avoid "Active Pinia" errors.
+- **Component Binding**: **ALWAYS** use standard `v-model` for UI components (like `Checkbox`, `Switch`, `Input`) unless the component explicitly requires a named model (e.g., `v-model:checked` is used for `Switch` but NOT for `Checkbox`). Check the component's `defineProps` if unsure.
 
 ---
 
-## 🚫 Critical "No-Go" Zones
+## � Authentication & Session Flow
+
+### 1. EIP-712 Login
+- **Challenge**: Request nonce from `/api/auth/nonce`.
+- **Sign**: User signs typed data (EIP-712) via `signAuthMessage`.
+- **Verify**: Submit signature to `/api/auth/verify`. Returns HttpOnly cookie + `expiresIn`.
+
+### 2. Session Restoration (Optimistic)
+- **Local Cache**: `auth_state` in `localStorage` persists for 24 hours.
+- **Verification**: On load, frontend optimistically sets `AUTHENTICATED` status, then validates in background:
+  1. Wait for Wagmi auto-reconnect.
+  2. Verify active wallet matches saved address.
+  3. Call `/api/me` to refresh session data and role.
+
+### 3. Proactive Token Refresh
+- **Mechanism**: `scheduleProactiveRefresh` sets a timer to refresh the session **1 minute before** the access token expires (default access token life: 4 minutes).
+- **Endpoint**: Calls `/api/auth/refresh` silently.
+- **Automatic**: Refresh happens automatically in the background as long as the tab is open.
+
+---
+
+## �🚫 Critical "No-Go" Zones
 
 1. **Baseline Schema**: Do NOT modify `migrations/000_baseline_schema.sql`.
 2. **Hardcoded Chains**: Do NOT hardcode Chain IDs (e.g., `1`, `56`). Use `c.env` or constants (e.g., `CHAIN_ID_BSC`).
@@ -188,4 +213,4 @@ Follow the **"Spec First, Test Second, Code Third"** principle:
 
 ---
 
-_Last updated: 2026-01-15 - Synchronized with Baseline Migration 000_
+_Last updated: 2026-01-30 - Synchronized with Auth Flow & URL Sanitization Fixes_
