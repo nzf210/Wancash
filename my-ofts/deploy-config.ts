@@ -1,43 +1,51 @@
-import 'dotenv/config'
+import path from 'path'
+
+import dotenv from 'dotenv'
+
+const envMode = process.env.ENV || (process.env.MODE === 'main' ? 'prod' : 'dev')
+dotenv.config({ path: path.resolve(__dirname, `.env.${envMode}`) })
+dotenv.config()
 
 // MODE SELECTION: 'dev' or 'prod'
-// Automatically determined by .env variable MODE. 
+// Automatically determined by .env variable MODE.
 // MODE='main' -> 'prod' (Mainnet)
 // MODE='test' (or anything else) -> 'dev' (Testnet)
-const currentMode = process.env.MODE === 'main' ? 'prod' : 'dev';
+const currentMode = process.env.MODE === 'main' ? 'prod' : 'dev'
+const envContractName = process.env.CONTRACT_NAME?.trim()
 
 // Token Configuration
 const tokenConfig = {
     name: 'Wancash',
     symbol: 'WCH',
-    initialSupply: '2100000000', // 21 Million
+    initialSupply: '999990000', // 999.99 Million
     decimals: 18,
-};
+    ownerAllocation: '200000000', // 200 Million to owner, rest to vesting
+}
 
 // Network Configurations
 const testnets = [
-    'bsc',       // BSC Testnet
-    'polygon',   // Amoy
-    'ethereum',  // Sepolia
-    'avalance',  // Fuji
+    'bsc', // BSC Testnet
+    'polygon', // Amoy
+    'ethereum', // Sepolia
+    'avalance', // Fuji
     'rootstock', // Rootstock Testnet
-    'arbitrum',  // Arbitrum Sepolia
-];
+    'arbitrum', // Arbitrum Sepolia
+]
 
 const mainnets = [
-    'bsc',       // BSC Mainnet
-    'polygon',   // Polygon Mainnet
-    'ethereum',  // Ethereum Mainnet
-    'avalance',  // Avalanche Mainnet
+    'bsc', // BSC Mainnet
+    'polygon', // Polygon Mainnet
+    'ethereum', // Ethereum Mainnet
+    'avalance', // Avalanche Mainnet
     'rootstock', // Rootstock Mainnet
-    'arbitrum',  // Arbitrum Mainnet
-];
+    'arbitrum', // Arbitrum Mainnet
+]
 
 export const config = {
     mode: currentMode,
 
     // Derived configuration
-    contractName: currentMode === 'prod' ? 'Wancash' : 'WancashMock',
+    contractName: envContractName || (currentMode === 'prod' ? 'Wancash' : 'WancashMock'),
     networks: currentMode === 'prod' ? mainnets : testnets,
 
     // Environment variable value for hardhat.config.ts (MODE=main triggers prod config)
@@ -57,24 +65,18 @@ export const config = {
     // Environment variable mapping for synchronization
     // Source (my-ofts/.env) -> Target (my-frontend/.env)
     envMapping: {
-        TEST_SC_BSC: ['WCH_TOKEN_BSC'],
-        BSC_CONTRACT: ['WCH_TOKEN_BSC_TEST'],
+        BSC_CONTRACT: ['WCH_TOKEN_BSC', 'WCH_TOKEN_BSC_TEST'],
         POLY_CONTRACT: ['WCH_TOKEN_POLYGON', 'WCH_TOKEN_POLYGON_AMOY'],
         ETH_CONTRACT: ['WCH_TOKEN_ETHEREUM', 'WCH_TOKEN_ETHEREUM_SEPOLIA'],
         AVA_CONTRACT: ['WCH_TOKEN_AVALANCHE', 'WCH_TOKEN_AVALANCHE_FUJI'],
         ARB_CONTRACT: ['WCH_TOKEN_ARBITRUM', 'WCH_TOKEN_ARBITRUM_SEPOLIA'],
-        ROOT_CONTRACT: ['WCH_TOKEN_ROOTSTOCK'],
+        ROOT_CONTRACT: ['WCH_TOKEN_ROOTSTOCK', 'WCH_TOKEN_ROOTSTOCK_TEST'],
 
-        BSC_RPC_URL: ['BSC_RPC_URL'],
-        BSC_TEST_RPC_URL: ['BSC_TEST_RPC_URL'],
-        POLYGON_RPC_URL: ['POLYGON_RPC_URL'],
-        POLYGON_AMOY_RPC_URL: ['POLYGON_AMOY_RPC_URL'],
-        ETHEREUM_RPC_URL: ['ETHEREUM_RPC_URL'],
-        ETHEREUM_SEPOLIA_RPC_URL: ['ETHEREUM_SEPOLIA_RPC_URL'],
-        ARBITRUM_RPC_URL: ['ARBITRUM_RPC_URL'],
-        ARBITRUM_SEPOLIA_RPC_URL: ['ARBITRUM_SEPOLIA_RPC_URL'],
-        AVALANCHE_RPC_URL: ['AVALANCHE_RPC_URL'],
-        AVALANCHE_FUJI_RPC_URL: ['AVALANCHE_FUJI_RPC_URL'],
+        BSC_RPC_URL: ['BSC_RPC_URL', 'BSC_TEST_RPC_URL'],
+        POLYGON_RPC_URL: ['POLYGON_RPC_URL', 'POLYGON_AMOY_RPC_URL'],
+        ETHEREUM_RPC_URL: ['ETHEREUM_RPC_URL', 'ETHEREUM_SEPOLIA_RPC_URL'],
+        ARBITRUM_RPC_URL: ['ARBITRUM_RPC_URL', 'ARBITRUM_SEPOLIA_RPC_URL'],
+        AVALANCHE_RPC_URL: ['AVALANCHE_RPC_URL', 'AVALANCHE_FUJI_RPC_URL'],
 
         TELEGRAM_BOT_TOKEN: ['TELEGRAM_BOT_TOKEN'],
         TELEGRAM_CHAT_ID_ERROR: ['TELEGRAM_CHAT_ID_ERROR'],
@@ -91,19 +93,12 @@ export const config = {
         APP_URL: ['APP_URL'],
         SENTRY_DSN: ['SENTRY_DSN'],
 
-        EXPLORER_URL_ETHEREUM: ['EXPLORER_URL_ETHEREUM'],
-        EXPLORER_URL_BSC: ['EXPLORER_URL_BSC'],
-        EXPLORER_URL_POLYGON: ['EXPLORER_URL_POLYGON'],
-        EXPLORER_URL_ARBITRUM: ['EXPLORER_URL_ARBITRUM'],
-        EXPLORER_URL_AVALANCHE: ['EXPLORER_URL_AVALANCHE'],
+        EXPLORER_URL_ETH: ['EXPLORER_URL_ETHEREUM', 'EXPLORER_URL_SEPOLIA'],
+        EXPLORER_URL_BSC: ['EXPLORER_URL_BSC', 'EXPLORER_URL_BSC_TEST'],
+        EXPLORER_URL_POLYGON: ['EXPLORER_URL_POLYGON', 'EXPLORER_URL_AMOY'],
+        EXPLORER_URL_ARBITRUM: ['EXPLORER_URL_ARBITRUM', 'EXPLORER_URL_ARB_SEPOLIA'],
+        EXPLORER_URL_AVALANCE: ['EXPLORER_URL_AVALANCHE', 'EXPLORER_URL_FUJI'],
         EXPLORER_URL_BASE: ['EXPLORER_URL_BASE'],
-
-        EXPLORER_URL_SEPOLIA: ['EXPLORER_URL_SEPOLIA'],
-        EXPLORER_URL_BSC_TEST: ['EXPLORER_URL_BSC_TEST'],
-        EXPLORER_URL_AMOY: ['EXPLORER_URL_AMOY'],
-        EXPLORER_URL_ARB_SEPOLIA: ['EXPLORER_URL_ARB_SEPOLIA'],
-        EXPLORER_URL_FUJI: ['EXPLORER_URL_FUJI'],
         ALCHEMY_API_KEY: ['ALCHEMY_API_KEY'],
-
-    }
+    },
 }

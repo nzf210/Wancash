@@ -28,7 +28,9 @@
     "c:deploy": "cd cloude-flare-wancash && bun run deploy",
     "c:logs": "cd cloude-flare-wancash && bun run logs",
     "c:test": "cd cloude-flare-wancash && bun run test:local",
-    "c:env": "bun run cloude-flare-wancash/scripts/generate-env-only.ts"
+    "c:env": "bun run cloude-flare-wancash/scripts/generate-env-only.ts",
+    "c:env:dev": "ENV=dev bun run cloude-flare-wancash/scripts/generate-env-only.ts",
+    "c:env:prod": "ENV=prod bun run cloude-flare-wancash/scripts/generate-env-only.ts"
   },
   "dependencies": {
     "@layerzerolabs/lz-v2-utilities": "^3.0.152",
@@ -70,6 +72,7 @@
     "vue3-apexcharts": "^1.10.0"
   },
   "devDependencies": {
+    "@cypress/vite-dev-server": "^7.2.0",
     "@tsconfig/node22": "^22.0.2",
     "@types/node": "^24.2.0",
     "@types/web3": "^1.2.2",

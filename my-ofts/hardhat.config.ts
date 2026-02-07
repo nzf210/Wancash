@@ -1,9 +1,15 @@
-// Get the environment configuration from .env file
+// Get the environment configuration from .env.<ENV> (dev/prod)
 //
 // To make use of automatic environment setup:
-// - Duplicate .env.example file and name it .env
+// - Duplicate .env.example file and name it .env.dev or .env.prod
 // - Fill in the environment variables
-import 'dotenv/config'
+import dotenv from 'dotenv'
+
+import path from 'path'
+
+const envMode = process.env.ENV || (process.env.MODE === 'main' ? 'prod' : 'dev')
+dotenv.config({ path: path.resolve(__dirname, `.env.${envMode}`) })
+dotenv.config()
 
 import 'hardhat-deploy'
 import 'hardhat-contract-sizer'
@@ -31,12 +37,30 @@ const PRIVATE_KEY = process.env.PRIVATE_KEY
 const privateKeyAccounts = PRIVATE_KEY ? [PRIVATE_KEY] : undefined
 const accounts: HttpNetworkAccountsUserConfig | undefined = MNEMONIC ? { mnemonic: MNEMONIC } : privateKeyAccounts
 
-const MODE = process.env.MODE === 'prod'
-const BSC_RPC_URL = process.env.BSC_RPC_URL || 'https://bsc-testnet.drpc.org'
-const ETH_RPC_URL = process.env.ETH_RPC_URL || `https://sepolia.infura.io/v3/${process.env.INFURA_API_KEY}`
-const POLYGON_RPC_URL = process.env.POLYGON_RPC_URL || 'https://polygon-amoy.drpc.org'
-const AVA_RPC_URL = process.env.AVA_RPC_URL || 'https://api.avax-test.network/ext/bc/C/rpc'
-const ARB_RPC_URL = process.env.ARB_RPC_URL || 'https://arbitrum-sepolia-rpc.publicnode.com'
+const MODE = process.env.MODE === 'main'
+const ALCHEMY_API_KEY = process.env.ALCHEMY_API_KEY
+const alchemyUrl = (network: string) =>
+    ALCHEMY_API_KEY ? `https://${network}.g.alchemy.com/v2/${ALCHEMY_API_KEY}` : undefined
+
+const BSC_RPC_URL =
+    process.env.BSC_RPC_URL || (MODE ? 'https://bsc-dataseed1.binance.org/' : 'https://bsc-testnet.drpc.org')
+const ETH_RPC_URL =
+    alchemyUrl(MODE ? 'eth-mainnet' : 'eth-sepolia') ||
+    process.env.ETHEREUM_RPC_URL ||
+    (MODE
+        ? `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`
+        : `https://sepolia.infura.io/v3/${process.env.INFURA_API_KEY}`)
+const POLYGON_RPC_URL =
+    alchemyUrl(MODE ? 'polygon-mainnet' : 'polygon-amoy') ||
+    process.env.POLYGON_RPC_URL ||
+    (MODE ? 'https://polygon-rpc.com/' : 'https://polygon-amoy.drpc.org')
+const AVA_RPC_URL =
+    process.env.AVALANCHE_RPC_URL ||
+    (MODE ? 'https://api.avax.network/ext/bc/C/rpc' : 'https://api.avax-test.network/ext/bc/C/rpc')
+const ARB_RPC_URL =
+    alchemyUrl(MODE ? 'arb-mainnet' : 'arb-sepolia') ||
+    process.env.ARBITRUM_RPC_URL ||
+    (MODE ? 'https://arb1.arbitrum.io/rpc' : 'https://arbitrum-sepolia-rpc.publicnode.com')
 
 const CI_BSC = process.env.CI_BSC || 97
 const CI_ETH = process.env.CI_ETH || 11155111
@@ -44,7 +68,8 @@ const CI_POLYGON = process.env.CI_POLYGON || 80002
 const CI_AVA = process.env.CI_AVA || 43113
 const CI_ARB = process.env.CI_ARB || 421614
 
-const ROOTSTOCK_RPC_URL = process.env.ROOTSTOCK_RPC_URL || 'https://rpc.testnet.rootstock.io'
+const ROOTSTOCK_RPC_URL =
+    process.env.ROOTSTOCK_RPC_URL || (MODE ? 'https://public-node.rsk.co' : 'https://rpc.testnet.rootstock.io')
 const CI_ROOTSTOCK = process.env.CI_ROOTSTOCK || 31
 
 // Warn if no accounts are set

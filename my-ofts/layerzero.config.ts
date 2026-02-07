@@ -3,35 +3,39 @@ import { ExecutorOptionType } from '@layerzerolabs/lz-v2-utilities'
 import { generateConnectionsConfig } from '@layerzerolabs/metadata-tools'
 import { OAppEnforcedOption, OmniPointHardhat } from '@layerzerolabs/toolbox-hardhat'
 
-const CONTRACT_NAME = 'MyOFTMock'
+import { config } from './deploy-config'
+
+const CONTRACT_NAME = config.contractName
+
+const isProd = config.mode === 'prod'
 
 const bscContract: OmniPointHardhat = {
-    eid: EndpointId.BSC_V2_TESTNET,
+    eid: isProd ? EndpointId.BSC_V2_MAINNET : EndpointId.BSC_V2_TESTNET,
     contractName: CONTRACT_NAME,
 }
 
-const amoyContract: OmniPointHardhat = {
-    eid: EndpointId.AMOY_V2_TESTNET,
+const polygonContract: OmniPointHardhat = {
+    eid: isProd ? EndpointId.POLYGON_V2_MAINNET : EndpointId.AMOY_V2_TESTNET,
     contractName: CONTRACT_NAME,
 }
 
-const sepoliaContract: OmniPointHardhat = {
-    eid: EndpointId.SEPOLIA_V2_TESTNET,
+const ethereumContract: OmniPointHardhat = {
+    eid: isProd ? EndpointId.ETHEREUM_V2_MAINNET : EndpointId.SEPOLIA_V2_TESTNET,
     contractName: CONTRACT_NAME,
 }
 
-const fujiContract: OmniPointHardhat = {
-    eid: EndpointId.AVALANCHE_V2_TESTNET,
+const avalancheContract: OmniPointHardhat = {
+    eid: isProd ? EndpointId.AVALANCHE_V2_MAINNET : EndpointId.AVALANCHE_V2_TESTNET,
     contractName: CONTRACT_NAME,
 }
 
 const rootstockContract: OmniPointHardhat = {
-    eid: EndpointId.ROOTSTOCK_V2_TESTNET,
+    eid: isProd ? EndpointId.ROOTSTOCK_V2_MAINNET : EndpointId.ROOTSTOCK_V2_TESTNET,
     contractName: CONTRACT_NAME,
 }
 
-const arbContract: OmniPointHardhat = {
-    eid: EndpointId.ARBSEP_V2_TESTNET,
+const arbitrumContract: OmniPointHardhat = {
+    eid: isProd ? EndpointId.ARBITRUM_V2_MAINNET : EndpointId.ARBSEP_V2_TESTNET,
     contractName: CONTRACT_NAME,
 }
 
@@ -63,41 +67,41 @@ export default async function () {
     const connections = await generateConnectionsConfig([
         [
             bscContract, // Chain A contract
-            amoyContract, // Chain B contract
+            polygonContract, // Chain B contract
             [['LayerZero Labs'], []], // [ requiredDVN[], [ optionalDVN[], threshold ] ]
             [1, 1], // [A to B confirmations, B to A confirmations]
             [EVM_ENFORCED_OPTIONS, EVM_ENFORCED_OPTIONS], // Chain B enforcedOptions, Chain A enforcedOptions
         ],
         [
             bscContract, // Chain A contract
-            sepoliaContract, // Chain B contract
+            ethereumContract, // Chain B contract
             [['LayerZero Labs', 'P2P'], []], // [ requiredDVN[], [ optionalDVN[], threshold ] ]
             [1, 1], // [A to B confirmations, B to A confirmations]
             [EVM_ENFORCED_OPTIONS, EVM_ENFORCED_OPTIONS], // Chain B enforcedOptions, Chain A enforcedOptions
         ],
         [
-            amoyContract, // Chain A contract
-            sepoliaContract, // Chain B contract
+            polygonContract, // Chain A contract
+            ethereumContract, // Chain B contract
             [['LayerZero Labs'], []], // [ requiredDVN[], [ optionalDVN[], threshold ] ]
             [1, 1], // [A to B confirmations, B to A confirmations]
             [EVM_ENFORCED_OPTIONS, EVM_ENFORCED_OPTIONS], // Chain B enforcedOptions, Chain A enforcedOptions
         ],
         [
-            fujiContract, // Chain A contract
-            sepoliaContract, // Chain B contract
+            avalancheContract, // Chain A contract
+            ethereumContract, // Chain B contract
             [['LayerZero Labs'], []], // [ requiredDVN[], [ optionalDVN[], threshold ] ]
             [1, 1], // [A to B confirmations, B to A confirmations]
             [EVM_ENFORCED_OPTIONS, EVM_ENFORCED_OPTIONS], // Chain B enforcedOptions, Chain A enforcedOptions
         ],
         [
-            fujiContract, // Chain A contract
-            amoyContract, // Chain B contract
+            avalancheContract, // Chain A contract
+            polygonContract, // Chain B contract
             [['LayerZero Labs'], []], // [ requiredDVN[], [ optionalDVN[], threshold ] ]
             [1, 1], // [A to B confirmations, B to A confirmations]
             [EVM_ENFORCED_OPTIONS, EVM_ENFORCED_OPTIONS], // Chain B enforcedOptions, Chain A enforcedOptions
         ],
         [
-            fujiContract, // Chain A contract
+            avalancheContract, // Chain A contract
             bscContract, // Chain B contract
             [['LayerZero Labs'], []], // [ requiredDVN[], [ optionalDVN[], threshold ] ]
             [1, 1], // [A to B confirmations, B to A confirmations]
@@ -112,55 +116,55 @@ export default async function () {
         ],
         [
             rootstockContract, // Chain A contract
-            sepoliaContract, // Chain B contract
+            ethereumContract, // Chain B contract
             [['LayerZero Labs'], []], // [ requiredDVN[], [ optionalDVN[], threshold ] ]
             [1, 1], // [A to B confirmations, B to A confirmations]
             [EVM_ENFORCED_OPTIONS, EVM_ENFORCED_OPTIONS], // Chain B enforcedOptions, Chain A enforcedOptions
         ],
         [
             rootstockContract, // Chain A contract
-            amoyContract, // Chain B contract
+            polygonContract, // Chain B contract
             [['LayerZero Labs'], []], // [ requiredDVN[], [ optionalDVN[], threshold ] ]
             [1, 1], // [A to B confirmations, B to A confirmations]
             [EVM_ENFORCED_OPTIONS, EVM_ENFORCED_OPTIONS], // Chain B enforcedOptions, Chain A enforcedOptions
         ],
         [
             rootstockContract, // Chain A contract
-            fujiContract, // Chain B contract
+            avalancheContract, // Chain B contract
             [['LayerZero Labs'], []], // [ requiredDVN[], [ optionalDVN[], threshold ] ]
             [1, 1], // [A to B confirmations, B to A confirmations]
             [EVM_ENFORCED_OPTIONS, EVM_ENFORCED_OPTIONS], // Chain B enforcedOptions, Chain A enforcedOptions
         ],
         [
-            arbContract, // Chain A contract
+            arbitrumContract, // Chain A contract
             bscContract, // Chain B contract
             [['LayerZero Labs'], []], // [ requiredDVN[], [ optionalDVN[], threshold ] ]
             [1, 1], // [A to B confirmations, B to A confirmations]
             [EVM_ENFORCED_OPTIONS, EVM_ENFORCED_OPTIONS], // Chain B enforcedOptions, Chain A enforcedOptions
         ],
         [
-            arbContract, // Chain A contract
-            sepoliaContract, // Chain B contract
+            arbitrumContract, // Chain A contract
+            ethereumContract, // Chain B contract
             [['LayerZero Labs'], []], // [ requiredDVN[], [ optionalDVN[], threshold ] ]
             [1, 1], // [A to B confirmations, B to A confirmations]
             [EVM_ENFORCED_OPTIONS, EVM_ENFORCED_OPTIONS], // Chain B enforcedOptions, Chain A enforcedOptions
         ],
         [
-            arbContract, // Chain A contract
-            amoyContract, // Chain B contract
+            arbitrumContract, // Chain A contract
+            polygonContract, // Chain B contract
             [['LayerZero Labs'], []], // [ requiredDVN[], [ optionalDVN[], threshold ] ]
             [1, 1], // [A to B confirmations, B to A confirmations]
             [EVM_ENFORCED_OPTIONS, EVM_ENFORCED_OPTIONS], // Chain B enforcedOptions, Chain A enforcedOptions
         ],
         [
-            arbContract, // Chain A contract
-            fujiContract, // Chain B contract
+            arbitrumContract, // Chain A contract
+            avalancheContract, // Chain B contract
             [['LayerZero Labs'], []], // [ requiredDVN[], [ optionalDVN[], threshold ] ]
             [1, 1], // [A to B confirmations, B to A confirmations]
             [EVM_ENFORCED_OPTIONS, EVM_ENFORCED_OPTIONS], // Chain B enforcedOptions, Chain A enforcedOptions
         ],
         [
-            arbContract, // Chain A contract
+            arbitrumContract, // Chain A contract
             rootstockContract, // Chain B contract
             [['LayerZero Labs'], []], // [ requiredDVN[], [ optionalDVN[], threshold ] ]
             [1, 1], // [A to B confirmations, B to A confirmations]
@@ -171,11 +175,11 @@ export default async function () {
     return {
         contracts: [
             { contract: bscContract },
-            { contract: amoyContract },
-            { contract: sepoliaContract },
-            { contract: fujiContract },
+            { contract: polygonContract },
+            { contract: ethereumContract },
+            { contract: avalancheContract },
             { contract: rootstockContract },
-            { contract: arbContract },
+            { contract: arbitrumContract },
         ],
         connections,
     }

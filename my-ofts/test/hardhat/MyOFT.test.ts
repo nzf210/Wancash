@@ -51,8 +51,28 @@ describe('MyOFT Test', function () {
 
         // Deploying two instances of MyOFT contract with different identifiers and linking them to the mock LZEndpoint
         // Providing dummy values for mainChainId (1) and initialSupply (0) as we mint manually
-        myOFTA = await MyOFT.deploy('aOFT', 'aOFT', mockEndpointV2A.address, ownerA.address, 1, 0)
-        myOFTB = await MyOFT.deploy('bOFT', 'bOFT', mockEndpointV2B.address, ownerB.address, 2, 0)
+        myOFTA = await MyOFT.deploy({
+            name: 'aOFT',
+            symbol: 'aOFT',
+            lzEndpoint: mockEndpointV2A.address,
+            delegate: ownerA.address,
+            treasury: ownerA.address,
+            mainChainId: 1,
+            initialSupply: 0,
+            ownerAllocation: 0,
+            vestingContract: ownerA.address
+        })
+        myOFTB = await MyOFT.deploy({
+            name: 'bOFT',
+            symbol: 'bOFT',
+            lzEndpoint: mockEndpointV2B.address,
+            delegate: ownerB.address,
+            treasury: ownerB.address,
+            mainChainId: 2,
+            initialSupply: 0,
+            ownerAllocation: 0,
+            vestingContract: ownerB.address
+        })
 
         // Setting destination endpoints in the LZEndpoint mock for each MyOFT instance
         await mockEndpointV2A.setDestLzEndpoint(myOFTB.address, mockEndpointV2B.address)

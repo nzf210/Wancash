@@ -1,12 +1,13 @@
 import assert from 'assert'
-import { ethers } from 'ethers'
+
 import { type DeployFunction } from 'hardhat-deploy/types'
+
 import { config } from '../deploy-config'
 
 const deploy: DeployFunction = async (hre) => {
     // Only run this script if we are in 'prod' mode and deploying 'Wancash'
     if (config.contractName !== 'Wancash') {
-        return;
+        return
     }
 
     const { getNamedAccounts, deployments } = hre
@@ -20,27 +21,35 @@ const deploy: DeployFunction = async (hre) => {
 
     // Define main chain ID (e.g. BSC Mainnet = 56, Testnet = 97)
     // We assume the first network in our list is the "Main Chain" for minting
-    // or you can configure this explicitly. For now, let's look at the config.networks[0] 
-    // but that's a name. 
+    // or you can configure this explicitly. For now, let's look at the config.networks[0]
+    // but that's a name.
     // Safer to check chainId from hre.
 
     // For Wancash (Prod), we essentially want to mint on one specific chain.
     // Let's assume BSC is our "Home" chain.
-    const BSC_CHAIN_ID = 56;
-    const BSC_TESTNET_CHAIN_ID = 97;
+    const BSC_CHAIN_ID = 56
+    const BSC_TESTNET_CHAIN_ID = 97
 
     // We determine MAIN_CHAIN_ID based on configs or env.
-    const MAIN_CHAIN_ID = config.mode === process.env.MODE ? BSC_CHAIN_ID : BSC_TESTNET_CHAIN_ID;
+    const MAIN_CHAIN_ID = config.mode === 'prod' ? BSC_CHAIN_ID : BSC_TESTNET_CHAIN_ID
 
-    const isMainChain = hre.network.config.chainId === MAIN_CHAIN_ID
+    const chainId = hre.network.config.chainId ?? 0
+    const isMainChain = chainId === MAIN_CHAIN_ID
 
-    // Parse initial supply
-    let supply = '0';
-    if (isMainChain) {
-        supply = ethers.utils.parseUnits(config.token.initialSupply, config.token.decimals).toString();
+    const vestingContract = process.env.VESTING_CONTRACT || ''
+    if (isMainChain && vestingContract === '') {
+        throw new Error('Missing VESTING_CONTRACT in .env')
     }
 
-    let endpointV2Address: string;
+    const ownerAllocation = hre.ethers.utils.parseUnits(config.token.ownerAllocation, config.token.decimals).toString()
+
+    // Parse initial supply
+    let supply = '0'
+    if (isMainChain) {
+        supply = hre.ethers.utils.parseUnits(config.token.initialSupply, config.token.decimals).toString()
+    }
+
+    let endpointV2Address: string
     try {
         const endpointV2Deployment = await hre.deployments.get('EndpointV2')
         endpointV2Address = endpointV2Deployment.address
@@ -54,13 +63,17 @@ const deploy: DeployFunction = async (hre) => {
     const { address } = await deploy(config.contractName, {
         from: deployer,
         args: [
-            config.token.name,
-            config.token.symbol,
-            endpointV2Address, // LayerZero's EndpointV2 address
-            deployer, // owner
-            deployer, // treasury (Refactored to use deployer address)
-            MAIN_CHAIN_ID, // main chain
-            supply, // initial supply
+            {
+                name: config.token.name,
+                symbol: config.token.symbol,
+                lzEndpoint: endpointV2Address,
+                delegate: deployer,
+                treasury: deployer,
+                mainChainId: MAIN_CHAIN_ID,
+                initialSupply: supply,
+                ownerAllocation: ownerAllocation,
+                vestingContract: vestingContract,
+            },
         ],
         log: true,
         skipIfAlreadyDeployed: true, // In prod, we usually don't want to redeploy easily

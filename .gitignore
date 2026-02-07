@@ -2,6 +2,8 @@ my-ofts/node_modules
 my-ofts/artifacts
 my-ofts/cache
 .env
+.env.prod
+.env.dev
 coverage
 coverage.json
 typechain

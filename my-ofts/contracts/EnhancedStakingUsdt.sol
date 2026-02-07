@@ -30,22 +30,22 @@ contract EnhancedStakingUsdt is Ownable, ReentrancyGuard {
 
     struct StakeInfo {
         address user;
-        uint256 amount;        // USDT staked (pokok)
+        uint256 amount; // USDT staked (pokok)
         uint256 startTime;
-        uint256 duration;      // seconds
-        uint256 aprBps;        // basis points, e.g. 300 = 3%
-        uint256 lastClaim;     // timestamp terakhir klaim
-        address referrer;      // upline untuk komisi 5%
-        bool withdrawn;        // pokok sudah ditarik
+        uint256 duration; // seconds
+        uint256 aprBps; // basis points, e.g. 300 = 3%
+        uint256 lastClaim; // timestamp terakhir klaim
+        address referrer; // upline untuk komisi 5%
+        bool withdrawn; // pokok sudah ditarik
     }
 
     IERC20 public immutable USDT;
     IERC20 public immutable WANCASH;
 
     // Konfigurasi alamat untuk auto-split dana masuk (opsional)
-    address public poolWallet;      // menerima 30% (likuiditas/operasional)
-    address public wancashBuyer;    // menerima 60% untuk membeli WANCASH off-chain/on-chain
-    bool    public autoSplit;       // jika true, 60% & 30% langsung ditransfer
+    address public poolWallet; // menerima 30% (likuiditas/operasional)
+    address public wancashBuyer; // menerima 60% untuk membeli WANCASH off-chain/on-chain
+    bool public autoSplit; // jika true, 60% & 30% langsung ditransfer
 
     // Lock periods (detik) dan APR (bps) harus sejajar indeksnya
     // uint256[] public lockOptions = [
@@ -55,25 +55,19 @@ contract EnhancedStakingUsdt is Ownable, ReentrancyGuard {
     //     180 days,
     //     360 days
     // ];
-    uint256[] public lockOptions = [
-        3 minutes,
-        6 minutes,
-        10 minutes,
-        15 minutes,
-        30 minutes
-    ];
+    uint256[] public lockOptions = [7 days, 30 days, 90 days, 180 days, 360 days];
 
     uint256[] public aprBpsOptions = [
-        300,   // 3%
-        800,   // 8%
-        1300,  // 13%
-        2000,  // 20%
-        4500   // 45%
+        300, // 3%
+        800, // 8%
+        1300, // 13%
+        2000, // 20%
+        4500 // 45%
     ];
 
     // Minimum stake & syarat eligible upline
-    uint256 public minStake;                  // 10 USDT (diset dari decimals USDT)
-    uint256 public uplineEligibleMinAmount;   // 100 USDT (diset dari decimals USDT)
+    uint256 public minStake; // 10 USDT (diset dari decimals USDT)
+    uint256 public uplineEligibleMinAmount; // 100 USDT (diset dari decimals USDT)
     uint256 public constant UPLINE_FEE_BPS = 500; // 5% dari reward total
     uint256 public constant BPS_DENOM = 10000;
 
@@ -82,9 +76,10 @@ contract EnhancedStakingUsdt is Ownable, ReentrancyGuard {
 
     // Data stake
     uint256 public nextStakeId = 1;
-    mapping(uint256 => StakeInfo) public stakes;        // stakeId => info
-    mapping(address => uint256[]) public userStakes;    // user => daftar stakeId
-    mapping(address => bool) public eligibleUpline;     // siapa yang berhak menjadi upline
+    uint256 public totalStaked;
+    mapping(uint256 => StakeInfo) public stakes; // stakeId => info
+    mapping(address => uint256[]) public userStakes; // user => daftar stakeId
+    mapping(address => bool) public eligibleUpline; // siapa yang berhak menjadi upline
 
     // Events
     event Staked(
@@ -108,9 +103,9 @@ contract EnhancedStakingUsdt is Ownable, ReentrancyGuard {
     event EmergencyWithdraw(address indexed token, address indexed to, uint256 amount);
     event AutoSplitExecuted(
         uint256 indexed stakeId,
-        uint256 toBuyer,   // 60%
-        uint256 toPool,    // 30%
-        uint256 toReserve  // 10% (retained in contract)
+        uint256 toBuyer, // 60%
+        uint256 toPool, // 30%
+        uint256 toReserve // 10% (retained in contract)
     );
     event UplineEligibilityGained(address indexed user);
     event SetWallets(address poolWallet, address wancashBuyer);
@@ -123,7 +118,7 @@ contract EnhancedStakingUsdt is Ownable, ReentrancyGuard {
 
         // Tetapkan nilai berbasis decimals USDT
         uint8 usdtDec = IERC20Metadata(_usdt).decimals();
-        minStake = 10 * (10 ** usdtDec);              // 10 USDT
+        minStake = 10 * (10 ** usdtDec); // 10 USDT
         uplineEligibleMinAmount = 100 * (10 ** usdtDec); // 100 USDT
 
         // Owner default eligible sebagai upline
@@ -166,11 +161,9 @@ contract EnhancedStakingUsdt is Ownable, ReentrancyGuard {
      * Menghitung reward yang belum diklaim & sisa waktu lock.
      * Mengembalikan (usdtReward, wancReward, sisaLockDetik)
      */
-    function pendingRewards(uint256 stakeId)
-        public
-        view
-        returns (uint256 usdtReward, uint256 wancReward, uint256 sisaLock)
-    {
+    function pendingRewards(
+        uint256 stakeId
+    ) public view returns (uint256 usdtReward, uint256 wancReward, uint256 sisaLock) {
         StakeInfo memory s = stakes[stakeId];
         require(s.user != address(0), "Stake not found");
 
@@ -200,20 +193,13 @@ contract EnhancedStakingUsdt is Ownable, ReentrancyGuard {
      * @param duration salah satu dari {7d, 30d, 90d, 180d, 360d}
      * @param referrer alamat upline; jika tidak eligible -> fallback owner()
      */
-    function stake(uint256 amount, uint256 duration, address referrer)
-        external
-        nonReentrant
-    {
+    function stake(uint256 amount, uint256 duration, address referrer) external nonReentrant {
         require(amount >= minStake, "Amount below minimum");
         uint256 aprBps = getAprBpsForDuration(duration);
 
         // Validasi referrer
         address finalRef = referrer;
-        if (
-            finalRef == address(0) ||
-            finalRef == msg.sender ||
-            !eligibleUpline[finalRef]
-        ) {
+        if (finalRef == address(0) || finalRef == msg.sender || !eligibleUpline[finalRef]) {
             finalRef = owner();
         }
 
@@ -233,6 +219,7 @@ contract EnhancedStakingUsdt is Ownable, ReentrancyGuard {
             withdrawn: false
         });
         userStakes[msg.sender].push(stakeId);
+        totalStaked += amount;
 
         // Cek apakah user mendapatkan status eligible upline (khusus jika lock 180 hari dan amount >= 100 USDT)
         if (duration == 180 days && amount >= uplineEligibleMinAmount && !eligibleUpline[msg.sender]) {
@@ -243,6 +230,9 @@ contract EnhancedStakingUsdt is Ownable, ReentrancyGuard {
         // Jalankan auto-split (opsional)
         if (autoSplit) {
             require(poolWallet != address(0) && wancashBuyer != address(0), "Split wallets not set");
+            uint256 balance = USDT.balanceOf(address(this));
+            uint256 surplus = balance > totalStaked ? balance - totalStaked : 0;
+            require(surplus >= amount, "Insufficient surplus for autoSplit");
             uint256 sixty = (amount * 60) / 100; // 60%
             uint256 thirty = (amount * 30) / 100; // 30%
             uint256 ten = amount - sixty - thirty; // 10% remains in contract
@@ -327,6 +317,7 @@ contract EnhancedStakingUsdt is Ownable, ReentrancyGuard {
         uint256 amount = s.amount;
         s.amount = 0;
         s.withdrawn = true;
+        totalStaked -= amount;
 
         USDT.safeTransfer(s.user, amount);
         emit WithdrawnPrincipal(stakeId, s.user, amount);

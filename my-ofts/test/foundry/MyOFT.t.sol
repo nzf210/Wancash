@@ -64,7 +64,7 @@ contract MyOFTTest is TestHelperOz5 {
         bOFT.mint(userB, initialBalance);
     }
 
-    function test_constructor() public {
+    function test_constructor() public view {
         assertEq(aOFT.owner(), address(this));
         assertEq(bOFT.owner(), address(this));
 
@@ -155,6 +155,4 @@ contract MyOFTTest is TestHelperOz5 {
         assertEq(composer.executor(), address(this));
         assertEq(composer.extraData(), composerMsg_); // default to setting the extraData to the message as well to test
     }
-
-    // TODO import the rest of oft tests?
 }

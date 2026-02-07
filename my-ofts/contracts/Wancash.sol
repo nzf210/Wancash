@@ -3,13 +3,11 @@ pragma solidity ^0.8.22;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { OFT } from "@layerzerolabs/oft-evm/contracts/OFT.sol";
-import { VestingWallet } from "@openzeppelin/contracts/finance/VestingWallet.sol";
 
 contract Wancash is OFT {
     uint16 public immutable mainChainId;
 
     // Anti-Whale & Anti-Bot
-    uint256 public maxTxAmount;
     uint256 public maxWalletAmount;
     uint256 public antiBotDuration = 40; // Default 40 seconds
     mapping(address => uint256) public _lastBuyTime;
@@ -20,63 +18,79 @@ contract Wancash is OFT {
     address public treasuryAddress;
 
     // Vesting
-    address public vestingWallet;
+    address public vestingContract;
 
     // Mappings
     mapping(address => bool) public _isExcludedFromFee;
+    mapping(address => bool) public _isExcludedFromLimits;
     mapping(address => bool) public automatedMarketMakerPairs;
 
-    event VestingWalletDeployed(address indexed wallet, uint256 amount);
+    event VestingContractUpdated(address indexed wallet);
     event TreasuryAddressUpdated(address indexed newTreasury);
     event TaxesUpdated(uint256 buyTax, uint256 sellTax);
-    event LimitsUpdated(uint256 maxTx, uint256 maxWallet);
     event AntiBotDurationUpdated(uint256 duration);
     event ExcludeFromFee(address indexed account, bool isExcluded);
+    event ExcludeFromLimits(address indexed account, bool isExcluded);
     event SetAutomatedMarketMakerPair(address indexed pair, bool indexed value);
+    event LimitsEnabledUpdated(bool enabled);
+    event MaxWalletAmountUpdated(uint256 maxWallet);
+
+    bool public limitsEnabled = true;
+
+    struct WancashConfig {
+        string name;
+        string symbol;
+        address lzEndpoint;
+        address delegate;
+        address treasury;
+        uint16 mainChainId;
+        uint256 initialSupply;
+        uint256 ownerAllocation;
+        address vestingContract;
+    }
 
     constructor(
-        string memory _name,
-        string memory _symbol,
-        address _lzEndpoint,
-        address _delegate,
-        address _treasury,
-        uint16 _mainChainId,
-        uint256 _initialSupply
-    ) OFT(_name, _symbol, _lzEndpoint, _delegate) Ownable(_delegate) {
-        mainChainId = _mainChainId;
+        WancashConfig memory _config
+    ) OFT(_config.name, _config.symbol, _config.lzEndpoint, _config.delegate) Ownable(_config.delegate) {
+        mainChainId = _config.mainChainId;
 
-        treasuryAddress = _treasury;
+        treasuryAddress = _config.treasury;
+        vestingContract = _config.vestingContract;
 
         // Default Exclusions
-        _isExcludedFromFee[_delegate] = true;
+        _isExcludedFromFee[_config.delegate] = true;
         _isExcludedFromFee[address(this)] = true;
-        _isExcludedFromFee[_lzEndpoint] = true;
-        _isExcludedFromFee[_treasury] = true;
+        _isExcludedFromFee[_config.lzEndpoint] = true;
+        _isExcludedFromFee[_config.treasury] = true;
         _isExcludedFromFee[address(0)] = true;
+        if (_config.vestingContract != address(0)) {
+            _isExcludedFromFee[_config.vestingContract] = true;
+        }
 
-        // Set initial limits (Dynamic calculation in logic, but valid values here)
-        // Note: Actual enforcement uses percentage of totalSupply() at runtime.
+        _isExcludedFromLimits[_config.delegate] = true;
+        _isExcludedFromLimits[address(this)] = true;
+        _isExcludedFromLimits[_config.lzEndpoint] = true;
+        _isExcludedFromLimits[_config.treasury] = true;
+        _isExcludedFromLimits[address(0)] = true;
+        if (_config.vestingContract != address(0)) {
+            _isExcludedFromLimits[_config.vestingContract] = true;
+        }
+
+        // Fixed max wallet cap across all chains (5,000,000 tokens)
+        maxWalletAmount = 5_000_000 * (10 ** uint256(decimals()));
 
         // Only mint initial supply if deployed on main chain
-        if (block.chainid == _mainChainId) {
-            uint256 vestingAmount = _initialSupply / 2; // 50%
-            uint256 liquidAmount = _initialSupply - vestingAmount;
+        if (block.chainid == _config.mainChainId) {
+            require(_config.ownerAllocation <= _config.initialSupply, "Owner allocation exceeds supply");
+            uint256 vestingAmount = _config.initialSupply - _config.ownerAllocation;
 
-            // Deploy Vesting Wallet
-            // Duration: 60 months * 30 days = 1800 days = 155520000 seconds approx
-            // Or precise: 5 years (avg 365.25 days) = 157788000 seconds.
-            // User asked for "60 Bulan" (60 Months). 60 * 30 * 24 * 3600 = 155520000
-            uint64 duration = 155520000;
-
-            // Create Vesting Wallet owned by _delegate (Owner)
-            VestingWallet vesting = new VestingWallet(_delegate, uint64(block.timestamp), duration);
-            vestingWallet = address(vesting);
-            _isExcludedFromFee[vestingWallet] = true;
-
-            _mint(vestingWallet, vestingAmount);
-            emit VestingWalletDeployed(vestingWallet, vestingAmount);
-
-            _mint(_delegate, liquidAmount);
+            if (vestingAmount > 0) {
+                require(_config.vestingContract != address(0), "Vesting contract required");
+                _mint(_config.vestingContract, vestingAmount);
+            }
+            if (_config.ownerAllocation > 0) {
+                _mint(_config.delegate, _config.ownerAllocation);
+            }
         }
     }
 
@@ -105,6 +119,17 @@ contract Wancash is OFT {
         emit AntiBotDurationUpdated(_duration);
     }
 
+    function setLimitsEnabled(bool _enabled) external onlyOwner {
+        limitsEnabled = _enabled;
+        emit LimitsEnabledUpdated(_enabled);
+    }
+
+    function setMaxWalletAmount(uint256 _maxWallet) external onlyOwner {
+        require(_maxWallet > 0, "Invalid max wallet");
+        maxWalletAmount = _maxWallet;
+        emit MaxWalletAmountUpdated(_maxWallet);
+    }
+
     function setAutomatedMarketMakerPair(address pair, bool value) external onlyOwner {
         require(pair != address(0), "Invalid pair");
         automatedMarketMakerPairs[pair] = value;
@@ -116,6 +141,37 @@ contract Wancash is OFT {
         emit ExcludeFromFee(account, excluded);
     }
 
+    function setVestingContract(address _vesting) external onlyOwner {
+        require(_vesting != address(0), "Invalid address");
+        vestingContract = _vesting;
+        _isExcludedFromFee[_vesting] = true;
+        _isExcludedFromLimits[_vesting] = true;
+        emit VestingContractUpdated(_vesting);
+    }
+
+    function burnFromVesting(uint256 amount) external {
+        require(msg.sender == vestingContract, "Not vesting contract");
+        _burn(msg.sender, amount);
+    }
+
+    function excludeFromLimits(address account, bool excluded) external onlyOwner {
+        _isExcludedFromLimits[account] = excluded;
+        emit ExcludeFromLimits(account, excluded);
+    }
+
+    function setBatchExcludedFromLimits(address[] calldata accounts, bool excluded) external onlyOwner {
+        uint256 length = accounts.length;
+        for (uint256 i = 0; i < length; i++) {
+            address account = accounts[i];
+            _isExcludedFromLimits[account] = excluded;
+            emit ExcludeFromLimits(account, excluded);
+        }
+    }
+
+    function getMaxTxAmount() public view returns (uint256) {
+        return (totalSupply() * 1) / 1000; // 0.1% per chain
+    }
+
     // --- Override _update for Logic ---
 
     function _update(address from, address to, uint256 value) internal virtual override {
@@ -125,25 +181,22 @@ contract Wancash is OFT {
             return;
         }
 
-        // Calculate dynamic limits based on current TOTAL SUPPLY
-        uint256 total = totalSupply();
-        uint256 limitTx = (total * 1) / 1000; // 0.1%
-        uint256 limitWallet = (total * 5) / 1000; // 0.5%
+        bool excludedFromFee = _isExcludedFromFee[from] || _isExcludedFromFee[to];
+        bool excludedFromLimits = _isExcludedFromLimits[to];
 
-        bool excluded = _isExcludedFromFee[from] || _isExcludedFromFee[to];
-
-        // Anti-Whale & Anti-Bot Checks
-        if (!excluded) {
-            // Check Max Transaction Amount
+        // Anti-Whale & Anti-Bot Checks (BUY only from AMM)
+        if (limitsEnabled && automatedMarketMakerPairs[from] && !excludedFromLimits) {
+            // Check Max Transaction Amount (0.1% per chain)
+            uint256 limitTx = getMaxTxAmount();
             require(value <= limitTx, "Exceeds max transaction amount");
 
-            // Check Max Wallet Holding (only on buy/transfer to holder)
+            // Check Max Wallet Holding (fixed 5,000,000 tokens)
             if (!automatedMarketMakerPairs[to]) {
-                require(balanceOf(to) + value <= limitWallet, "Exceeds max wallet holding");
+                require(balanceOf(to) + value <= maxWalletAmount, "Exceeds max wallet holding");
             }
 
             // Anti-Bot: Buy Cooldown
-            if (automatedMarketMakerPairs[from]) {
+            if (antiBotDuration > 0) {
                 require(block.timestamp > _lastBuyTime[to] + antiBotDuration, "Transfer blocked by cooldown");
                 _lastBuyTime[to] = block.timestamp;
             }
@@ -152,7 +205,7 @@ contract Wancash is OFT {
         uint256 taxAmount = 0;
 
         // Apply Taxes only if not excluded
-        if (!excluded) {
+        if (!excludedFromFee) {
             // Buy: Pair -> Wallet
             if (automatedMarketMakerPairs[from] && buyTax > 0) {
                 taxAmount = (value * buyTax) / 100;

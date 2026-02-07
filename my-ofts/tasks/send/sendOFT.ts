@@ -2,6 +2,8 @@ import * as dotenv from 'dotenv'
 // import * as Ethers from 'ethers'
 import { BigNumber, Contract } from 'ethers'
 import { task } from 'hardhat/config'
+const envMode = process.env.ENV || (process.env.MODE === 'main' ? 'prod' : 'dev')
+dotenv.config({ path: `${process.cwd()}/.env.${envMode}` })
 dotenv.config()
 
 const MODE = process.env.MODE === 'main'
