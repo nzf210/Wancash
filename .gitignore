@@ -4,6 +4,10 @@ my-ofts/cache
 .env
 .env.prod
 .env.dev
+/my-frontend/node_modules
+/my-frontend/dist
+/my-frontend/.env.production
+/my-frontend/.env.development
 coverage
 coverage.json
 typechain

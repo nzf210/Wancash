@@ -41,7 +41,8 @@ bun test:unit:dev # or `bun test:unit` for headless testing
 ### Run End-to-End Tests with [Cypress](https://www.cypress.io/)
 
 ```sh
-bun test:e2e:dev
+bun test:e2e:dev # Opens interactive runner
+bun test:e2e:run # Runs headless tests (Recommended for quick check)
 ```
 
 This runs the end-to-end tests against the Vite development server.

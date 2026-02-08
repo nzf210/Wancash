@@ -6,23 +6,24 @@ const isProd = ENV === 'production'
 const getEnv = (key: string) => (import.meta.env as any)[key] || ''
 
 // Staging (Testnet) Addresses
+// Staging (Testnet) Addresses
 const stagingAddresses: Record<number, string> = {
-  97: getEnv('VITE_WCH_TOKEN_BSC_TEST'), // BSC Testnet
-  80002: getEnv('VITE_WCH_TOKEN_POLYGON_AMOY'), // Amoy
-  11155111: getEnv('VITE_WCH_TOKEN_ETHEREUM_SEPOLIA'), // Sepolia
-  43113: getEnv('VITE_WCH_TOKEN_AVALANCHE_FUJI'), // Fuji
-  421614: getEnv('VITE_WCH_TOKEN_ARBITRUM_SEPOLIA'), // Arbitrum Sepolia
-  31: getEnv('VITE_WCH_TOKEN_ROOTSTOCK_TEST'), // Rootstock Testnet
+  97: getEnv('VITE_BSC_CONTRACT'), // BSC Testnet
+  80002: getEnv('VITE_POLY_CONTRACT'), // Amoy
+  11155111: getEnv('VITE_ETH_CONTRACT'), // Sepolia
+  43113: getEnv('VITE_AVA_CONTRACT'), // Fuji
+  421614: getEnv('VITE_ARB_CONTRACT'), // Arbitrum Sepolia
+  31: getEnv('VITE_ROOT_CONTRACT'), // Rootstock Testnet
 }
 
 // Production (Mainnet) Addresses
 const productionAddresses: Record<number, string> = {
-  56: getEnv('VITE_WCH_TOKEN_BSC'), // BSC Mainnet
-  137: getEnv('VITE_WCH_TOKEN_POLYGON'), // Polygon
-  1: getEnv('VITE_WCH_TOKEN_ETHEREUM'), // Ethereum
-  43114: getEnv('VITE_WCH_TOKEN_AVALANCHE'), // Avalanche
-  42161: getEnv('VITE_WCH_TOKEN_ARBITRUM'), // Arbitrum
-  30: getEnv('VITE_WCH_TOKEN_ROOTSTOCK'), // Rootstock Mainnet
+  56: getEnv('VITE_BSC_CONTRACT'), // BSC Mainnet
+  137: getEnv('VITE_POLY_CONTRACT'), // Polygon
+  1: getEnv('VITE_ETH_CONTRACT'), // Ethereum
+  43114: getEnv('VITE_AVA_CONTRACT'), // Avalanche
+  42161: getEnv('VITE_ARB_CONTRACT'), // Arbitrum
+  30: getEnv('VITE_ROOT_CONTRACT'), // Rootstock Mainnet
 }
 
 export const wancashContractAddress: Record<number, string> = isProd

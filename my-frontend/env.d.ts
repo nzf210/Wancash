@@ -2,10 +2,13 @@ interface ImportMetaEnv {
   readonly VITE_NODE_ENV: string
   readonly VITE_API_URL?: string
   readonly VITE_WHITEPAPER_URL?: string
-  readonly VITE_USDT_TOKEN_BSC: string
-  readonly VITE_USDT_TOKEN_BSC_TEST: string
-  readonly VITE_WCH_TOKEN_ROOTSTOCK?: string
-  readonly VITE_WCH_TOKEN_ROOTSTOCK_TEST?: string
+  readonly VITE_BSC_USDT_CONTRACT: string
+  readonly VITE_ROOT_CONTRACT?: string
+  readonly VITE_BSC_CONTRACT: string
+  readonly VITE_POLY_CONTRACT: string
+  readonly VITE_ETH_CONTRACT: string
+  readonly VITE_AVA_CONTRACT: string
+  readonly VITE_ARB_CONTRACT: string
   readonly VITE_SENTRY_DSN?: string
   // Add more env variables as needed
 }

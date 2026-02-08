@@ -125,12 +125,9 @@ const handleSignIn = async () => {
 
 const disconnectWallet = async () => {
   try {
-    if (isAuthenticated.value) {
-      await logout()
-    }
-    await walletDisconnect()
+    await logout()
   } catch (error: any) {
-    console.error('Disconnect failed', error)
+    console.error('Logout failed', error)
   }
 }
 

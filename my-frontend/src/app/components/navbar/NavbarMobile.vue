@@ -45,13 +45,9 @@ const notificationStore = useNotificationStore()
 
 const disconnectWallet = async () => {
   try {
-    if (isAuthenticated && isAuthenticated.value) {
-      await logout()
-      console.info('Signed out')
-    }
-    await walletDisconnect()
+    await logout()
   } catch (error: unknown) {
-    console.error(error instanceof Error ? error.message : 'Disconnect failed')
+    console.error(error instanceof Error ? error.message : 'Logout failed')
   }
 }
 

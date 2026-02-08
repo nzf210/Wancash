@@ -18,23 +18,22 @@ export interface UpdateStatusData {
 
 const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
 
-// Helper to get auth headers
-const getAuthHeaders = (additionalHeaders: Record<string, string> = {}) => {
-    const headers: Record<string, string> = { ...additionalHeaders };
+// Helper to get admin headers with fallback to localStorage for wallet address
+const getAdminHeaders = (additionalHeaders: Record<string, string> = {}) => {
+    const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...additionalHeaders
+    };
 
     const savedAuth = localStorage.getItem('auth_state');
     if (savedAuth) {
         try {
             const parsed = JSON.parse(savedAuth);
-            const { address, token } = parsed;
-            if (address) {
-                headers['X-Wallet-Address'] = address;
-            }
-            if (token) {
-                headers['Authorization'] = `Bearer ${token}`;
+            if (parsed.address) {
+                headers['X-Wallet-Address'] = parsed.address;
             }
         } catch (e) {
-            console.warn('Failed to parse auth_state:', e);
+            console.warn('[AdminApi] Failed to parse auth_state:', e);
         }
     }
 
@@ -57,7 +56,7 @@ export const adminApi = {
         const response = await fetch(`${API_BASE}/api/redemption/admin/redemption/requests?${params}`, {
             method: 'GET',
             credentials: 'include',
-            headers: getAuthHeaders()
+            headers: getAdminHeaders()
         });
 
         if (!response.ok) {
@@ -66,7 +65,6 @@ export const adminApi = {
         }
 
         const result = await response.json();
-        // Return full result to access meta data
         return result;
     },
 
@@ -77,7 +75,7 @@ export const adminApi = {
         const response = await fetch(`${API_BASE}/api/redemption/admin/redemption/${id}/status`, {
             method: 'PATCH',
             credentials: 'include',
-            headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+            headers: getAdminHeaders(),
             body: JSON.stringify(data)
         });
 
@@ -97,7 +95,7 @@ export const adminApi = {
         const response = await fetch(`${API_BASE}/api/products/admin/products`, {
             method: 'GET',
             credentials: 'include',
-            headers: getAuthHeaders()
+            headers: getAdminHeaders()
         });
 
         if (!response.ok) {
@@ -134,7 +132,7 @@ export const adminApi = {
         const response = await fetch(`${API_BASE}/api/products/admin/products`, {
             method: 'POST',
             credentials: 'include',
-            headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+            headers: getAdminHeaders(),
             body: JSON.stringify(data)
         });
 
@@ -151,38 +149,25 @@ export const adminApi = {
      * Update gold product
      */
     async updateProduct(id: string, data: any): Promise<any> {
-        console.log('🌐 API: Updating product', id, 'with data:', data);
-
         const response = await fetch(`${API_BASE}/api/products/admin/products/${id}`, {
             method: 'PUT',
             credentials: 'include',
-            headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+            headers: getAdminHeaders(),
             body: JSON.stringify(data)
         });
 
-        console.log('📡 API Response Status:', response.status, response.statusText);
-
         if (!response.ok) {
             let errorMessage = 'Failed to update product';
-            let errorDetails = null;
             try {
                 const error = await response.json();
                 errorMessage = error.error || error.message || errorMessage;
-                errorDetails = error;
-                console.error('❌ API Error Response:', {
-                    status: response.status,
-                    statusText: response.statusText,
-                    error: error
-                });
             } catch (e) {
-                console.error('❌ Failed to parse error response');
-                console.error('❌ Raw response status:', response.status, response.statusText);
+                // ignore
             }
             throw new Error(errorMessage);
         }
 
         const result = await response.json();
-        console.log('✅ API: Product updated successfully');
         return result.data;
     },
 
@@ -193,7 +178,7 @@ export const adminApi = {
         const response = await fetch(`${API_BASE}/api/products/admin/products/${id}`, {
             method: 'DELETE',
             credentials: 'include',
-            headers: getAuthHeaders()
+            headers: getAdminHeaders()
         });
 
         if (!response.ok) {
@@ -209,7 +194,7 @@ export const adminApi = {
         const response = await fetch(`${API_BASE}/api/redemption/admin/redemption/config`, {
             method: 'PUT',
             credentials: 'include',
-            headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+            headers: getAdminHeaders(),
             body: JSON.stringify(settings)
         });
 
@@ -229,7 +214,7 @@ export const adminApi = {
         const response = await fetch(`${API_BASE}/api/redemption/admin/redemption/stats`, {
             method: 'GET',
             credentials: 'include',
-            headers: getAuthHeaders()
+            headers: getAdminHeaders()
         });
 
         if (!response.ok) {
@@ -239,5 +224,42 @@ export const adminApi = {
 
         const result = await response.json();
         return result.data;
+    },
+
+    /**
+     * Export database to JSON
+     */
+    async exportDatabase(): Promise<Blob> {
+        const response = await fetch(`${API_BASE}/api/admin/db/export`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: getAdminHeaders()
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to export database');
+        }
+
+        return await response.blob();
+    },
+
+    /**
+     * Import database from JSON
+     */
+    async importDatabase(data: any): Promise<any> {
+        const response = await fetch(`${API_BASE}/api/admin/db/import`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: getAdminHeaders(),
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to import database');
+        }
+
+        return await response.json();
     }
 };

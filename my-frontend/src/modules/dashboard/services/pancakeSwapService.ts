@@ -23,7 +23,7 @@ const CHAIN_CONFIGS: Record<number, ChainConfig> = {
         chain: bsc,
         rpc: 'https://bsc-dataseed.binance.org',
         routerAddress: '0x13f4EA83D0bd40E75C8222255bc855a974568Dd4',
-        usdtAddress: import.meta.env.VITE_USDT_TOKEN_BSC || '0x55d398326f99059fF775485246999027B3197955',
+        usdtAddress: import.meta.env.VITE_BSC_USDT_CONTRACT || '0x55d398326f99059fF775485246999027B3197955',
         wchAddress: wancashContractAddress[56]
     },
     97: {
@@ -31,7 +31,7 @@ const CHAIN_CONFIGS: Record<number, ChainConfig> = {
         chain: bscTestnet,
         rpc: 'https://data-seed-prebsc-1-s1.binance.org:8545',
         routerAddress: '0x9a489505a00cE272eAa5e07Dba6491314CaE3796', // PancakeSwap V3 Testnet Router
-        usdtAddress: import.meta.env.VITE_USDT_TOKEN_BSC_TEST || '0x337610d27c682E347C9cD60BD4b3b107C9d34dDd',
+        usdtAddress: import.meta.env.VITE_BSC_USDT_CONTRACT || '0x337610d27c682E347C9cD60BD4b3b107C9d34dDd',
         wchAddress: wancashContractAddress[97]
     }
 }

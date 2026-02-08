@@ -1,6 +1,6 @@
 // frontend/src/composables/useAuth.ts
 import { ref, computed } from 'vue'
-import { watchAccount, getAccount, signTypedData } from '@wagmi/core'
+import { watchAccount, getAccount, signTypedData, disconnect } from '@wagmi/core'
 import { z } from 'zod'
 import { toast } from 'vue-sonner'
 import { isAddressEqual, type TypedDataDefinition } from 'viem'
@@ -262,16 +262,32 @@ export const useAuth = () => {
   }
 
   const logout = async () => {
+    console.log('🚪 [useAuth] Initializing full logout...')
     try {
+      // 1. Backend logout
       await fetch('/api/auth/logout', {
         method: 'POST',
         headers: getAuthHeaders()
       })
+      console.log('✅ [useAuth] Backend logout successful')
     } catch (e) {
-      console.warn('Logout API failed', e)
+      console.warn('⚠️ [useAuth] Logout API failed', e)
     } finally {
+      // 2. Disconnect Wallet (Wagmi)
+      try {
+        const account = getAccount(wagmiAdapter.wagmiConfig)
+        if (account.isConnected) {
+          console.log('🔌 [useAuth] Disconnecting wallet...')
+          await disconnect(wagmiAdapter.wagmiConfig)
+        }
+      } catch (disconnectError) {
+        console.error('⚠️ [useAuth] Wallet disconnect failed:', disconnectError)
+      }
+
+      // 3. Reset internal state
       resetState()
       toast.info('Disconnected')
+      console.log('🚪 [useAuth] Logout process complete')
     }
   }
 

@@ -44,6 +44,14 @@
                         </svg>
                         Reconciliation
                     </TabsTrigger>
+                    <TabsTrigger value="database"
+                        class="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+                        </svg>
+                        Database
+                    </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="redemption" class="mt-6">
@@ -61,6 +69,10 @@
                 <TabsContent value="reconciliation" class="mt-6">
                     <ReconciliationControl />
                 </TabsContent>
+
+                <TabsContent value="database" class="mt-6">
+                    <DatabaseManager />
+                </TabsContent>
             </Tabs>
         </div>
     </div>
@@ -75,6 +87,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import RedemptionDashboard from './RedemptionDashboard.vue'
 import ProductManagement from './ProductManagement.vue'
 import ConfigSettings from './ConfigSettings.vue'
+import DatabaseManager from './DatabaseManager.vue'
 import ReconciliationControl from '../components/ReconciliationControl.vue'
 
 const route = useRoute()
