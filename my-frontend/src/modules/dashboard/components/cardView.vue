@@ -220,7 +220,7 @@
 
                 <!-- Chart Integration -->
                 <div class="mt-4 h-[220px]">
-                  <TokenPriceChart @timeframe-changed="handleTimeframeChange" />
+                  <TokenPriceChart @timeframe-changed="handleTimeframeChange" @price-change="handlePriceChange" />
                 </div>
             </div>
 
@@ -309,8 +309,11 @@ const {
 // Reactive state
 const loading = ref<boolean>(false)
 const selectedTimeframe = ref('1d')
+const dynamicPriceChange = ref<number | null>(null)
 
 const priceChange = computed(() => {
+  if (dynamicPriceChange.value !== null) return dynamicPriceChange.value
+  
   const tf = selectedTimeframe.value
   if (tf === '1m' || tf === '5m' || tf === '1h') return wchChange1h.value
   return wchChange24h.value
@@ -630,6 +633,11 @@ const fetchRealData = async () => {
 
 const handleTimeframeChange = (tf: string) => {
   selectedTimeframe.value = tf
+  dynamicPriceChange.value = null // Reset until chart emits new value
+}
+
+const handlePriceChange = (change: number) => {
+  dynamicPriceChange.value = change
 }
 
 // Lifecycle hooks

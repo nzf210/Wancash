@@ -37,6 +37,8 @@ const error = ref<string | null>(null)
 const chartColor = computed(() => isDark.value ? '#8b5cf6' : '#6366f1')
 
 // Fetch real data from backend
+const emit = defineEmits(['timeframe-changed', 'price-change'])
+
 const fetchChartData = async (tf: Timeframe) => {
     isLoading.value = true
     error.value = null
@@ -59,7 +61,8 @@ const fetchChartData = async (tf: Timeframe) => {
         })
 
         if (response.data.success && response.data.data) {
-            const chartData = response.data.data
+            const rawData = response.data.data
+            const chartData = rawData
                 .map((item: any) => ({
                     x: item.timestamp,
                     y: item.price
@@ -75,6 +78,16 @@ const fetchChartData = async (tf: Timeframe) => {
                 name: 'Price (USD)',
                 data: chartData
             }]
+
+            // Calculate percentage change for this timeframe
+            if (chartData.length >= 2) {
+                const first = chartData[0].y
+                const last = chartData[chartData.length - 1].y
+                if (first !== 0) {
+                    const change = ((last - first) / first) * 100
+                    emit('price-change', change)
+                }
+            }
         } else {
             throw new Error('No data received')
         }
@@ -96,8 +109,6 @@ const series = ref([
     }
 ])
 
-
-const emit = defineEmits(['timeframe-changed'])
 
 const selectTimeframe = (tf: Timeframe) => {
     selectedTimeframe.value = tf
