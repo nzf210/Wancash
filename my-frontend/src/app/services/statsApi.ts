@@ -1,5 +1,19 @@
 import { apiClient } from '@/utils/apiClient'
 
+export interface TokenPrice {
+    priceUsd: string
+    priceChange: {
+        h1: number
+        h6: number
+        h24: number
+    }
+    volume: {
+        h24: number
+    }
+    marketCap: number
+    pairAddress: string
+}
+
 export interface PriceHistoryItem {
     timestamp: number
     open: number
@@ -29,6 +43,20 @@ export const statsApi = {
         if (!response.ok) {
             const errorData = await response.json()
             throw new Error(errorData.error || 'Failed to fetch price history')
+        }
+
+        return await response.json()
+    },
+
+    /**
+     * Fetch current WCH token price and stats
+     */
+    async getTokenPrice(): Promise<TokenPrice> {
+        const response = await apiClient.fetch('/api/stats/token-price')
+
+        if (!response.ok) {
+            const errorData = await response.json()
+            throw new Error(errorData.error || 'Failed to fetch token price')
         }
 
         return await response.json()

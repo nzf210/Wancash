@@ -1,4 +1,4 @@
-const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
+import { statsApi } from './statsApi'
 
 export interface TokenPrice {
     priceUsd: number
@@ -39,22 +39,17 @@ export const priceService = {
      */
     async fetchWchPrice(): Promise<TokenPrice> {
         try {
-            const response = await fetch(`${API_BASE}/api/stats/token-price`)
-            if (!response.ok) throw new Error('Failed to fetch WCH price from backend')
+            const data = await statsApi.getTokenPrice()
 
-            const data = await response.json()
-            if (data && !data.error) {
-                return {
-                    priceUsd: parseFloat(data.priceUsd),
-                    percentChange1h: data.priceChange?.h1 || 0,
-                    percentChange6h: data.priceChange?.h6 || 0,
-                    percentChange24h: data.priceChange?.h24 || 0,
-                    volume24h: data.volume?.h24 || 0,
-                    marketCap: data.marketCap || 0,
-                    pairAddress: data.pairAddress
-                }
+            return {
+                priceUsd: parseFloat(data.priceUsd),
+                percentChange1h: data.priceChange?.h1 || 0,
+                percentChange6h: data.priceChange?.h6 || 0,
+                percentChange24h: data.priceChange?.h24 || 0,
+                volume24h: data.volume?.h24 || 0,
+                marketCap: data.marketCap || 0,
+                pairAddress: data.pairAddress
             }
-            throw new Error('Invalid backend data')
         } catch (error) {
             console.warn('Error fetching WCH price from backend:', error)
             return {
