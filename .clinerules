@@ -26,6 +26,7 @@ The Wancash Staking project is a multi-layered decentralized application:
   2. **Verification (CRITICAL)**:
      - **Double-Check**: Review existing `migrations/` to ensure you aren't duplicating work or conflicting with previous changes.
      - **Idempotency**: **ALWAYS** use `IF NOT EXISTS` for tables and `ADD COLUMN IF NOT EXISTS` for columns.
+     - **Transaction Safety (SAVEPOINT)**: When performing complex operations inside a transaction (like restore/import), use `SAVEPOINT` to protect sub-operations (e.g., sequence syncs) from poisoning the main transaction if they fail on specific data types (like UUIDs).
      - **Safety**: Avoid destructive operations (`DROP TABLE`/`DROP COLUMN`) unless explicitly authorized and planned for data loss/backup.
   3. **Application**: Use `bun run scripts/apply-migrations.ts` to apply ALL pending migrations. This script tracks applied migrations in the `_migrations` table.
   4. **Post-Check**: Verify the migration was successful and the schema is as expected.
@@ -188,9 +189,10 @@ Follow the **"Spec First, Test Second, Code Third"** principle:
 
 ---
 
-_Last updated: 2026-02-08 - Synchronized with Production Readiness Audit & DB Solidification_
+_Last updated: 2026-02-10 - Integrated Savepoint-Robust DB Restore & Test stabilization_
 
 ### 📈 Current Project Status: **PRODUCTION READY**
 - **Auth**: Corrected 401 cookie handling (Non-Secure in Dev, Secure in Prod).
-- **DB**: Solidified restore logic with batching, sequences, and transactions.
+- **DB**: Solidified restore logic with `SAVEPOINT` protection for UUID tables and sequence syncing.
+- **Test**: Vitest suite fully stabilized with exhaustive mocking for DB, Rate Limiter, and Telegram.
 - **Audit**: Comprehensive check of CORS, Rate Limiting, and Env Sync completed.
