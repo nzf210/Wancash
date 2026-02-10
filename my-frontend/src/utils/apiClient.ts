@@ -6,8 +6,11 @@ interface FetchOptions extends RequestInit {
 
 export const apiClient = {
     async fetch(url: string, options: FetchOptions = {}) {
+        const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
+        const fullUrl = url.startsWith('http') ? url : `${API_BASE}${url}`
+
         console.log('\n🌐 [apiClient] ========== API REQUEST ==========')
-        console.log('🌐 [apiClient] URL:', url)
+        console.log('🌐 [apiClient] URL:', fullUrl)
         console.log('🌐 [apiClient] Method:', options.method || 'GET')
 
         const { getAuthHeaders, refreshSession } = useAuth()
@@ -25,7 +28,7 @@ export const apiClient = {
 
         // 2. Initial Request
         console.log('🌐 [apiClient] Sending initial request...')
-        let response = await fetch(url, {
+        let response = await fetch(fullUrl, {
             ...options,
             headers,
             credentials: 'include' // Important for cookies
@@ -55,7 +58,7 @@ export const apiClient = {
 
                     console.log('🌐 [apiClient] Retry headers:', newHeaders)
 
-                    response = await fetch(url, {
+                    response = await fetch(fullUrl, {
                         ...options,
                         headers: newHeaders,
                         credentials: 'include'

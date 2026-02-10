@@ -23,7 +23,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useDark } from '@vueuse/core'
-import axios from 'axios'
+import { statsApi } from '@/app/services/statsApi'
 
 type Timeframe = '1m' | '5m' | '1h' | '1d' | '1w' | '1M'
 const timeframes: Timeframe[] = ['1m', '5m', '1h', '1d', '1w', '1M']
@@ -45,31 +45,26 @@ const fetchChartData = async (tf: Timeframe) => {
 
     try {
         const pointsMap: Record<Timeframe, number> = {
-            '1m': 120,  // Last 2 hours (Matches KV PRICE_SERIES:1M)
-            '5m': 120,  // Last 10 hours (KV PRICE_SERIES:5M has up to 576, but 120 is good for view)
+            '1m': 120,  // Last 2 hours
+            '5m': 120,  // Last 10 hours
             '1h': 120,  // Last 5 days
             '1d': 30,   // Last 30 days
-            '1w': 24,   // Last 6 months (weeks)
-            '1M': 12    // Last year (months)
+            '1w': 24,   // Last 6 months
+            '1M': 12    // Last year
         }
 
-        const response = await axios.get('/api/stats/token-price-history', {
-            params: {
-                timeframe: tf,
-                points: pointsMap[tf]
-            }
-        })
+        const response = await statsApi.getTokenPriceHistory(tf, pointsMap[tf])
 
-        if (response.data.success && response.data.data) {
-            const rawData = response.data.data
+        if (response.success && response.data) {
+            const rawData = response.data
             const chartData = rawData
                 .map((item: any) => ({
                     x: item.timestamp,
                     y: item.price
                 }))
-                .filter((p: any) => 
-                    p.x != null && !isNaN(p.x) && 
-                    p.y != null && !isNaN(p.y) && 
+                .filter((p: any) =>
+                    p.x != null && !isNaN(p.x) &&
+                    p.y != null && !isNaN(p.y) &&
                     typeof p.y === 'number'
                 )
 
@@ -95,14 +90,12 @@ const fetchChartData = async (tf: Timeframe) => {
     } catch (err) {
         console.error('Failed to fetch chart data:', err)
         error.value = 'Failed to load chart data'
-
-        // Keep showing old data on error
     } finally {
         isLoading.value = false
     }
 }
 
-const series = ref([
+const series = ref<{ name: string; data: { x: number; y: number }[] }[]>([
     {
         name: 'Price (USD)',
         data: []
