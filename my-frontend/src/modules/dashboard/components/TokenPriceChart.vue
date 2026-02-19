@@ -106,6 +106,7 @@ const series = ref<{ name: string; data: { x: number; y: number }[] }[]>([
 const selectTimeframe = (tf: Timeframe) => {
     selectedTimeframe.value = tf
     fetchChartData(tf)
+    startAutoRefresh(tf)
     emit('timeframe-changed', tf)
 }
 
@@ -212,19 +213,31 @@ const chartOptions = computed(() => ({
     }
 }))
 
-// Auto-refresh for short timeframes
+// Auto-refresh with timeframe-appropriate intervals
 let refreshInterval: NodeJS.Timeout | null = null
 
-onMounted(() => {
-    // Initial load
-    fetchChartData(selectedTimeframe.value)
+const getRefreshInterval = (tf: Timeframe): number => {
+    switch (tf) {
+        case '1m':
+        case '5m':
+            return 60_000      // 1 minute
+        case '1h':
+            return 5 * 60_000  // 5 minutes
+        default:
+            return 30 * 60_000 // 30 minutes for 1d/1w/1M
+    }
+}
 
-    // Auto-refresh for short timeframes
+const startAutoRefresh = (tf: Timeframe) => {
+    if (refreshInterval) clearInterval(refreshInterval)
     refreshInterval = setInterval(() => {
-        if (selectedTimeframe.value === '1m' || selectedTimeframe.value === '5m') {
-            fetchChartData(selectedTimeframe.value)
-        }
-    }, 60000) // Refresh every minute for 1m/5m charts
+        fetchChartData(tf)
+    }, getRefreshInterval(tf))
+}
+
+onMounted(() => {
+    fetchChartData(selectedTimeframe.value)
+    startAutoRefresh(selectedTimeframe.value)
 })
 
 onUnmounted(() => {
