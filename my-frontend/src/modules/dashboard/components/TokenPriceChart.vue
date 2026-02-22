@@ -219,12 +219,13 @@ let refreshInterval: NodeJS.Timeout | null = null
 const getRefreshInterval = (tf: Timeframe): number => {
     switch (tf) {
         case '1m':
+            return 2 * 60_000   // 2 minutes (match cron interval)
         case '5m':
-            return 60_000      // 1 minute
+            return 5 * 60_000   // 5 minutes
         case '1h':
-            return 5 * 60_000  // 5 minutes
+            return 10 * 60_000  // 10 minutes
         default:
-            return 30 * 60_000 // 30 minutes for 1d/1w/1M
+            return 60 * 60_000  // 60 minutes for 1d/1w/1M
     }
 }
 
