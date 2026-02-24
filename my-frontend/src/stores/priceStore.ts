@@ -4,7 +4,7 @@ import { priceService } from '@/app/services/priceService'
 
 export const usePriceStore = defineStore('price', () => {
     // State
-    const wchPrice = ref(0.0015) // Default fallback
+    const wchPrice = ref(0.0000) // Default fallback
     const wchChange1h = ref(0)
     const wchChange6h = ref(0)
     const wchChange24h = ref(0)
