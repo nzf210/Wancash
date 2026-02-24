@@ -70,12 +70,12 @@
               <div class="flex flex-col items-center">
                 <span class="text-gray-500">WCH</span>
                 <span class="font-medium text-gray-900 dark:text-gray-200">{{ formatBalance(wchBalance, 'TOKEN')
-                }}</span>
+                  }}</span>
               </div>
               <div class="flex flex-col items-center">
                 <span class="text-gray-500">USDT</span>
                 <span class="font-medium text-gray-900 dark:text-gray-200">{{ formatBalance(usdtBalance, 'TOKEN')
-                }}</span>
+                  }}</span>
               </div>
             </div>
 
@@ -230,7 +230,7 @@
                 <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Market Cap</div>
                 <div class="text-[13px] md:text-base font-semibold text-gray-900 dark:text-white">${{
                   marketCap.toLocaleString(undefined, { maximumFractionDigits: 0 })
-                }}</div>
+                  }}</div>
               </div>
               <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border dark:border-gray-700">
                 <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Volume 24h</div>
@@ -319,8 +319,8 @@ const priceChange = computed(() => {
   return wchChange24h.value
 })
 
-const totalSupply = ref<number>(9999999999)
-const circulatingSupply = ref<number>(2000000000)
+const totalSupply = ref<number>(9999999)
+const circulatingSupply = ref<number>(200000000)
 const lastUpdated = ref<string>('')
 
 // Swap State
